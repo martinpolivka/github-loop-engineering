@@ -1,0 +1,21 @@
+{
+  "name": "Pharmacy reservation station",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:24-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/copilot-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "GitHub.copilot-chat"
+      ]
+    }
+  },
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": {
+      "label": "Pharmacy service"
+    }
+  },
+  "postCreateCommand": "npm test"
+}

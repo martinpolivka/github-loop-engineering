@@ -100,9 +100,9 @@ Keep four durable artifacts visible all day: issue, pull request, workflow run, 
 
 ### Chapter 2: From intent to a verified handoff - 10:35 to 11:35
 
-- **Outcome:** Noisy organizational context becomes a confirmed need, then a structured issue, lightweight specification, bounded implementation proposal, and reviewable pull request.
-- **Demonstrate:** Issue intake, Project context, specification, architecture decision, Copilot-assisted plan, linked pull request, tests, and review.
-- **Lab:** `docs\labs\02-intent-to-pr\index.html` starts with seven minutes of coached intake: a read-only `requirement-refiner` custom agent asks questions about the synthetic team chat thread, ticket digest, and stakeholder email in the station `context\intake\` folder, and drafts a requirement only after the attendee confirms it. The attendee compares the draft with the product-owner requirement, then turns that requirement into a merged change judged by deterministic acceptance checks. The station also carries path-scoped `.github\instructions\` files and a seeded synthetic backlog that supplies realistic duplicates (ADR 0011).
+- **Outcome:** Noisy organizational context becomes a confirmed need, then a structured issue, a failing acceptance test, a bounded Copilot implementation, and a reviewed, merged pull request.
+- **Demonstrate:** Coached intake, issue form, red acceptance test, `@copilot` on the pull request, green check, and review.
+- **Lab:** `docs\labs\02-intent-to-pr\index.html` starts with each attendee forking the workshop repository as `github-loop-engineering-NN` and opening it in a GitHub Codespace (a local clone is the alternative). A read-only `requirement-refiner` custom agent then coaches them through the synthetic chat thread, ticket digest, stakeholder email, and planned backlog in `context\intake\`, and drafts a requirement only after the attendee confirms it. The attendee files the issue, pushes a failing acceptance test on a draft pull request, delegates the implementation by commenting `@copilot` on that pull request, and merges only after the check is green and the diff is reviewed (ADR 0011, ADR 0013).
 - **Connect:** Pull requests are the common control point for human- and agent-authored work; a proposal remains untrusted until scope, diff, tests, and review are clear.
 
 ### Chapter 3: GitHub Enterprise operating model - 11:35 to 12:30

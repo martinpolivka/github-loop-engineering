@@ -68,8 +68,8 @@ export function sourceElement(source, id, ancestorClass) {
 
 export function screenshotInputs(source) {
   if (/inventory(?:\.reference)?\.mjs$/.test(source)) {
-    return [source, "platform/templates/station-repository/src/server.mjs",
-      ...["index.html", "app.js", "app.css"].map((file) => `platform/templates/station-repository/public/${file}`)];
+    return [source, "src/server.mjs",
+      ...["index.html", "app.js", "app.css"].map((file) => `public/${file}`)];
   }
   const path = source.split("#")[0];
   const file = join(root, ...path.split("/"));
@@ -142,7 +142,6 @@ export function validateRepository() {
 
   const workflowDirectories = [
     join(root, ".github", "workflows"),
-    join(root, "platform", "templates", "station-repository", ".github", "workflows"),
     join(root, "platform", "demos", "security-remediation", "workflows")
   ];
   for (const directory of workflowDirectories) {

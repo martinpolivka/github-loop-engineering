@@ -39,6 +39,39 @@ test("sandbox remote provision requires explicit apply", () => {
   assert.match(output, /PLAN ONLY/);
 });
 
+test("attendees fork this repository itself, so the station sits at its root", () => {
+  for (const profileName of ["sandbox", "enterprise.example"]) {
+    const profile = JSON.parse(readFileSync(join(root, "platform", "profiles", `${profileName}.json`), "utf8"));
+    assert.equal(profile.sourceRepository, undefined, "No separate source repository is published");
+  }
+  for (const path of [".devcontainer/devcontainer.json", "context/intake/backlog.md", ".github/agents/requirement-refiner.agent.md",
+    "src/server.mjs", "test/inventory.test.mjs"]) {
+    assert.ok(existsSync(join(root, ...path.split("/"))), `${path} is at the repository root`);
+  }
+  assert.equal(existsSync(join(root, "platform", "templates", "station-repository")), false);
+});
+
+test("repository opens in a Codespace with Copilot and runs the tests", () => {
+  const template = root;
+  const devcontainer = JSON.parse(readFileSync(join(template, ".devcontainer", "devcontainer.json"), "utf8"));
+  assert.match(devcontainer.image, /javascript-node:24/);
+  assert.ok(devcontainer.features["ghcr.io/devcontainers/features/copilot-cli:1"], "Copilot CLI is installed");
+  assert.ok(devcontainer.customizations.vscode.extensions.includes("GitHub.copilot-chat"));
+  assert.equal(devcontainer.postCreateCommand, "npm test");
+  assert.deepEqual(devcontainer.forwardPorts, [3000]);
+});
+
+test("attendee forks carry the planned backlog as a file the coach reads", () => {
+  const template = root;
+  const backlogFile = readFileSync(join(template, "context", "intake", "backlog.md"), "utf8");
+  for (const item of loadBacklog(join(root, "platform", "templates", "station-backlog.json")).issues) {
+    assert.ok(backlogFile.includes(item.title.replace(/^\[Backlog\]\s*/, "")), `backlog.md names ${item.id}`);
+  }
+  assert.doesNotMatch(backlogFile, /substitut|alternative|suggest/i);
+  const agent = readFileSync(join(template, ".github", "agents", "requirement-refiner.agent.md"), "utf8");
+  assert.match(agent, /context\/intake\/backlog\.md/);
+});
+
 test("profile traversal is rejected and concrete enterprise config is ignored", () => {
   assert.throws(() => execFileSync(process.execPath, [
     join(root, "platform", "scripts", "workshop.mjs"),
@@ -53,8 +86,8 @@ test("profile traversal is rejected and concrete enterprise config is ignored", 
   assert.match(ignore, /^platform\/profiles\/enterprise\.json$/m);
 });
 
-test("station template carries reproducible Agentic Workflow inputs", () => {
-  const template = join(root, "platform", "templates", "station-repository");
+test("repository carries reproducible Agentic Workflow inputs", () => {
+  const template = root;
   const attributes = readFileSync(join(template, ".gitattributes"), "utf8");
   const workflowConfig = JSON.parse(readFileSync(join(template, ".github", "workflows", "aw.json"), "utf8"));
   const actionsLock = JSON.parse(readFileSync(join(template, ".github", "aw", "actions-lock.json"), "utf8"));
@@ -86,8 +119,8 @@ test("an unavailable optional compiler preserves the verified compiled fallback"
 });
 
 test("primary harnesses use Copilot without an Anthropic dependency", () => {
-  const template = join(root, "platform", "templates", "station-repository");
-  for (const directory of [root, template]) {
+  const template = root;
+  for (const directory of [template]) {
     for (const name of ["repository-pulse", "showcase-signal"]) {
       const source = readFileSync(join(directory, ".github", "workflows", `${name}.md`), "utf8");
       assert.match(source, /^engine: copilot$/m);
@@ -155,7 +188,7 @@ test("backlog seed is dry-run by default and refuses unsafe apply targets", () =
 });
 
 test("station intake context, coaching agent, and path-scoped instructions stay consistent", () => {
-  const template = join(root, "platform", "templates", "station-repository");
+  const template = root;
   const read = (...parts) => readFileSync(join(template, ...parts), "utf8");
   const agent = read(".github", "agents", "requirement-refiner.agent.md");
   const frontmatter = agent.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? "";

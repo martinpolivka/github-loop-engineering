@@ -18,7 +18,7 @@ test("workshop examples do not promise unavailable station controls", () => {
   const lab3 = read("docs", "labs", "03-operating-model", "index.html");
   const lab5 = read("docs", "labs", "05-capstone", "index.html");
   const operator = read("platform", "demos", "full-day", "operator-guide.html");
-  const stationCI = read("platform", "templates", "station-repository", ".github", "workflows", "ci.yml");
+  const stationCI = read(".github", "workflows", "ci.yml");
 
   assert.match(opening, /consecutive reservations/);
   assert.doesNotMatch(opening, /stock-suggestion|feature-request\.md|inventory\.reference\.mjs/);

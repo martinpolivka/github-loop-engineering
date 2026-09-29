@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-25T07:31:57.742Z",
+  "capturedAt": "2026-09-29T14:54:29.943Z",
   "browser": "151.0.7922.34",
   "sourceHashFormat": "sha256-utf8-lf",
   "captures": [
@@ -17,7 +17,7 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "fbdbde1de4aa4a4c2f4b485060adc692701747cca053fa05113c177ed6cc589d"
+          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -63,7 +63,7 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "fbdbde1de4aa4a4c2f4b485060adc692701747cca053fa05113c177ed6cc589d"
+          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -109,7 +109,7 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "fbdbde1de4aa4a4c2f4b485060adc692701747cca053fa05113c177ed6cc589d"
+          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -155,7 +155,7 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "fbdbde1de4aa4a4c2f4b485060adc692701747cca053fa05113c177ed6cc589d"
+          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -201,7 +201,7 @@
       "inputs": [
         {
           "path": "docs/labs/04-trusted-delivery/index.html",
-          "sha256": "32c0b64bb1bf28513ca9f2a2dd2413415139d624e0872d0b64cf1bcdb1f50145"
+          "sha256": "b7c6dfafbb8b9be4df38d6c5b3e3e89c46f7d35d97f6ca13a732d61e5c201d2d"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -247,7 +247,7 @@
       "inputs": [
         {
           "path": "docs/labs/04-trusted-delivery/index.html",
-          "sha256": "32c0b64bb1bf28513ca9f2a2dd2413415139d624e0872d0b64cf1bcdb1f50145"
+          "sha256": "b7c6dfafbb8b9be4df38d6c5b3e3e89c46f7d35d97f6ca13a732d61e5c201d2d"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -293,7 +293,7 @@
       "inputs": [
         {
           "path": "docs/labs/04-trusted-delivery/index.html",
-          "sha256": "32c0b64bb1bf28513ca9f2a2dd2413415139d624e0872d0b64cf1bcdb1f50145"
+          "sha256": "b7c6dfafbb8b9be4df38d6c5b3e3e89c46f7d35d97f6ca13a732d61e5c201d2d"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -339,7 +339,7 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "fbdbde1de4aa4a4c2f4b485060adc692701747cca053fa05113c177ed6cc589d"
+          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -385,7 +385,7 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "fbdbde1de4aa4a4c2f4b485060adc692701747cca053fa05113c177ed6cc589d"
+          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -431,7 +431,7 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "fbdbde1de4aa4a4c2f4b485060adc692701747cca053fa05113c177ed6cc589d"
+          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -477,7 +477,7 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "fbdbde1de4aa4a4c2f4b485060adc692701747cca053fa05113c177ed6cc589d"
+          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -523,7 +523,7 @@
       "inputs": [
         {
           "path": "docs/labs/04-trusted-delivery/index.html",
-          "sha256": "32c0b64bb1bf28513ca9f2a2dd2413415139d624e0872d0b64cf1bcdb1f50145"
+          "sha256": "b7c6dfafbb8b9be4df38d6c5b3e3e89c46f7d35d97f6ca13a732d61e5c201d2d"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -569,7 +569,7 @@
       "inputs": [
         {
           "path": "docs/labs/04-trusted-delivery/index.html",
-          "sha256": "32c0b64bb1bf28513ca9f2a2dd2413415139d624e0872d0b64cf1bcdb1f50145"
+          "sha256": "b7c6dfafbb8b9be4df38d6c5b3e3e89c46f7d35d97f6ca13a732d61e5c201d2d"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -615,7 +615,7 @@
       "inputs": [
         {
           "path": "docs/labs/04-trusted-delivery/index.html",
-          "sha256": "32c0b64bb1bf28513ca9f2a2dd2413415139d624e0872d0b64cf1bcdb1f50145"
+          "sha256": "b7c6dfafbb8b9be4df38d6c5b3e3e89c46f7d35d97f6ca13a732d61e5c201d2d"
         },
         {
           "path": "docs/assets/html-docs/article.css",
@@ -649,7 +649,7 @@
     },
     {
       "file": "pharmacy-baseline-light.png",
-      "source": "platform/templates/station-repository/src/inventory.mjs",
+      "source": "src/inventory.mjs",
       "theme": "light",
       "accent": "blue",
       "description": "Actual local HTTP 409 response; synthetic data, not GitHub or a cloud deployment.",
@@ -660,30 +660,30 @@
       "kind": "browser-capture",
       "inputs": [
         {
-          "path": "platform/templates/station-repository/src/inventory.mjs",
+          "path": "src/inventory.mjs",
           "sha256": "0564412d77ed43789a121c648aefe4cf5a217fee24f5c9dba2c748c9e52b74c8"
         },
         {
-          "path": "platform/templates/station-repository/src/server.mjs",
-          "sha256": "450888891e48482353d969e7d3635e79d90474364d866073d2687a469fc34852"
+          "path": "src/server.mjs",
+          "sha256": "428a4370b4cf411fb2310d9a075bc9cd11c51a885e01ea33f72b77d2f19d1db0"
         },
         {
-          "path": "platform/templates/station-repository/public/index.html",
+          "path": "public/index.html",
           "sha256": "4eb09a85e76764aea50245d99f1faa7a1d356ad70a0013c061f35c21e87770bc"
         },
         {
-          "path": "platform/templates/station-repository/public/app.js",
+          "path": "public/app.js",
           "sha256": "7ea5ed1c0765e56f28ce56504bb16ebf28512a7125c896daaf175f25adb285d0"
         },
         {
-          "path": "platform/templates/station-repository/public/app.css",
+          "path": "public/app.css",
           "sha256": "cb8dd6226163eaf8db886eaab6f9d3767c4ff7b67ad34417ebe6b4997f92f10f"
         }
       ]
     },
     {
       "file": "pharmacy-baseline-dark.png",
-      "source": "platform/templates/station-repository/src/inventory.mjs",
+      "source": "src/inventory.mjs",
       "theme": "dark",
       "accent": "blue",
       "description": "Actual local HTTP 409 response; synthetic data, not GitHub or a cloud deployment.",
@@ -694,23 +694,23 @@
       "kind": "browser-capture",
       "inputs": [
         {
-          "path": "platform/templates/station-repository/src/inventory.mjs",
+          "path": "src/inventory.mjs",
           "sha256": "0564412d77ed43789a121c648aefe4cf5a217fee24f5c9dba2c748c9e52b74c8"
         },
         {
-          "path": "platform/templates/station-repository/src/server.mjs",
-          "sha256": "450888891e48482353d969e7d3635e79d90474364d866073d2687a469fc34852"
+          "path": "src/server.mjs",
+          "sha256": "428a4370b4cf411fb2310d9a075bc9cd11c51a885e01ea33f72b77d2f19d1db0"
         },
         {
-          "path": "platform/templates/station-repository/public/index.html",
+          "path": "public/index.html",
           "sha256": "4eb09a85e76764aea50245d99f1faa7a1d356ad70a0013c061f35c21e87770bc"
         },
         {
-          "path": "platform/templates/station-repository/public/app.js",
+          "path": "public/app.js",
           "sha256": "7ea5ed1c0765e56f28ce56504bb16ebf28512a7125c896daaf175f25adb285d0"
         },
         {
-          "path": "platform/templates/station-repository/public/app.css",
+          "path": "public/app.css",
           "sha256": "cb8dd6226163eaf8db886eaab6f9d3767c4ff7b67ad34417ebe6b4997f92f10f"
         }
       ]
@@ -732,19 +732,19 @@
           "sha256": "cba22c766a41561220aa6a68197677bcdd0a753c92aa3a9187ce6cfd5a216526"
         },
         {
-          "path": "platform/templates/station-repository/src/server.mjs",
-          "sha256": "450888891e48482353d969e7d3635e79d90474364d866073d2687a469fc34852"
+          "path": "src/server.mjs",
+          "sha256": "428a4370b4cf411fb2310d9a075bc9cd11c51a885e01ea33f72b77d2f19d1db0"
         },
         {
-          "path": "platform/templates/station-repository/public/index.html",
+          "path": "public/index.html",
           "sha256": "4eb09a85e76764aea50245d99f1faa7a1d356ad70a0013c061f35c21e87770bc"
         },
         {
-          "path": "platform/templates/station-repository/public/app.js",
+          "path": "public/app.js",
           "sha256": "7ea5ed1c0765e56f28ce56504bb16ebf28512a7125c896daaf175f25adb285d0"
         },
         {
-          "path": "platform/templates/station-repository/public/app.css",
+          "path": "public/app.css",
           "sha256": "cb8dd6226163eaf8db886eaab6f9d3767c4ff7b67ad34417ebe6b4997f92f10f"
         }
       ]
@@ -766,19 +766,19 @@
           "sha256": "cba22c766a41561220aa6a68197677bcdd0a753c92aa3a9187ce6cfd5a216526"
         },
         {
-          "path": "platform/templates/station-repository/src/server.mjs",
-          "sha256": "450888891e48482353d969e7d3635e79d90474364d866073d2687a469fc34852"
+          "path": "src/server.mjs",
+          "sha256": "428a4370b4cf411fb2310d9a075bc9cd11c51a885e01ea33f72b77d2f19d1db0"
         },
         {
-          "path": "platform/templates/station-repository/public/index.html",
+          "path": "public/index.html",
           "sha256": "4eb09a85e76764aea50245d99f1faa7a1d356ad70a0013c061f35c21e87770bc"
         },
         {
-          "path": "platform/templates/station-repository/public/app.js",
+          "path": "public/app.js",
           "sha256": "7ea5ed1c0765e56f28ce56504bb16ebf28512a7125c896daaf175f25adb285d0"
         },
         {
-          "path": "platform/templates/station-repository/public/app.css",
+          "path": "public/app.css",
           "sha256": "cb8dd6226163eaf8db886eaab6f9d3767c4ff7b67ad34417ebe6b4997f92f10f"
         }
       ]

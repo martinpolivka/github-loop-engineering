@@ -1,6 +1,5 @@
 import { execFileSync, spawnSync } from "node:child_process";
 import {
-  cpSync,
   existsSync,
   lstatSync,
   mkdirSync,
@@ -16,6 +15,7 @@ import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 import { assertCompilerStamp, compilerProbeVersion, expectedCompilerVersion } from "./workflow-version.mjs";
 import { issueBody, loadBacklog, missingLabels, planSeed } from "./backlog.mjs";
+import { copyStation } from "./station.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const args = process.argv.slice(2);
@@ -93,22 +93,6 @@ function outputPath(profile, station) {
   return destination;
 }
 
-function replaceTokens(directory, values) {
-  for (const entry of readdirSync(directory)) {
-    const path = join(directory, entry);
-    if (statSync(path).isDirectory()) {
-      replaceTokens(path, values);
-      continue;
-    }
-    const original = readFileSync(path, "utf8");
-    const rendered = Object.entries(values).reduce(
-      (content, [key, value]) => content.replaceAll(`{{${key}}}`, value),
-      original
-    );
-    writeFileSync(path, rendered);
-  }
-}
-
 function render(profile, station, destination = outputPath(profile, station)) {
   if (existsSync(destination)) {
     throw new Error(`Station already exists at ${relative(root, destination)}. Resume there or explicitly clean up before rendering again.`);
@@ -117,16 +101,20 @@ function render(profile, station, destination = outputPath(profile, station)) {
   if (lstatSync(dirname(destination)).isSymbolicLink()) {
     throw new Error("Station parent must not be a symbolic link or junction.");
   }
-  cpSync(join(root, "platform", "templates", "station-repository"), destination, { recursive: true });
-  replaceTokens(destination, {
-    CODEOWNER: profile.teams?.platform
-      ? `@${profile.owner}/${profile.teams.platform}`
-      : `@${profile.owner}`,
-    OWNER: profile.owner,
-    REPOSITORY: stationName(profile, station),
-    STATION_ID: station,
-    PROFILE: profile.id
-  });
+  copyStation(destination);
+  const codeowner = profile.teams?.platform ? `@${profile.owner}/${profile.teams.platform}` : `@${profile.owner}`;
+  writeFileSync(join(destination, ".github", "CODEOWNERS"), `# Workshop governance boundaries\n${
+    ["/.github/", "/src/", "/context/", "/AGENTS.md", "/CLAUDE.md"].map((path) => `${path} ${codeowner}`).join("\n")}\n`);
+  writeFileSync(join(destination, "package.json"), `${JSON.stringify({
+    name: `pharmacy-reservation-${station}`,
+    version: "1.0.0",
+    private: true,
+    type: "module",
+    scripts: { start: "node src/server.mjs", test: "node --test \"test/**/*.test.mjs\"" },
+    engines: { node: ">=22" }
+  }, null, 2)}\n`);
+  writeFileSync(join(destination, "README.md"),
+    `# Pharmacy reservation service\n\nWorkshop station \`${station}\`, rendered with the \`${profile.id}\` profile. Run \`npm test\`, then \`npm start\` and open http://localhost:3000.\n`);
   writeFileSync(join(destination, ".workshop-station.json"), `${JSON.stringify({
     owner: "github-loop-engineering/station", profile: profile.id, station
   }, null, 2)}\n`);
@@ -186,6 +174,7 @@ function help() {
   cleanup   --profile sandbox --station demo01 [--apply]
 
 Remote provision, seed, and cleanup are plan-only unless --apply is explicit.
+Lab 2 attendees fork this repository itself; no publishing step is needed.
 Seed creates only missing synthetic backlog issues; it never edits or deletes issues.`);
 }
 
@@ -277,8 +266,7 @@ try {
       throw new Error(`Node.js 20 or newer is required; found ${process.versions.node}.`);
     }
     for (const workflow of ["repository-pulse", "showcase-signal"]) {
-      const path = join(root, "platform", "templates", "station-repository",
-        ".github", "workflows", `${workflow}.lock.yml`);
+      const path = join(root, ".github", "workflows", `${workflow}.lock.yml`);
       assertCompilerStamp(readFileSync(path, "utf8"), `${workflow}.lock.yml`);
     }
     const gitVersion = run("git", ["--version"]);

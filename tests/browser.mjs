@@ -7,6 +7,7 @@ import { pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
 import { chromium } from "playwright";
 import { htmlMarkup, materialFiles, root, screenshotInputs } from "./validation.mjs";
+import { copyStation } from "../platform/scripts/station.mjs";
 
 const capture = process.argv.includes("--capture");
 const output = join(root, "docs", "assets", "screenshots");
@@ -70,7 +71,7 @@ async function pharmacyJourney() {
   try {
     for (const state of ["baseline", "suggestion"]) {
       const directory = join(temporary, state);
-      cpSync(join(root, "platform", "templates", "station-repository"), directory, { recursive: true });
+      copyStation(directory);
       if (state === "suggestion") cpSync(join(root, "docs", "labs", "02-intent-to-pr", "artifacts", "inventory.reference.mjs"),
         join(directory, "src", "inventory.mjs"));
       const { buildServer } = await import(pathToFileURL(join(directory, "src", "server.mjs")).href);
@@ -94,7 +95,7 @@ async function pharmacyJourney() {
           check(await page.locator('#stock tr[data-sku="MED-004"] td:last-child').innerText() === "6",
             `Pharmacy ${state}: suggestion must not reserve stock`);
           const source = state === "baseline"
-            ? "platform/templates/station-repository/src/inventory.mjs"
+            ? "src/inventory.mjs"
             : "docs/labs/02-intent-to-pr/artifacts/inventory.reference.mjs";
           await screenshot(page, `pharmacy-${state}`, source, theme,
             "Actual local HTTP 409 response; synthetic data, not GitHub or a cloud deployment.");

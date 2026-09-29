@@ -1,10 +1,29 @@
 name: Workshop quality
 
+# Materials only: attendee pull requests that change the service are checked by ci.yml.
 on:
   pull_request:
+    paths:
+      - ".github/aw/**"
+      - ".github/workflows/**"
+      - "docs/**"
+      - "platform/**"
+      - "templates/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
   push:
     branches:
       - main
+    paths:
+      - ".github/aw/**"
+      - ".github/workflows/**"
+      - "docs/**"
+      - "platform/**"
+      - "templates/**"
+      - "tests/**"
+      - "package.json"
+      - "package-lock.json"
   workflow_dispatch:
 
 permissions:
@@ -37,8 +56,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh extension install github/gh-aw --pin v0.86.2
-      - name: Test repository
-        run: npm test
+      - name: Test service and materials
+        run: npm test && npm run test:materials
       - name: Validate content and profiles
         run: npm run validate
       - name: Exercise browser journeys
@@ -52,7 +71,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           npm run compile:workflows
-          git diff --exit-code -- .github/workflows .github/aw platform/templates/station-repository/.github platform/demos/security-remediation/workflows
+          git diff --exit-code -- .github/workflows .github/aw platform/demos/security-remediation/workflows
 
   workflow-security:
     name: Audit workflows
@@ -67,7 +86,7 @@ jobs:
         run: >-
           go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
           .github/workflows/quality.yml
-          platform/templates/station-repository/.github/workflows/ci.yml
+          .github/workflows/ci.yml
           platform/demos/security-remediation/fixture/repository/.github/workflows/quality.yml
           platform/demos/security-remediation/fixture/repository/.github/workflows/codeql.yml
           platform/demos/security-remediation/workflows/release.yml
@@ -78,7 +97,6 @@ jobs:
           annotations: true
           inputs: |
            .github/workflows
-           platform/templates/station-repository/.github/workflows
           online-audits: false
           persona: auditor
           version: 1.28.0

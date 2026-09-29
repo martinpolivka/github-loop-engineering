@@ -3,9 +3,9 @@ import test from "node:test";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
 import { join, resolve } from "node:path";
-import { digest, workId, reconcileLoop, transactLoop, readLoop, resetLoop, reconcilePublication, publishLoop, loopLimits, validateLoopState, LOOP_LIMITS } from "../platform/templates/station-repository/scripts/loop-state.mjs";
-import { validateTelemetry } from "../platform/templates/station-repository/scripts/loop-intake.mjs";
-import { markedIssueBody, reconcileMarkedIssue } from "../platform/templates/station-repository/scripts/loop-issue-adapter.mjs";
+import { digest, workId, reconcileLoop, transactLoop, readLoop, resetLoop, reconcilePublication, publishLoop, loopLimits, validateLoopState, LOOP_LIMITS } from "../scripts/loop-state.mjs";
+import { validateTelemetry } from "../scripts/loop-intake.mjs";
+import { markedIssueBody, reconcileMarkedIssue } from "../scripts/loop-issue-adapter.mjs";
 
 const identity = { profile: "sandbox", station: "controller-test", repository: "owner/test", objectiveId: "malformed-export", contractVersion: 1 };
 const base = { identity, applicationRevision: "a".repeat(40), evidenceDigest: digest("trusted task"), owner: "station maintainer", now: "2026-09-15T12:00:00Z", event: "intake" };

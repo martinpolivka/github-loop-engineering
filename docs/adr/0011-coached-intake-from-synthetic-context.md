@@ -34,7 +34,7 @@ artifacts, branding, or cloud-service dependency is taken from it.
 
 ## Decision
 
-Use option 3. The station template carries `context/intake/` (a synthetic team chat
+Use option 3. The station (now the repository root, see ADR 0013) carries `context/intake/` (a synthetic team chat
 thread, ticket digest, and stakeholder email) and
 `.github/agents/requirement-refiner.agent.md`. The agent has only the `read` and
 `search` tool aliases, is excluded from automatic model selection, asks one
@@ -85,3 +85,5 @@ receive the synthetic backlog.
 - A sanctioned synthetic organizational data connector becomes available in
   both profiles.
 - Educator review shows the intake consistently exceeds its time box.
+
+Update: [ADR 0013](0013-attendee-forks-and-codespaces.md) moves the planned backlog into `context/intake/backlog.md` for attendee forks, because forks do not copy issues.

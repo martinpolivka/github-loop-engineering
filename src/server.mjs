@@ -35,8 +35,7 @@ export function buildServer() {
     if (request.method === "GET" && request.url === "/health") {
       sendJson(response, 200, {
         status: "ready",
-        station: "{{STATION_ID}}",
-        profile: "{{PROFILE}}"
+        service: "pharmacy-reservation"
       });
       return;
     }

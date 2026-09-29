@@ -4,6 +4,7 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import test from "node:test";
 import { root } from "./validation.mjs";
+import { copyStation } from "../platform/scripts/station.mjs";
 
 test("lab artifacts preserve the complete station service", () => {
   mkdirSync(join(root, ".workshop"), { recursive: true });
@@ -12,7 +13,7 @@ test("lab artifacts preserve the complete station service", () => {
   writeFileSync(ownership, "tests/solution-integration.test.mjs");
   const station = join(ownedRoot, "station");
   try {
-    cpSync(join(root, "platform", "templates", "station-repository"), station, { recursive: true });
+    copyStation(station);
     cpSync(
       join(root, "docs", "labs", "02-intent-to-pr", "artifacts", "inventory.reference.mjs"),
       join(station, "src", "inventory.mjs")

@@ -11,7 +11,8 @@ ACCEPTANCE CRITERIA
   when POST /reservations requests one MED-003, then the service returns 409
   with error, available, and a suggestion containing sku, name, and available.
 - A candidate is eligible only when its stock can satisfy the requested quantity;
-  if no same-category candidate qualifies, omit suggestion.
+  if several qualify, return the first by SKU order. If none qualifies, omit
+  suggestion.
 - Given an unknown SKU, the service still returns 404 without a suggestion.
 - Given an in-stock SKU, reservation behavior and remaining stock are unchanged.
 - A suggestion never creates a reservation or changes stock.

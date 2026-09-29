@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { transactLoop, resetLoop } from "../templates/station-repository/scripts/loop-state.mjs";
+import { transactLoop, resetLoop } from "../../scripts/loop-state.mjs";
 
 export async function main(args) {
   const [command, directory, inputPath] = args;

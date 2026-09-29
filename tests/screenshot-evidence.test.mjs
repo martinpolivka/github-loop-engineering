@@ -79,7 +79,7 @@ test("published screenshots identify actual browser captures and matching pharma
     assert.deepEqual(capture.inputs.map((input) => input.path).sort(), screenshotInputs(capture.source).sort(),
       `${capture.file}: bind the full current appearance/runtime source set`);
     for (const input of capture.inputs) {
-      assert.match(input.path, /^(docs|platform)\//);
+      assert.match(input.path, /^(docs|platform|src|public)\//);
       assert.ok(!input.path.split("/").includes(".."));
       assert.equal(input.sha256, createHash("sha256").update(readFileSync(join(root, input.path), "utf8").replaceAll("\r\n", "\n")).digest("hex"),
         `${capture.file}: ${input.path} changed; rerun npm run capture`);
@@ -87,7 +87,7 @@ test("published screenshots identify actual browser captures and matching pharma
     if (capture.file.startsWith("pharmacy-")) {
       assert.match(capture.description, /local HTTP 409/);
       for (const file of ["index.html", "app.js", "app.css"]) {
-        assert.ok(capture.inputs.some((input) => input.path === `platform/templates/station-repository/public/${file}`));
+        assert.ok(capture.inputs.some((input) => input.path === `public/${file}`));
       }
     } else {
       assert.ok(capture.inputs.some((input) => input.path === "docs/assets/html-docs/appearance.js"));

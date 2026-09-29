@@ -2,7 +2,7 @@
 
 Use the issue as the implementation contract.
 
-- Use Node.js 20 or newer and built-in modules only.
+- Use Node.js 22 or newer and built-in modules only.
 - Keep the service dependency-free and deterministic.
 - Use synthetic medicine identifiers and never introduce patient data.
 - Preserve the JSON API contract and explicit HTTP status codes.
