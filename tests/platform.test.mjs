@@ -55,6 +55,7 @@ test("repository opens in a Codespace with Copilot and runs the tests", () => {
   const template = root;
   const devcontainer = JSON.parse(readFileSync(join(template, ".devcontainer", "devcontainer.json"), "utf8"));
   assert.match(devcontainer.image, /javascript-node:24/);
+  assert.ok(devcontainer.features["ghcr.io/devcontainers/features/github-cli:1"], "GitHub CLI is installed");
   assert.ok(devcontainer.features["ghcr.io/devcontainers/features/copilot-cli:1"], "Copilot CLI is installed");
   assert.ok(devcontainer.customizations.vscode.extensions.includes("GitHub.copilot-chat"));
   assert.equal(devcontainer.postCreateCommand, "npm test");
