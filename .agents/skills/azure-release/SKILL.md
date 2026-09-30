@@ -33,6 +33,12 @@ different tagged resources and managed identities INSIDE that group.
   Plan is offline and makes no changes.
 - Check Azure and GitHub login identities without printing tokens. The operator
   needs resource creation and role assignment rights on the allocated group.
+- Confirm Key Vault network access with the facilitator. GitHub-hosted runners
+  need an authenticated public endpoint unless a private-network runner is
+  prepared. `allowPublicVaultAccess` defaults to false: enable it only after
+  explicit owner approval for these synthetic workshop vaults. Preserve RBAC,
+  non-exportable keys and platform network policies; never bypass an enforced
+  private-network policy or silently open existing vaults.
 - Use the facilitator-approved `docker.io/library/node:24-alpine@sha256:...`
   base reference. Never silently replace it with a tag.
 - Request separate explicit permission for `what-if`, then run

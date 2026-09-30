@@ -6,9 +6,9 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 import { root } from "./validation.mjs";
-import { assertEvidence, promoteEvidence, releaseConfig, smokeChecks, trustPolicy } from "../scripts/release-evidence.mjs";
+import { assertEvidence, notationIdentity, promoteEvidence, releaseConfig, smokeChecks, trustPolicy, workshopCertificateSubject } from "../scripts/release-evidence.mjs";
 import { acaParameters, assertAcaChanges, waitForAcaHealth } from "../scripts/deploy-aca.mjs";
-import { assertAllocation, assertChanges, assertEnvironment, environmentSubject, plan, resourceStem, roleAssignmentPlan, validateConfig } from "../platform/scripts/oci-platform.mjs";
+import { assertAllocation, assertChanges, assertEnvironment, assertVaultNetworking, environmentSubject, plan, resourceStem, roleAssignmentPlan, validateConfig } from "../platform/scripts/oci-platform.mjs";
 import { buildServer } from "../src/server.mjs";
 
 const workflow = readFileSync(join(root, ".github", "workflows", "release-rehearsal.yml"), "utf8");
@@ -69,7 +69,12 @@ test("Notation trust binds the certificate, identity and exact repository with s
   const policy = trustPolicy(config.imageRepository, pem, fingerprint, withinValidity);
   assert.deepEqual(policy.trustPolicies[0].registryScopes, [config.imageRepository]);
   assert.deepEqual(policy.trustPolicies[0].signatureVerification, { level: "strict" });
-  assert.deepEqual(policy.trustPolicies[0].trustedIdentities, ["x509.subject: CN=workshop-synthetic-test"]);
+  assert.deepEqual(policy.trustPolicies[0].trustStores, ["ca:workshop-test"]);
+  assert.deepEqual(policy.trustPolicies[0].trustedIdentities, ["x509.subject: CN=workshop-synthetic-test,O=Synthetic Retail Workshop,ST=Workshop,C=CZ"]);
+  assert.equal(workshopCertificateSubject("workshop-synthetic-test"), "CN=workshop-synthetic-test,O=Synthetic Retail Workshop,ST=Workshop,C=CZ");
+  assert.throws(() => notationIdentity("CN=workshop-synthetic-test"), /exactly/);
+  assert.throws(() => notationIdentity("CN=workshop-synthetic-test\nO=Foreign\nST=Workshop\nC=CZ"), /organization/);
+  assert.throws(() => notationIdentity("CN=workshop-synthetic-test\nO=Synthetic Retail Workshop\nST=Workshop\nC=CZ\nCN=workshop-other"), /exactly/);
   assert.throws(() => trustPolicy(config.imageRepository, pem, "0".repeat(64), withinValidity), /trust root/);
   assert.throws(() => trustPolicy("*", pem, fingerprint, withinValidity), /trust scope/);
   assert.throws(() => trustPolicy(config.imageRepository, pem, fingerprint, Date.parse(certificate.validTo) + 1), /valid/);
@@ -150,6 +155,19 @@ test("IaC plan targets only one preallocated group, explicitly labels Owner risk
   assert.throws(() => assertChanges({}, platformConfig, group.id), /complete/);
 });
 
+test("policy-modified vault networking cannot become a successful hosted-runner readiness claim", () => {
+  const publicApproved = { ...platformConfig, allowPublicVaultAccess: true };
+  assert.doesNotThrow(() => assertVaultNetworking({
+    name: "synthetic-vault", properties: { publicNetworkAccess: "Enabled" }
+  }, publicApproved));
+  assert.throws(() => assertVaultNetworking({
+    name: "synthetic-vault", properties: { publicNetworkAccess: "Disabled" }
+  }, publicApproved), /effective parent policies/);
+  assert.throws(() => assertVaultNetworking({ name: "synthetic-vault", properties: {} }, publicApproved), /unknown/);
+  assert.doesNotThrow(() => assertVaultNetworking({
+    name: "synthetic-vault", properties: { publicNetworkAccess: "Disabled" }
+  }, platformConfig));
+});
 function rolePayload(assignment, principalId = assignment.principalId) {
   return {
     id: assignment.resourceId,
@@ -175,6 +193,15 @@ test("redeploy accepts only the exact owned role IDs, roles, principals and scop
   }));
   assert.ok(changes.every((change) => change.before.tags === undefined));
   assert.doesNotThrow(() => assertChanges({ changes }, configWithRuntime, groupId, allowed.assignments));
+  assert.doesNotThrow(() => assertChanges({
+    changes: changes.map((change) => {
+      const copy = structuredClone(change);
+      delete copy.before.properties.principalType;
+      delete copy.after.properties.principalType;
+      return copy;
+    })
+  }, configWithRuntime, groupId, allowed.assignments),
+  "Azure what-if omits principalType; exact verified principal IDs, role IDs and scope still bind ownership");
   assert.doesNotThrow(() => assertChanges({
     changes: changes.map((change) => ({ ...change, changeType: "Deploy" }))
   }, configWithRuntime, groupId, allowed.assignments));
@@ -232,9 +259,22 @@ test("first deployment and optional ACA additions allow only planned role creati
 });
 
 test("ARM templates use two environment tags, one group, and never attach Owner to ACA runtime", () => {
+  const platform = readFileSync(join(root, "platform", "scripts", "oci-platform.mjs"), "utf8");
+  assert.match(platform, /certificateUser: "Key Vault Certificate User"/,
+    "The role name must match Azure's live built-in role, not the plural wording in some documentation.");
+  assert.doesNotMatch(platform, /Key Vault Certificates User/);
+  assert.match(platform, /\["role", "assignment", "list", "--scope", group\.id\]/,
+    "Azure CLI rejects --scope together with --all; inspect only the exact allocation scope.");
+  assert.match(platform, /"FullResourcePayloads", "--no-pretty-print"/,
+    "Azure CLI pretty-print notes are not JSON and must be disabled before parsing what-if.");
+  assert.match(readFileSync(join(root, "scripts", "deploy-aca.mjs"), "utf8"), /"FullResourcePayloads", "--no-pretty-print"/);
   const template = JSON.parse(readFileSync(join(root, "platform", "azure", "retail-environments.json"), "utf8"));
   assert.deepEqual(template.variables.environments, ["test", "prod"]);
   assert.ok(template.resources.every((resource) => resource.type !== "Microsoft.Resources/resourceGroups"));
+  assert.equal(template.parameters.allowPublicVaultAccess.defaultValue, false);
+  const vault = template.resources.find((resource) => resource.type === "Microsoft.KeyVault/vaults");
+  assert.equal(vault.properties.enableRbacAuthorization, true);
+  assert.equal(vault.properties.publicNetworkAccess, "[if(parameters('allowPublicVaultAccess'), 'Enabled', 'Disabled')]");
   const runtime = template.resources.find((resource) => resource.copy?.name === "runtimeIdentities");
   assert.equal(runtime.tags.Purpose, "runtime");
   const runtimeRoles = template.resources.filter((resource) => resource.copy?.name === "runtimePullRoles");
@@ -366,8 +406,19 @@ test("workflow builds once without Azure access, preserves digest across registr
   assert.match(workflow, /environment: workshop-test/);
   assert.match(workflow, /environment: workshop-prod/);
   assert.match(workflow, /oras copy "\$test_ref" "\$target"/);
+  assert.equal([...workflow.matchAll(/https:\/\/github\.com\/notaryproject\/notation\/releases\/download\/v1\.3\.2\/notation_1\.3\.2_linux_amd64\.tar\.gz/g)].length, 2);
+  assert.equal([...workflow.matchAll(/e1a0f060308086bf8020b2d31defb7c5348f133ca0dba6a1a7820ef3cbb6dfe5  \$RUNNER_TEMP\/notation\.tar\.gz/g)].length, 2);
+  assert.match(workflow, /https:\/\/github\.com\/oras-project\/oras\/releases\/download\/v1\.3\.0\/oras_1\.3\.0_linux_amd64\.tar\.gz/);
+  assert.match(workflow, /6cdc692f929100feb08aa8de584d02f7bcc30ec7d88bc2adc2054d782db57c64  \$RUNNER_TEMP\/oras\.tar\.gz/);
+  assert.doesNotMatch(workflow, /notaryproject\/notation-action\/setup|oras-project\/setup-oras/,
+    "Direct checksum-pinned CLIs avoid deprecated JavaScript action runtimes.");
   assert.equal([...workflow.matchAll(/docker build --/g)].length, 1);
   assert.equal([...workflow.matchAll(/notation verify "\$IMAGE_REFERENCE"/g)].length, 2);
+  assert.equal([...workflow.matchAll(/--store workshop-test release\/certificate\.pem/g)].length, 2);
+  assert.equal([...workflow.matchAll(/--store workshop-prod release\/certificate\.pem/g)].length, 1,
+    "Test and prod certificates share a filename, so their Notation trust stores must remain separate.");
+  assert.equal([...workflow.matchAll(/notation policy import --force release\/trustpolicy\.json/g)].length, 3,
+    "Switching from verified test policy to prod policy must replace the ephemeral CLI policy non-interactively.");
   assert.match(workflow, /persist-credentials: false/);
   assert.doesNotMatch(workflow, /AZURE_CREDENTIALS|client-secret:|pull_request_target/);
   for (const use of workflow.matchAll(/uses:\s*([^\s]+)/g)) assert.match(use[1], /@[0-9a-f]{40}$/);

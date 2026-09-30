@@ -44,6 +44,24 @@ export function assertEvidence(evidence, config, { published = false } = {}) {
   return evidence;
 }
 
+export function workshopCertificateSubject(name) {
+  requireValue(name, /^workshop-[a-z0-9-]{3,50}$/, "workshop certificate name");
+  return `CN=${name},O=Synthetic Retail Workshop,ST=Workshop,C=CZ`;
+}
+
+export function notationIdentity(subject) {
+  const fields = subject.split("\n").map((line) => /^([A-Z]+)=(.+)$/.exec(line));
+  if (fields.length !== 4 || fields.some((field) => !field) ||
+      new Set(fields.map((field) => field[1])).size !== 4) {
+    throw new Error("Workshop certificate must have exactly CN, O, ST and C attributes.");
+  }
+  const attributes = Object.fromEntries(fields.map((field) => [field[1], field[2]]));
+  if (attributes.O !== "Synthetic Retail Workshop" || attributes.ST !== "Workshop" || attributes.C !== "CZ") {
+    throw new Error("Unexpected workshop certificate organization, state or country.");
+  }
+  return `x509.subject: ${workshopCertificateSubject(attributes.CN)}`;
+}
+
 export function trustPolicy(imageRepository, certificatePem, expectedFingerprint, now = Date.now()) {
   requireValue(imageRepository, /^[a-z0-9]{5,50}\.azurecr\.io\/stations\/[a-z0-9-]{2,31}\/retail-reservation$/, "trust scope");
   requireValue(expectedFingerprint, /^[0-9a-f]{64}$/, "trusted public certificate SHA-256");
@@ -51,8 +69,9 @@ export function trustPolicy(imageRepository, certificatePem, expectedFingerprint
   if (certificate.fingerprint256.replaceAll(":", "").toLowerCase() !== expectedFingerprint) {
     throw new Error("Public certificate differs from the platform-approved trust root.");
   }
-  // The workshop certificate deliberately has one DN component, avoiding ambiguous DN conversion.
-  requireValue(certificate.subject, /^CN=workshop-[a-z0-9-]{3,50}$/, "workshop certificate subject");
+  const trustedIdentity = notationIdentity(certificate.subject);
+  const phase = /^x509\.subject: CN=workshop-[a-z0-9-]+-(test|prod),/.exec(trustedIdentity)?.[1];
+  if (!phase) throw new Error("Signing certificate must name the test or prod trust domain.");
   if (now < Date.parse(certificate.validFrom) || now >= Date.parse(certificate.validTo)) {
     throw new Error("Workshop signing certificate is not currently valid.");
   }
@@ -62,8 +81,8 @@ export function trustPolicy(imageRepository, certificatePem, expectedFingerprint
       name: "workshop-station",
       registryScopes: [imageRepository],
       signatureVerification: { level: "strict" },
-      trustStores: ["ca:workshop"],
-      trustedIdentities: [`x509.subject: ${certificate.subject}`]
+      trustStores: [`ca:workshop-${phase}`],
+      trustedIdentities: [trustedIdentity]
     }]
   };
 }

@@ -3,6 +3,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { run, runJson, runJsonOrMissing } from "./command.mjs";
+import { notationIdentity, workshopCertificateSubject } from "../../scripts/release-evidence.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 export const phases = ["test", "prod"];
@@ -47,6 +48,9 @@ export function plan(config) {
       githubEnvironment: `workshop-${environment}`,
       pipelineIdentityRole: "Owner on the ONE allocated resource group (workshop shortcut, not security isolation)",
       certificate: "non-exportable self-signed workshop certificate",
+      vaultNetworking: config.allowPublicVaultAccess === true
+        ? "authenticated public endpoint explicitly approved for GitHub-hosted runners"
+        : "private endpoint connectivity required; hosted runners cannot sign",
       optionalAca: config.deployAca === true ? "consumption environment and separate AcrPull-only runtime identity" : "disabled"
     })),
     deployment: "Prepared ARM template; incremental mode, never create, rename, or delete a resource group",
@@ -93,6 +97,14 @@ export function assertAllocation(group, config) {
     throw new Error("Group ID or trusted allocation ownership tag mismatch; no deployment is authorized.");
   }
   return group;
+}
+
+export function assertVaultNetworking(vault, config) {
+  const expected = config.allowPublicVaultAccess === true ? "Enabled" : "Disabled";
+  if (vault.properties?.publicNetworkAccess !== expected) {
+    throw new Error(`Vault ${vault.name} network access is ${vault.properties?.publicNetworkAccess ?? "unknown"}, not the approved ${expected}. ` +
+      "A successful ARM write is not proof that the setting was applied. Check effective parent policies; do not override or bypass them.");
+  }
 }
 
 function assignmentName(parts) {
@@ -162,7 +174,7 @@ function assertRolePayload(payload, expected, existing) {
   const sameId = (actual, wanted) => typeof actual === "string" && typeof wanted === "string" &&
     actual.toLowerCase() === wanted.toLowerCase();
   if (!properties || !sameId(properties.roleDefinitionId, expected.roleDefinitionId) ||
-      properties.principalType !== expected.principalType ||
+      (properties.principalType !== undefined && properties.principalType !== expected.principalType) ||
       (payload.id && !sameId(payload.id, expected.resourceId)) ||
       (properties.scope && !sameId(properties.scope, expected.scope))) {
     throw new Error("Role assignment ID, role definition, principal type, or scope differs from the exact template plan.");
@@ -204,7 +216,8 @@ function parameters(config, roles, groupId) {
     provisionerObjectId: config.provisionerObjectId, provisionerType: config.provisionerType,
     roleIds: roles, deployAca: config.deployAca === true,
     resourceStem: resourceStem(config, groupId),
-    assignmentNames: roleAssignmentPlan(config, roles, groupId).names
+    assignmentNames: roleAssignmentPlan(config, roles, groupId).names,
+    allowPublicVaultAccess: config.allowPublicVaultAccess === true
   }).map(([key, value]) => [key, { value }]));
 }
 
@@ -221,7 +234,7 @@ async function deploy(config, command) {
   const roles = {};
   for (const [name, role] of Object.entries({
     owner: "Owner", acrPush: "AcrPush", acrPull: "AcrPull",
-    cryptoUser: "Key Vault Crypto User", certificateUser: "Key Vault Certificates User",
+    cryptoUser: "Key Vault Crypto User", certificateUser: "Key Vault Certificate User",
     certificateOfficer: "Key Vault Certificates Officer"
   })) {
     const found = t.az(["role", "definition", "list", "--name", role]);
@@ -237,7 +250,7 @@ async function deploy(config, command) {
     const result = t.az(["deployment", "group", "what-if", "--name", `retail-${config.stationId}`,
       "--resource-group", config.resourceGroup,
       "--template-file", join(root, "platform", "azure", "retail-environments.json"),
-      "--parameters", `@${params}`, "--mode", "Incremental", "--result-format", "FullResourcePayloads"]);
+      "--parameters", `@${params}`, "--mode", "Incremental", "--result-format", "FullResourcePayloads", "--no-pretty-print"]);
     assertChanges(result, config, group.id, expected);
     return result;
   };
@@ -260,6 +273,11 @@ async function deploy(config, command) {
       resourceGroupId: group.id, repository: config.repository,
       stationId: config.stationId, outputs: result.properties.outputs
     }, null, 2)}\n`);
+    for (const phase of phases) {
+      const vault = t.az(["keyvault", "show", "--name", result.properties.outputs[phase].value.vaultName,
+        "--resource-group", config.resourceGroup]);
+      assertVaultNetworking(vault, config);
+    }
     console.log("DEPLOYED test/prod resources in the allocated group. Federation is not wired yet.");
   } else {
     const result = checkedWhatIf();
@@ -298,7 +316,7 @@ async function wire(config, apply) {
       "-F", "use_default=true", "-F", "use_immutable_subject=true"]);
     settings = t.gh([`repos/${config.repository}/actions/oidc/customization/sub`]);
   }
-  const ownerRoles = t.az(["role", "assignment", "list", "--scope", group.id, "--all"]);
+  const ownerRoles = t.az(["role", "assignment", "list", "--scope", group.id]);
   const certificates = {};
   for (const phase of phases) {
     const environment = `workshop-${phase}`;
@@ -309,6 +327,7 @@ async function wire(config, apply) {
           resource.tags?.Environment !== phase || resource.tags?.WorkshopStation !== config.stationId) {
         throw new Error("Resource tags or parent group differ from the allocated test/prod receipt.");
       }
+      if (command === "keyvault") assertVaultNetworking(resource, config);
     }
     const identity = t.az(["identity", "show", "--name", deployed.identityName, "--resource-group", config.resourceGroup]);
     if (!ownerRoles.some((role) => role.principalId === identity.principalId &&
@@ -348,14 +367,20 @@ async function wire(config, apply) {
         JSON.stringify(credential.audiences) !== '["api://AzureADTokenExchange"]') throw new Error("Federation issuer, audience, or environment binding mismatch.");
     const name = `workshop-${config.stationId}-${phase}`;
     const all = t.az(["keyvault", "certificate", "list", "--vault-name", deployed.vaultName]);
-    if (!all.some((item) => item.id.split("/").at(-1) === name)) {
-      if (!apply) throw new Error("Workshop signing certificate missing.");
+    const existingCertificate = all.some((item) => item.id.split("/").at(-1) === name)
+      ? t.az(["keyvault", "certificate", "show", "--vault-name", deployed.vaultName, "--name", name]) : null;
+    const expectedSubject = workshopCertificateSubject(name);
+    const legacySubject = existingCertificate?.policy?.x509CertificateProperties?.subject === `CN=${name}`;
+    if (!existingCertificate || legacySubject) {
+      if (!apply) throw new Error(legacySubject
+        ? "Legacy CN-only certificate needs an explicitly applied rotation to the Notation-compatible subject."
+        : "Workshop signing certificate missing.");
       const policy = {
         issuerParameters: { name: "Self" },
-        keyProperties: { exportable: false, keySize: 2048, keyType: "RSA", reuseKey: true },
+        keyProperties: { exportable: false, keySize: 2048, keyType: "RSA", reuseKey: false },
         secretProperties: { contentType: "application/x-pem-file" },
         x509CertificateProperties: {
-          subject: `CN=${name}`, ekus: ["1.3.6.1.5.5.7.3.3"],
+          subject: expectedSubject, ekus: ["1.3.6.1.5.5.7.3.3"],
           keyUsage: ["digitalSignature"], validityInMonths: 1
         }
       };
@@ -366,7 +391,7 @@ async function wire(config, apply) {
     const certificate = t.az(["keyvault", "certificate", "show", "--vault-name", deployed.vaultName, "--name", name]);
     if (certificate.policy?.keyProperties?.exportable !== false || certificate.attributes?.enabled !== true) throw new Error("Certificate must be enabled and non-exportable.");
     const x509 = new X509Certificate(Buffer.from(certificate.cer, "base64"));
-    if (x509.subject !== `CN=${name}`) throw new Error("Unexpected test/prod signer identity.");
+    if (notationIdentity(x509.subject) !== `x509.subject: ${expectedSubject}`) throw new Error("Unexpected test/prod signer identity.");
     certificates[phase] = {
       base64: Buffer.from(x509.toString()).toString("base64"), sha256: x509.fingerprint256.replaceAll(":", "").toLowerCase()
     };

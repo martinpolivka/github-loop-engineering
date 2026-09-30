@@ -1,9 +1,16 @@
 {
-  "name": "Pharmacy reservation station",
+  "name": "Retail reservation station",
   "image": "mcr.microsoft.com/devcontainers/javascript-node:24-bookworm",
   "features": {
     "ghcr.io/devcontainers/features/github-cli:1": {},
-    "ghcr.io/devcontainers/features/copilot-cli:1": {}
+    "ghcr.io/devcontainers/features/copilot-cli:1": {},
+    "ghcr.io/devcontainers/features/azure-cli:1": {
+      "installBicep": false
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+      "dockerDashComposeVersion": "none",
+      "installDockerBuildx": true
+    }
   },
   "customizations": {
     "vscode": {
@@ -15,7 +22,7 @@
   "forwardPorts": [3000],
   "portsAttributes": {
     "3000": {
-      "label": "Pharmacy service"
+      "label": "Retail service"
     }
   },
   "postCreateCommand": "npm test"

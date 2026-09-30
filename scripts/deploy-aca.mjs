@@ -126,7 +126,7 @@ async function main() {
   const deploymentArgs = ["--name", `aca-${parameters.phase.value}`,
     "--resource-group", env.AZURE_RESOURCE_GROUP, "--mode", "Incremental",
     "--template-file", "platform/azure/aca.json", "--parameters", "@release/aca-parameters.json"];
-  const preview = az(["deployment", "group", "what-if", ...deploymentArgs, "--result-format", "FullResourcePayloads"]);
+  const preview = az(["deployment", "group", "what-if", ...deploymentArgs, "--result-format", "FullResourcePayloads", "--no-pretty-print"]);
   assertAcaChanges(preview, group.id, parameters);
   const result = az(["deployment", "group", "create", ...deploymentArgs]);
   if (result.properties?.provisioningState !== "Succeeded") throw new Error("ACA deployment failed.");

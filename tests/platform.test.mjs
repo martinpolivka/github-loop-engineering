@@ -66,6 +66,13 @@ test("repository opens in a Codespace with Copilot and runs the tests", () => {
   assert.match(devcontainer.image, /javascript-node:24/);
   assert.ok(devcontainer.features["ghcr.io/devcontainers/features/github-cli:1"], "GitHub CLI is installed");
   assert.ok(devcontainer.features["ghcr.io/devcontainers/features/copilot-cli:1"], "Copilot CLI is installed");
+  assert.equal(devcontainer.features["ghcr.io/devcontainers/features/azure-cli:1"].installBicep, false,
+    "Azure CLI is ready for the prepared ARM deployment without adding a second IaC tool");
+  assert.equal(devcontainer.features["ghcr.io/devcontainers/features/docker-outside-of-docker:1"].dockerDashComposeVersion, "none",
+    "Codespaces can run the optional local image check without installing unused Compose");
+  assert.equal(devcontainer.features["ghcr.io/devcontainers/features/docker-outside-of-docker:1"].installDockerBuildx, true);
+  assert.equal(devcontainer.name, "Retail reservation station");
+  assert.equal(devcontainer.portsAttributes["3000"].label, "Retail service");
   assert.ok(devcontainer.customizations.vscode.extensions.includes("GitHub.copilot-chat"));
   assert.equal(devcontainer.postCreateCommand, "npm test");
   assert.deepEqual(devcontainer.forwardPorts, [3000]);
