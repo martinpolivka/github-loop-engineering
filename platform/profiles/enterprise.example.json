@@ -21,6 +21,7 @@
     "thirdPartyCodingAgents": "policy-check",
     "organizationRulesets": "required",
     "enterprisePolicies": "required",
+    "codeQuality": "organization-all-repositories",
     "codeSecurity": "required",
     "secretProtection": "required",
     "environments": "required"

@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en" data-default-accent="blue">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Lab 1: correlate synthetic intake evidence and approve one cited Issue before coding.">
+  <title>Lab 1 &middot; From evidence to an engineering goal | GitHub workshop</title>
+  <meta name="doc-id" content="workshop-lab-01-evidence-to-goal">
+  <script data-doc-bootstrap>
+/* Inline in the head before styles with sync-head.js. No deferred bootstrap. */
+(() => {
+  "use strict";
+  const root = document.documentElement;
+  const params = new URLSearchParams(location.search);
+  const id = document.querySelector('meta[name="doc-id"]')?.content ||
+    location.pathname.replace(/\.standalone(?=\.html$)/i, "");
+  const prefix = "html-docs:" + id + ":";
+  const choices = { theme: ["light", "dark"], accent: ["blue", "red", "green", "yellow"] };
+  const read = (name) => {
+    try { return localStorage.getItem(prefix + name); }
+    catch { return null; /* Storage may be unavailable for local files. */ }
+  };
+  const write = (name, value) => {
+    try { localStorage.setItem(prefix + name, value); }
+    catch { /* The current view still works without persistence. */ }
+  };
+  function refresh() {
+    for (const name of Object.keys(choices)) {
+      const current = root.getAttribute("data-" + name);
+      const next = choices[name][(choices[name].indexOf(current) + 1) % choices[name].length];
+      document.querySelectorAll('[data-action="toggle-' + name + '"]').forEach(button => {
+        button.textContent = name === "theme" ? (next === "dark" ? "Dark" : "Light") :
+          "Accent: " + current[0].toUpperCase() + current.slice(1);
+        button.setAttribute("aria-label", name === "theme" ? "Switch to " + next + " theme" :
+          "Accent: " + current + ". Switch to " + next);
+      });
+    }
+  }
+  for (const [name, values] of Object.entries(choices)) {
+    const fallback = name === "theme" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : values[0];
+    const value = [params.get(name), read(name), root.getAttribute("data-default-" + name), fallback]
+      .map(candidate => name === "accent" && candidate === "orange" ? "red" : candidate)
+      .find(candidate => values.includes(candidate));
+    root.setAttribute("data-" + name, value);
+  }
+  root.classList.add("js");
+  if (["slides", "sheet"].includes(params.get("view"))) root.setAttribute("data-view", params.get("view"));
+
+  // Print what is on screen. data-print selects the matching print stylesheet.
+  const printTarget = () => {
+    if (document.querySelector(".deck-stage")) return "slides";
+    const view = root.getAttribute("data-view");
+    if (view === "slides" || (view === "sheet" && document.querySelector(".sheet"))) return view;
+    return document.querySelector(".doc") || !document.querySelector(".sheet") ? "read" : "sheet";
+  };
+  let printing = null;
+  addEventListener("beforeprint", () => {
+    if (root.hasAttribute("data-print")) return; // Set by an automated export.
+    const target = printTarget();
+    printing = document.title;
+    root.setAttribute("data-print", target);
+    // The browser proposes the title as the PDF file name.
+    if (target !== "read" && document.querySelector(".doc")) {
+      document.title += target === "slides" ? " - Slides" : " - Sheet";
+    }
+  });
+  addEventListener("afterprint", () => {
+    if (printing === null) return;
+    root.removeAttribute("data-print");
+    document.title = printing;
+    printing = null;
+  });
+
+  // Keep the display awake while presenting, like presentation software does.
+  let lock = null;
+  let awake = false;
+  async function holdScreen() {
+    if (!awake || lock || document.visibilityState !== "visible" || !navigator.wakeLock) return;
+    try {
+      const sentinel = await navigator.wakeLock.request("screen");
+      if (!awake || lock) { sentinel.release(); return; }
+      lock = sentinel;
+      root.setAttribute("data-awake", "");
+      sentinel.addEventListener("release", () => {
+        if (lock !== sentinel) return;
+        lock = null;
+        root.removeAttribute("data-awake");
+      });
+    } catch { /* Denied by battery saver or an embedding policy; retried on input. */ }
+  }
+  function keepAwake(on) {
+    awake = !!on;
+    if (awake) holdScreen();
+    else if (lock) lock.release();
+  }
+  // The browser drops the lock when the tab is hidden; some require a gesture.
+  document.addEventListener("visibilitychange", holdScreen);
+  document.addEventListener("pointerdown", holdScreen);
+  document.addEventListener("keydown", holdScreen);
+
+  window.HtmlDocs = { read, write, refresh, keepAwake };
+  document.addEventListener("DOMContentLoaded", refresh);
+  document.addEventListener("click", event => {
+    if (event.target.closest('[data-action="print"]')) window.print();
+  });
+  document.addEventListener("click", event => {
+    const button = event.target.closest('[data-action="toggle-theme"], [data-action="toggle-accent"]');
+    if (!button) return;
+    const name = button.getAttribute("data-action").slice(7);
+    const values = choices[name];
+    const next = values[(values.indexOf(root.getAttribute("data-" + name)) + 1) % values.length];
+    root.setAttribute("data-" + name, next);
+    write(name, next);
+    // Replace a URL override too, so reloading preserves a deliberate change.
+    const url = new URL(location.href);
+    if (url.searchParams.has(name)) {
+      url.searchParams.set(name, next);
+      history.replaceState(null, "", url.href);
+    }
+    refresh();
+  });
+})();
+</script>
+  <style data-doc-tokens>
+/* Canonical tokens. Inline with sync-head.js; one accent family at a time. */
+:root {
+  color-scheme: light;
+  --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f2; --surface-3: #e8e8e8;
+  --border: #dedede; --border-strong: #b8b8b8;
+  --text: #161616; --text-muted: #565656; --text-faint: #686868;
+  --accent-light: #006da0; --accent-dark: #00a4ef;
+  --accent: var(--accent-light);
+  --accent-strong: var(--accent);
+  --accent-quiet: var(--accent);
+  --accent-soft: color-mix(in srgb, var(--accent) 9%, var(--bg));
+  --accent-border: color-mix(in srgb, var(--accent) 36%, var(--bg));
+  --warn: var(--accent); --warn-soft: var(--accent-soft); --warn-border: var(--accent-border);
+  --code-bg: var(--surface-2); --code-border: var(--border);
+  --focus: var(--accent);
+  --shadow-1: 0 1px 2px rgba(0,0,0,.04);
+  --shadow-2: 0 2px 4px rgba(0,0,0,.04), 0 12px 28px rgba(0,0,0,.06);
+  --radius: 10px; --radius-sm: 6px; --canvas: 1160px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Mono", "Cascadia Code", ui-monospace, Consolas, "SF Mono", "Liberation Mono", Menlo, monospace;
+}
+/* Screen only: every PDF and printout uses the light palette. */
+@media screen {
+  [data-theme="dark"], :root:not([data-theme])[data-default-theme="dark"] {
+    color-scheme: dark;
+    --bg: #101010; --surface: #191919; --surface-2: #232323; --surface-3: #2c2c2c;
+    --border: #363636; --border-strong: #595959;
+    --text: #f2f2f2; --text-muted: #b5b5b5; --text-faint: #a0a0a0;
+    --accent: var(--accent-dark);
+    --shadow-1: 0 1px 2px rgba(0,0,0,.3);
+    --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.4);
+  }
+}
+[data-accent="red"], :root:not([data-accent])[data-default-accent="red"],
+[data-accent="orange"], :root:not([data-accent])[data-default-accent="orange"] {
+  --accent-light: #bc3a16; --accent-dark: #f25022;
+}
+[data-accent="green"], :root:not([data-accent])[data-default-accent="green"] {
+  --accent-light: #4c7100; --accent-dark: #7fba00;
+}
+[data-accent="yellow"], :root:not([data-accent])[data-default-accent="yellow"] {
+  --accent-light: #805b00; --accent-dark: #ffb900;
+}
+</style>
+  <link rel="stylesheet" href="../../assets/html-docs/article.css">
+  <link rel="stylesheet" href="../../assets/html-docs/slides.css">
+  <link rel="stylesheet" href="../../assets/lab-tables.css">
+  <script src="../../assets/html-docs/article.js" defer></script>
+  <script src="../../assets/html-docs/slides.js" defer></script>
+  <script src="../../assets/materials.js" defer></script>
+</head>
+<body>
+<div class="controls" role="group" aria-label="Article controls">
+  <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
+  <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
+  <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
+  <button type="button" class="ctrl" data-action="print">PDF</button>
+  <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
+  <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
+</div>
+<div class="doc">
+  <header class="doc-header" id="opening">
+    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 1</p><h2 class="slide-title">Separate the signals.<br><em>Approve two intents.</em></h2><p class="slide-lead">Classify a feature and a bug before either becomes durable work.</p></div>
+    <p class="eyebrow">09:45-10:30 &middot; 45 minutes</p>
+    <h1>From evidence to approved engineering intent</h1>
+    <p class="subtitle">Create your workshop repository, correlate two synthetic support cases across several sources, and publish one evidence-backed feature Issue and one independently scoped bug Issue. Do not design either implementation yet.</p>
+    <p><strong>Result:</strong> an isolated organizational fork, one working development surface, and two confirmed Issues with different templates, evidence, and acceptance boundaries.</p>
+  </header>
+  <nav class="doc-nav" aria-label="Workshop navigation"><a href="../../index.html#ch-agenda">All labs</a><a href="#main">Skip to content</a><a href="../../index.html">Workshop home</a><a href="../02-inner-loop/index.html">Next lab</a></nav>
+  <nav class="toc" aria-label="Contents"><p class="toc-label">Contents</p><ol><li><a href="#ch-start">Start your station</a></li><li><a href="#ch-evidence">Correlate evidence</a></li></ol></nav>
+  <main id="main">
+    <section class="chapter" id="ch-start"><h2 class="chapter-label">Start your station</h2>
+      <article class="card card--lead" id="card-station" data-open>
+        <div class="slide-content"><h2 class="slide-title">One repository becomes<br><em>the system of record.</em></h2><ul class="slide-points"><li class="frag">Your fork isolates every artifact.</li><li class="frag">Choose a Codespace or your laptop.</li><li class="frag">Later labs continue here.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Fork and open the workspace</span><span class="card-sub">10 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Open the facilitator-provided <code>github-loop-engineering</code> source repository and select <strong>Fork</strong>.</li>
+            <li>Name the fork <code>github-loop-engineering-NN</code> using your attendee number. In Station, choose the facilitator-provided workshop organization. In Sandbox, choose your own account; no dedicated organization is required. Call that selected login <code>TARGET-OWNER</code>. Copy only the default branch.</li>
+            <li>In the fork, enable <strong>Actions</strong> and <strong>Issues</strong>. Never create attendee artifacts in the source repository.</li>
+            <li>Open one workspace:
+              <div class="tabs">
+                <div class="tablist" role="tablist" aria-label="Development workspace">
+                  <button type="button" role="tab" id="tab-workspace-codespace" aria-controls="panel-workspace-codespace" aria-selected="true">Codespace</button>
+                  <button type="button" role="tab" id="tab-workspace-laptop" aria-controls="panel-workspace-laptop" aria-selected="false">Your laptop</button>
+                </div>
+                <div class="tabpanel" role="tabpanel" id="panel-workspace-codespace" aria-labelledby="tab-workspace-codespace" data-tab-label="Codespace">
+                  <p>A <a href="https://docs.github.com/en/codespaces/about-codespaces/what-are-codespaces">codespace</a> is a cloud-hosted development environment created from the repository, with the workshop tools and configuration already prepared.</p>
+                  <ol>
+                    <li>Select <strong>Code</strong>, <strong>Codespaces</strong>, then <strong>Create codespace on main</strong>.</li>
+                    <li>When VS Code opens, run:
+                      <div class="code"><pre><code>gh repo set-default "$GITHUB_REPOSITORY"
+npm test</code></pre></div>
+                    </li>
+                  </ol>
+                </div>
+                <div class="tabpanel" role="tabpanel" id="panel-workspace-laptop" aria-labelledby="tab-workspace-laptop" data-tab-label="Your laptop" hidden>
+                  <p>Install Git, Node.js 22 or newer, and <a href="https://cli.github.com/">GitHub CLI</a>. Sign in to the workshop GitHub host.</p>
+                  <div class="code"><pre><code>gh repo clone TARGET-OWNER/github-loop-engineering-NN
+cd github-loop-engineering-NN
+gh repo set-default TARGET-OWNER/github-loop-engineering-NN
+npm test</code></pre></div>
+                  <p>Open the folder in VS Code, GitHub Copilot CLI or app, or another approved coding agent.</p>
+                </div>
+              </div>
+            </li>
+          </ol>
+          <p><strong>Expected result:</strong> the Codespace or local clone is connected to <code>TARGET-OWNER/github-loop-engineering-NN</code>, and the service suite reports zero failures.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-evidence"><h2 class="chapter-label">Correlate evidence</h2>
+      <article class="card" id="card-intake">
+        <div class="slide-content"><h2 class="slide-title">Start from signals,<br><em>not a solution prompt.</em></h2><ul class="slide-points"><li class="frag">The agent connects scattered evidence.</li><li class="frag">Citations make claims inspectable.</li><li class="frag">A person confirms scope.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Separate two cited cases</span><span class="card-sub">20 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p><code>context/intake/</code> contains synthetic snapshots of a support case, request log, Teams-style discussion, meeting decisions, Outlook-style authorization, and backlog. Approved connectors can retrieve authorized business context in a real environment; the lab uses repository files so every attendee sees the same safe evidence.</p>
+          <ol>
+            <li>Read the files under <code>context/intake/</code>. Separate direct evidence, product decisions, authorization, and unrelated backlog work. Keep <code>SUP-4102</code>/<code>REQ-S12-4102</code> distinct from <code>SUP-4113</code>/<code>REQ-S07-4113</code>.</li>
+            <li>Start the coach in one supported surface:
+              <div class="tabs">
+                <div class="tablist" role="tablist" aria-label="Copilot surface">
+                  <button type="button" role="tab" id="tab-agent-codespace" aria-controls="panel-agent-codespace" aria-selected="true">Codespace</button>
+                  <button type="button" role="tab" id="tab-agent-laptop" aria-controls="panel-agent-laptop" aria-selected="false">Your laptop</button>
+                  <button type="button" role="tab" id="tab-agent-browser" aria-controls="panel-agent-browser" aria-selected="false">GitHub in the browser</button>
+                </div>
+                <div class="tabpanel" role="tabpanel" id="panel-agent-codespace" aria-labelledby="tab-agent-codespace" data-tab-label="Codespace">
+                  <ul>
+                    <li><strong>Copilot Chat:</strong> open Chat in agent mode and name <code>/requirement-refiner</code> in the prompt.</li>
+                    <li><strong>Copilot CLI:</strong> run <code>copilot</code>, enter <code>/skills list</code>, verify that <strong>requirement-refiner</strong> is enabled, then name <code>/requirement-refiner</code> in the prompt.</li>
+                  </ul>
+                </div>
+                <div class="tabpanel" role="tabpanel" id="panel-agent-laptop" aria-labelledby="tab-agent-laptop" data-tab-label="Your laptop" hidden>
+                  <ul>
+                    <li><strong>VS Code or Copilot app:</strong> open the cloned folder and name <code>/requirement-refiner</code> in the prompt.</li>
+                    <li><strong>Copilot CLI:</strong> run <code>copilot</code>, use <code>/skills list</code> to verify the project skill, then invoke it with its slash-qualified name.</li>
+                    <li>An approved agent without Agent Skills discovery can read <code>.agents/skills/requirement-refiner/SKILL.md</code> and follow it exactly.</li>
+                  </ul>
+                </div>
+                <div class="tabpanel" role="tabpanel" id="panel-agent-browser" aria-labelledby="tab-agent-browser" data-tab-label="GitHub in the browser" hidden>
+                  <ol>
+                    <li>Open <code>https://YOUR-GITHUB-HOST/copilot</code>, stay in <strong>Chat</strong>, and select <code>TARGET-OWNER/github-loop-engineering-NN</code> as the repository.</li>
+                    <li>Name <code>/requirement-refiner</code> in the prompt. Repository skills are loaded from <code>.agents/skills/</code>.</li>
+                    <li>Do not start the asynchronous coding agent: this step is an interactive evidence interview and must not create a pull request.</li>
+                  </ol>
+                </div>
+              </div>
+            </li>
+            <li>Send:
+              <div class="code"><pre><code>Use /requirement-refiner to analyze the complete synthetic intake packet. Separate every supported case, return a cited evidence brief for each, identify contradictions and unrelated backlog work, and recommend the correct Issue type for each case. Do not create an Issue.</code></pre></div>
+            </li>
+            <li>Verify that the feature case describes missing API capability while the bug case proves that the UI hides an existing <code>available</code> value. A different form does not make a request a bug; it must violate a confirmed current contract.</li>
+            <li>Correct unsupported claims, then send <code>CONFIRMED:</code>.</li>
+          </ol>
+          <p><strong>Expected result:</strong> one feature-request draft and one bug-report draft, each with its own citations, scope, acceptance boundary, and risk. No code changed.</p>
+        </div>
+      </article>
+      <article class="card" id="card-issue">
+        <div class="slide-content"><h2 class="slide-title">Each durable write<br><em>needs its own approval.</em></h2><ul class="slide-points"><li class="frag">Confirm the exact target repository.</li><li class="frag">Approve feature and bug separately.</li><li class="frag">Keep implementation closed.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Approve two Issues in your fork</span><span class="card-sub">15 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>The repository already contains two Issue forms under <code>.github/ISSUE_TEMPLATE/</code>: <code>reservation-feature.yml</code> and <code>reservation-bug.yml</code>. You can inspect them in the <strong>Code</strong> tab; GitHub renders them as choices under <strong>New issue</strong>. The skill selects the matching form and drafts its fields before any write.</p>
+          <ol>
+            <li>Review both complete drafts and the target resolved by the skill. The feature uses <code>reservation-feature.yml</code>; the bug uses <code>reservation-bug.yml</code>. Compare with the <a href="artifacts/feature-request.md">feature reference</a> or <a href="artifacts/bug-report.md">bug reference</a> only if you need recovery.</li>
+            <li>The target must be <code>TARGET-OWNER/github-loop-engineering-NN</code>, must be a fork, and must not equal its parent. In GitHub terminology, the repository <em>owner</em> is the selected organization login in Station or your account login in Sandbox.</li>
+            <li>Approve the feature draft with the exact repository-qualified line supplied by the agent:
+              <div class="code"><pre><code>APPROVED FEATURE: Create one issue in TARGET-OWNER/github-loop-engineering-NN</code></pre></div>
+            </li>
+            <li>Open the returned URL and verify its form, evidence, and fork. Then separately approve the bug:
+              <div class="code"><pre><code>APPROVED BUG: Create one issue in TARGET-OWNER/github-loop-engineering-NN</code></pre></div>
+            </li>
+            <li>Open both URLs. Confirm that neither Issue contains implementation guesses and that approval for one did not authorize creation of the other.</li>
+          </ol>
+        </div>
+      </article>
+    </section>
+  </main>
+  <section class="takeaway" id="closing"><p>You turned one evidence packet into two independently approved work items: a new capability and a reproducible contract violation. Both are now traceable to sources without mixing their scope.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Classify the need.<br><em>Approve each intent.</em></h2></div></section>
+  <footer class="doc-footer">Lab 1 of 5 &middot; Two evidence-backed Issues &middot; Synthetic pharmacy data only.</footer>
+</div>
+</body>
+</html>

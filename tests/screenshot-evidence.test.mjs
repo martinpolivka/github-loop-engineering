@@ -93,7 +93,7 @@ test("published screenshots identify actual browser captures and matching pharma
       assert.ok(capture.inputs.some((input) => input.path === "docs/assets/html-docs/appearance.js"));
       assert.ok(capture.inputs.some((input) => input.path === "docs/assets/html-docs/tokens.css"));
       assert.ok(capture.inputs.some((input) => input.path === "docs/assets/materials.js"));
-      if (/evidence|security-|secret-protection|release-boundary/.test(capture.file)) {
+      if (/evidence|security-|secret-protection|release-|environment-gate/.test(capture.file)) {
         assert.match(capture.description, /not (?:a screenshot of )?(?:the )?GitHub|no .*GitHub UI/i,
           "A local guide capture must not be represented as a GitHub screenshot");
       }
@@ -105,10 +105,10 @@ test("published screenshots identify actual browser captures and matching pharma
     for (const theme of ["light", "dark"]) assert.ok(images.has(`pharmacy-${state}-${theme}.png`));
   }
   for (const theme of ["light", "dark"]) assert.ok(images.has(`workshop-agenda-${theme}.png`));
-  for (const theme of ["light", "dark"]) assert.ok(images.has(`secret-protection-${theme}.png`));
+  for (const theme of ["light", "dark"]) assert.ok(images.has(`environment-gate-${theme}.png`));
   for (const theme of ["light", "dark"]) {
     for (const name of ["workshop-opening", "workshop-slides", "workshop-closing",
-      "workshop-agenda", "security-evidence", "release-boundary", "secret-protection"]) {
+      "workshop-agenda", "release-candidate", "environment-gate", "release-decision"]) {
       assert.ok(images.has(`${name}-${theme}.png`));
     }
   }

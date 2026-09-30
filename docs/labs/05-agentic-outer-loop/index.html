@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en" data-default-accent="blue">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Lab 5: author bounded Issue triage and release-readiness workflows, then inspect a recurring repository pulse.">
+  <title>Lab 5 &middot; Agentic outer loop | GitHub workshop</title>
+  <meta name="doc-id" content="workshop-lab-05-agentic-outer-loop">
+  <script data-doc-bootstrap>
+/* Inline in the head before styles with sync-head.js. No deferred bootstrap. */
+(() => {
+  "use strict";
+  const root = document.documentElement;
+  const params = new URLSearchParams(location.search);
+  const id = document.querySelector('meta[name="doc-id"]')?.content ||
+    location.pathname.replace(/\.standalone(?=\.html$)/i, "");
+  const prefix = "html-docs:" + id + ":";
+  const choices = { theme: ["light", "dark"], accent: ["blue", "red", "green", "yellow"] };
+  const read = (name) => {
+    try { return localStorage.getItem(prefix + name); }
+    catch { return null; /* Storage may be unavailable for local files. */ }
+  };
+  const write = (name, value) => {
+    try { localStorage.setItem(prefix + name, value); }
+    catch { /* The current view still works without persistence. */ }
+  };
+  function refresh() {
+    for (const name of Object.keys(choices)) {
+      const current = root.getAttribute("data-" + name);
+      const next = choices[name][(choices[name].indexOf(current) + 1) % choices[name].length];
+      document.querySelectorAll('[data-action="toggle-' + name + '"]').forEach(button => {
+        button.textContent = name === "theme" ? (next === "dark" ? "Dark" : "Light") :
+          "Accent: " + current[0].toUpperCase() + current.slice(1);
+        button.setAttribute("aria-label", name === "theme" ? "Switch to " + next + " theme" :
+          "Accent: " + current + ". Switch to " + next);
+      });
+    }
+  }
+  for (const [name, values] of Object.entries(choices)) {
+    const fallback = name === "theme" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : values[0];
+    const value = [params.get(name), read(name), root.getAttribute("data-default-" + name), fallback]
+      .map(candidate => name === "accent" && candidate === "orange" ? "red" : candidate)
+      .find(candidate => values.includes(candidate));
+    root.setAttribute("data-" + name, value);
+  }
+  root.classList.add("js");
+  if (["slides", "sheet"].includes(params.get("view"))) root.setAttribute("data-view", params.get("view"));
+
+  // Print what is on screen. data-print selects the matching print stylesheet.
+  const printTarget = () => {
+    if (document.querySelector(".deck-stage")) return "slides";
+    const view = root.getAttribute("data-view");
+    if (view === "slides" || (view === "sheet" && document.querySelector(".sheet"))) return view;
+    return document.querySelector(".doc") || !document.querySelector(".sheet") ? "read" : "sheet";
+  };
+  let printing = null;
+  addEventListener("beforeprint", () => {
+    if (root.hasAttribute("data-print")) return; // Set by an automated export.
+    const target = printTarget();
+    printing = document.title;
+    root.setAttribute("data-print", target);
+    // The browser proposes the title as the PDF file name.
+    if (target !== "read" && document.querySelector(".doc")) {
+      document.title += target === "slides" ? " - Slides" : " - Sheet";
+    }
+  });
+  addEventListener("afterprint", () => {
+    if (printing === null) return;
+    root.removeAttribute("data-print");
+    document.title = printing;
+    printing = null;
+  });
+
+  // Keep the display awake while presenting, like presentation software does.
+  let lock = null;
+  let awake = false;
+  async function holdScreen() {
+    if (!awake || lock || document.visibilityState !== "visible" || !navigator.wakeLock) return;
+    try {
+      const sentinel = await navigator.wakeLock.request("screen");
+      if (!awake || lock) { sentinel.release(); return; }
+      lock = sentinel;
+      root.setAttribute("data-awake", "");
+      sentinel.addEventListener("release", () => {
+        if (lock !== sentinel) return;
+        lock = null;
+        root.removeAttribute("data-awake");
+      });
+    } catch { /* Denied by battery saver or an embedding policy; retried on input. */ }
+  }
+  function keepAwake(on) {
+    awake = !!on;
+    if (awake) holdScreen();
+    else if (lock) lock.release();
+  }
+  // The browser drops the lock when the tab is hidden; some require a gesture.
+  document.addEventListener("visibilitychange", holdScreen);
+  document.addEventListener("pointerdown", holdScreen);
+  document.addEventListener("keydown", holdScreen);
+
+  window.HtmlDocs = { read, write, refresh, keepAwake };
+  document.addEventListener("DOMContentLoaded", refresh);
+  document.addEventListener("click", event => {
+    if (event.target.closest('[data-action="print"]')) window.print();
+  });
+  document.addEventListener("click", event => {
+    const button = event.target.closest('[data-action="toggle-theme"], [data-action="toggle-accent"]');
+    if (!button) return;
+    const name = button.getAttribute("data-action").slice(7);
+    const values = choices[name];
+    const next = values[(values.indexOf(root.getAttribute("data-" + name)) + 1) % values.length];
+    root.setAttribute("data-" + name, next);
+    write(name, next);
+    // Replace a URL override too, so reloading preserves a deliberate change.
+    const url = new URL(location.href);
+    if (url.searchParams.has(name)) {
+      url.searchParams.set(name, next);
+      history.replaceState(null, "", url.href);
+    }
+    refresh();
+  });
+})();
+</script>
+  <style data-doc-tokens>
+/* Canonical tokens. Inline with sync-head.js; one accent family at a time. */
+:root {
+  color-scheme: light;
+  --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f2; --surface-3: #e8e8e8;
+  --border: #dedede; --border-strong: #b8b8b8;
+  --text: #161616; --text-muted: #565656; --text-faint: #686868;
+  --accent-light: #006da0; --accent-dark: #00a4ef;
+  --accent: var(--accent-light);
+  --accent-strong: var(--accent);
+  --accent-quiet: var(--accent);
+  --accent-soft: color-mix(in srgb, var(--accent) 9%, var(--bg));
+  --accent-border: color-mix(in srgb, var(--accent) 36%, var(--bg));
+  --warn: var(--accent); --warn-soft: var(--accent-soft); --warn-border: var(--accent-border);
+  --code-bg: var(--surface-2); --code-border: var(--border);
+  --focus: var(--accent);
+  --shadow-1: 0 1px 2px rgba(0,0,0,.04);
+  --shadow-2: 0 2px 4px rgba(0,0,0,.04), 0 12px 28px rgba(0,0,0,.06);
+  --radius: 10px; --radius-sm: 6px; --canvas: 1160px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Mono", "Cascadia Code", ui-monospace, Consolas, "SF Mono", "Liberation Mono", Menlo, monospace;
+}
+/* Screen only: every PDF and printout uses the light palette. */
+@media screen {
+  [data-theme="dark"], :root:not([data-theme])[data-default-theme="dark"] {
+    color-scheme: dark;
+    --bg: #101010; --surface: #191919; --surface-2: #232323; --surface-3: #2c2c2c;
+    --border: #363636; --border-strong: #595959;
+    --text: #f2f2f2; --text-muted: #b5b5b5; --text-faint: #a0a0a0;
+    --accent: var(--accent-dark);
+    --shadow-1: 0 1px 2px rgba(0,0,0,.3);
+    --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.4);
+  }
+}
+[data-accent="red"], :root:not([data-accent])[data-default-accent="red"],
+[data-accent="orange"], :root:not([data-accent])[data-default-accent="orange"] {
+  --accent-light: #bc3a16; --accent-dark: #f25022;
+}
+[data-accent="green"], :root:not([data-accent])[data-default-accent="green"] {
+  --accent-light: #4c7100; --accent-dark: #7fba00;
+}
+[data-accent="yellow"], :root:not([data-accent])[data-default-accent="yellow"] {
+  --accent-light: #805b00; --accent-dark: #ffb900;
+}
+</style>
+  <link rel="stylesheet" href="../../assets/html-docs/article.css">
+  <link rel="stylesheet" href="../../assets/html-docs/slides.css">
+  <script src="../../assets/html-docs/article.js" defer></script>
+  <script src="../../assets/html-docs/slides.js" defer></script>
+  <script src="../../assets/materials.js" defer></script>
+</head>
+<body>
+<div class="controls" role="group" aria-label="Article controls">
+  <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
+  <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
+  <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
+  <button type="button" class="ctrl" data-action="print">PDF</button>
+  <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
+  <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
+</div>
+<div class="doc">
+  <header class="doc-header" id="opening">
+    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 5</p><h2 class="slide-title">Automate recurring<br><em>reasoning, not authority.</em></h2><p class="slide-lead">Author event-driven triage and release advice, then inspect a scheduled reconciliation loop.</p></div>
+    <p class="eyebrow">14:20-15:00 &middot; 40 minutes</p>
+    <h1>Agentic outer loop</h1>
+    <p class="subtitle">Create an Issue-triage Agentic Workflow, finish a deployment-readiness workflow over the deterministic evidence from Lab 4, and compare both with the prepared repository-pulse recurrence.</p>
+    <p><strong>Result:</strong> two attendee-authored workflow sources in one draft PR, at least one compiled lock when preview tooling is available, and a review of a third scheduled pattern.</p>
+  </header>
+  <nav class="doc-nav" aria-label="Workshop navigation"><a href="../../index.html#ch-agenda">All labs</a><a href="#main">Skip to content</a><a href="../04-trusted-delivery/index.html">Previous lab</a><a href="../../index.html">Workshop home</a></nav>
+  <nav class="toc" aria-label="Contents"><p class="toc-label">Contents</p><ol><li><a href="#ch-contract">Compare three patterns</a></li><li><a href="#ch-author">Author two workflows</a></li><li><a href="#ch-run">Compile and review</a></li><li><a href="#ch-transfer">Inspect recurrence</a></li></ol></nav>
+  <main id="main">
+    <section class="chapter" id="ch-contract"><h2 class="chapter-label">Separate intent from authority</h2>
+      <article class="card card--lead" id="card-contract" data-open>
+        <div class="slide-content"><h2 class="slide-title">One platform.<br><em>Three loop shapes.</em></h2><ul class="slide-points"><li class="frag">Issue events need classification.</li><li class="frag">Release evidence needs advice.</li><li class="frag">Schedules need reconciliation.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Compare three useful automated steps</span><span class="card-sub">5 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>An Agentic Workflow is justified when a repeatable trigger needs contextual evidence and a bounded recommendation. It is not justified merely because an agent can perform the task.</p>
+          <dl>
+            <dt>Issue triage</dt><dd>An Issue-opened event reads untrusted intake and may publish one advisory comment.</dd>
+            <dt>Deployment readiness</dt><dd>A manual run reads immutable release evidence and reports readiness without approving an environment.</dd>
+            <dt>Repository pulse</dt><dd>A schedule reconciles seven days of repository state into one owned, updateable Issue.</dd>
+          </dl>
+          <p><strong>Checkpoint:</strong> for each pattern, name the trigger, evidence, worst permitted effect, stop condition, and remaining human decision.</p>
+          <aside class="callout callout--warning"><p class="callout-label">Public preview</p><p>GitHub Agentic Workflows are public preview. Source changes are proposals until an approved compiler regenerates the lock, the source and lock diff are reviewed together, and the repository accepts the workflow.</p></aside>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-author"><h2 class="chapter-label">Write the source contract</h2>
+      <article class="card" id="card-edit">
+        <div class="slide-content"><h2 class="slide-title">The prompt proposes.<br><em>Frontmatter constrains.</em></h2><ul class="slide-points"><li class="frag">Trigger only on opened Issues.</li><li class="frag">Read only needed evidence.</li><li class="frag">Publish one bounded comment.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Author Issue triage</span><span class="card-sub">9 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Create a branch named <code>lab-05-issue-triage</code>.</li>
+            <li>Copy <a href="artifacts/issue-triage.starter.md">the control skeleton</a> to <code>.github/workflows/issue-triage.md</code>.</li>
+            <li>Complete the instruction body so the comment reports one type: <code>FEATURE</code>, <code>BUG</code>, <code>QUESTION</code>, or <code>NEEDS CLARIFICATION</code>; cites its evidence; and names the next human decision.</li>
+            <li>Keep <code>issues: read</code>, one <code>add-comment</code> safe output, threat detection, the five-minute timeout, and the 30-credit cap. Do not add general write permissions or network access.</li>
+          </ol>
+          <p><strong>Expected result:</strong> a reviewer can tell what starts the workflow, what it may read, its worst permitted effect, when it stops, and who still owns the decision.</p>
+          <p>If you run out of time, compare your source with <a href="artifacts/issue-triage.reference.md">the reference contract</a>.</p>
+        </div>
+      </article>
+      <article class="card" id="card-readiness">
+        <div class="slide-content"><h2 class="slide-title">Reason over evidence.<br><em>Never replace the gate.</em></h2><ul class="slide-points"><li class="frag">Read exact revision evidence.</li><li class="frag">Report READY or BLOCKED.</li><li class="frag">Leave approval to the environment.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Complete deployment readiness</span><span class="card-sub">9 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Copy <a href="artifacts/deployment-readiness.starter.md">the prepared scaffold</a> to <code>.github/workflows/deployment-readiness.md</code>.</li>
+            <li>Complete its three instruction fields: required evidence, conditions that force <code>BLOCKED</code>, and the human decision that remains.</li>
+            <li>Require the run ID, candidate SHA, artifact digest, deterministic and smoke results, unresolved findings, and merged PR to agree.</li>
+            <li>Keep the workflow read-only with <code>noop</code> as its only safe output. It must not approve an environment, execute artifacts, access secrets, or deploy.</li>
+          </ol>
+          <p><strong>Expected result:</strong> reasoning can summarize operational evidence, but only the deterministic workflow and GitHub Environment can establish or exercise their controls.</p>
+          <p>If you run out of time, compare your source with <a href="artifacts/deployment-readiness.reference.md">the reference contract</a>.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-run"><h2 class="chapter-label">Turn reviewed source into observable operation</h2>
+      <article class="card" id="card-compile">
+        <div class="slide-content"><h2 class="slide-title">Source and lock<br><em>must travel together.</em></h2><ul class="slide-points"><li class="frag">Compile with an approved toolchain.</li><li class="frag">Review generated authority.</li><li class="frag">Keep stale locks unmerged.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 4 &mdash; Compile, validate, and review</span><span class="card-sub">11 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Commit the source and open a draft PR.</li>
+            <li>If the approved <code>gh aw</code> compiler is available, run:
+              <div class="code"><pre><code>gh aw compile --dir .github/workflows --validate</code></pre></div>
+            </li>
+            <li>Commit both generated lock files to the same PR. Review that triage has one comment output while deployment readiness remains read-only and can only return a no-op report.</li>
+          </ol>
+          <p>If compilation is unavailable, keep the PR draft and review the source contract against the reference. That is a source review, not proof of an executable workflow.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-transfer"><h2 class="chapter-label">Inspect a recurring reconciliation loop</h2>
+      <article class="card" id="card-transfer">
+        <div class="slide-content"><h2 class="slide-title">Recurrence requires<br><em>ownership and no-op.</em></h2><ul class="slide-points"><li class="frag">Reconcile before publishing.</li><li class="frag">Update one owned artifact.</li><li class="frag">No change means no write.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 5 &mdash; Review repository pulse</span><span class="card-sub">6 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>Open <code>.github/workflows/repository-pulse.md</code> and compare it with your two event-specific workflows.</p>
+          <dl>
+            <dt>Owned state</dt><dd>The marker identifies the one Issue this workflow may create or update.</dd>
+            <dt>Reconciliation</dt><dd>Closed, waiting-human, duplicate, or unchanged state produces no write rather than another report.</dd>
+            <dt>Budget</dt><dd>Timeout, inference credits, one create, and one update bound each run.</dd>
+            <dt>Authority</dt><dd>The workflow recommends no more than three actions; owners still prioritize and execute them.</dd>
+          </dl>
+          <p><strong>Optional extension:</strong> if the environment exposes an SRE agent, compare its evidence, tool access, and authority boundary with deployment readiness. Do not represent unavailable or recorded behavior as live.</p>
+        </div>
+      </article>
+    </section>
+  </main>
+  <section class="takeaway" id="closing"><p>You authored bounded reasoning for intake and release evidence, then traced how a scheduled loop reconciles its own prior output. Each workflow keeps trigger, evidence, effect, stop, and human authority reviewable.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Automate the loop.<br><em>Keep authority human.</em></h2></div></section>
+  <footer class="doc-footer">Lab 5 of 5 &middot; Continue with adoption discussion and Azure DevOps migration &middot; Synthetic pharmacy data only.</footer>
+</div>
+</body>
+</html>

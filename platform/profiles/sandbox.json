@@ -1,8 +1,8 @@
 {
   "id": "sandbox",
-  "label": "tkubica12 public GitHub sandbox",
+  "label": "Public GitHub sandbox",
   "githubHost": "github.com",
-  "owner": "tkubica12",
+  "owner": "workshop-owner",
   "authoringRepository": "github-loop-engineering",
   "repositoryPrefix": "workshop-lab",
   "visibility": "private",
@@ -16,6 +16,7 @@
     "thirdPartyCodingAgents": "account-check",
     "organizationRulesets": "demonstration",
     "enterprisePolicies": "simulation",
+    "codeQuality": "demonstration-unless-enabled",
     "codeSecurity": "public-repository-or-license",
     "secretProtection": "public-repository-or-license",
     "environments": "repository-check"

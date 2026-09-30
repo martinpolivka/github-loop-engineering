@@ -1,29 +1,28 @@
-# Email (synthetic)
+# Outlook email export (synthetic)
 
 **From:** Regional product owner, pharmacy services
+
 **To:** Reservation service team
-**Subject:** Priority for this iteration
+**Subject:** Decision for SUP-4102
 
-Hello team,
+Use the attached Teams meeting decisions to prepare two independently
+reviewable Issues:
 
-Thank you for the notes from the stores. My priority for this iteration is
-simple: fewer reservations that end in a dead end at the counter when the
-requested item is not available. I want to see the "customer left" tickets go
-down.
+1. A feature request for `SUP-4102`, preventing an out-of-stock request from
+   becoming a dead end when a relevant option is available.
+2. A bug report for `SUP-4113`, because the kiosk hides the `available` value
+   already returned by the service.
 
-Please keep three things in mind:
+Preserve the current `409` contract so the kiosk continues to work without a
+coordinated release. The pharmacist must remain in control: inventory
+information is not medical advice, and no option may be reserved automatically.
 
-1. The pharmacist decides. Whatever the service shows is information for a
-   person to evaluate, not advice and not an automatic action.
-2. The kiosk client must keep working without an update in the same release.
-3. I need something small that we can prove with tests and review this week.
-
-Low-stock alerts and expiry of unconfirmed reservations are already planned in
-the backlog; please do not reopen them here. The spreadsheet export for the
-audit team is next quarter.
-
-Send me the refined requirement before anyone starts building. I will confirm
-the final wording.
+Keep automatic partial fulfilment and every item already listed in `backlog.md`
+out of scope. Each Issue must cite its support case, matching request log,
+Teams chat, and meeting decision. Keep the two scopes independent and small
+enough to prove with deterministic tests this week.
 
 Regards,
 Regional product owner
+
+This is synthetic workshop evidence, not a real email.

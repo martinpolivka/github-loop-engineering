@@ -5,9 +5,12 @@ import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } f
 import { isAbsolute, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createHash } from "node:crypto";
+import { createRequire } from "node:module";
 import { chromium } from "playwright";
 import { htmlMarkup, materialFiles, root, screenshotInputs } from "./validation.mjs";
 import { copyStation } from "../platform/scripts/station.mjs";
+const { printPlan, preparePrint, printOverflow, renderPdf, pdfPages } =
+  createRequire(import.meta.url)("./../docs/assets/html-docs/validate.js");
 
 const capture = process.argv.includes("--capture");
 const output = join(root, "docs", "assets", "screenshots");
@@ -23,6 +26,9 @@ assert.ok(!paletteOutput || (!relative(root, paletteOutput).startsWith("..") && 
 const pages = materialFiles().filter((file) => !pageFilter || relative(root, file).replaceAll("\\", "/") === pageFilter.replaceAll("\\", "/"));
 assert.ok(pages.length, "--page did not select a material");
 const readingText = new Map();
+const readingSelector = (path) => path === "docs/index.html" ? ".hub-agenda" : ".card-body";
+const selectedViewport = option("--viewport");
+assert.ok(!selectedViewport || /^\d+x\d+$/.test(selectedViewport), "Use --viewport WIDTHxHEIGHT");
 
 const server = process.env.WORKSHOP_BASE_URL ? null : spawn(process.execPath, [join(root, "tests", "serve.mjs")], {
   env: { ...process.env, PORT: "0" }, stdio: ["ignore", "pipe", "pipe"]
@@ -72,7 +78,7 @@ async function pharmacyJourney() {
     for (const state of ["baseline", "suggestion"]) {
       const directory = join(temporary, state);
       copyStation(directory);
-      if (state === "suggestion") cpSync(join(root, "docs", "labs", "02-intent-to-pr", "artifacts", "inventory.reference.mjs"),
+      if (state === "suggestion") cpSync(join(root, "docs", "labs", "02-inner-loop", "artifacts", "inventory.reference.mjs"),
         join(directory, "src", "inventory.mjs"));
       const { buildServer } = await import(pathToFileURL(join(directory, "src", "server.mjs")).href);
       const service = buildServer();
@@ -96,7 +102,7 @@ async function pharmacyJourney() {
             `Pharmacy ${state}: suggestion must not reserve stock`);
           const source = state === "baseline"
             ? "src/inventory.mjs"
-            : "docs/labs/02-intent-to-pr/artifacts/inventory.reference.mjs";
+            : "docs/labs/02-inner-loop/artifacts/inventory.reference.mjs";
           await screenshot(page, `pharmacy-${state}`, source, theme,
             "Actual local HTTP 409 response; synthetic data, not GitHub or a cloud deployment.");
           await page.setViewportSize({ width: 1280, height: 720 });
@@ -143,9 +149,10 @@ async function pharmacyJourney() {
 }
 const opposite = (theme) => theme === "light" ? "dark" : "light";
 const palette = {
-  light: { blue: "#0068bd", orange: "#a94000", green: "#137344" },
-  dark: { blue: "#69b8ff", orange: "#ffae72", green: "#6cd6a0" }
+  light: { blue: "#006da0", red: "#bc3a16", green: "#4c7100", yellow: "#805b00" },
+  dark: { blue: "#00a4ef", red: "#f25022", green: "#7fba00", yellow: "#ffb900" }
 };
+const accents = Object.keys(palette.light);
 async function frame(page) {
   await page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done))));
 }
@@ -183,10 +190,9 @@ async function appearance(page, theme, accent, label) {
   await page.keyboard.press("Space");
   check(await page.locator("html").getAttribute("data-theme") === opposite(theme), `${label}: native Space toggles theme`);
   await themeButton.click();
-  const accents = ["blue", "orange", "green"];
-  for (let step = 1; step <= 3; step++) {
+  for (let step = 1; step <= accents.length; step++) {
     await accentButton.click();
-    const expected = accents[(accents.indexOf(accent) + step) % 3];
+    const expected = accents[(accents.indexOf(accent) + step) % accents.length];
     check(await page.locator("html").getAttribute("data-accent") === expected, `${label}: accent cycle ${step}`);
     check((await accentButton.getAttribute("aria-label")).includes(`Accent: ${expected}. Switch to `),
       `${label}: accent control names current and next selection`);
@@ -242,12 +248,48 @@ async function expandReadingDepth(page, label) {
   }
 }
 async function articleChecks(page, path, label) {
+  if (path === "docs/index.html") {
+    readingText.set(path, await page.locator(readingSelector(path)).allTextContents());
+    check(await page.locator(".hub-agenda").isVisible(), `${label}: agenda needs no disclosure`);
+    check(await page.locator(".chapter:visible, .card:visible, .card-toggle, .card-body").count() === 0,
+      `${label}: reading is a landing page, not an article with chapters`);
+    check(await page.locator(".agenda > li").count() === 10, `${label}: complete timed agenda`);
+    check(await page.locator(".agenda a.agenda-entry").count() === 5, `${label}: five prominent lab links`);
+    check(await page.locator('[data-action="expand-all"], [data-action="collapse-all"]').count() === 0,
+      `${label}: no unnecessary disclosure controls`);
+    for (const surface of await page.locator(".slide-content").all()) {
+      const text = await surface.evaluate((node) => {
+        const copy = node.cloneNode(true);
+        copy.querySelectorAll("title, desc").forEach((element) => element.remove());
+        copy.querySelectorAll("br").forEach((element) => element.replaceWith(" "));
+        copy.querySelectorAll("svg text").forEach((element) => element.replaceWith(` ${element.textContent} `));
+        return copy.textContent.trim();
+      });
+      check(text.split(/\s+/).length <= 45, `${label}: preserved slides remain sparse`);
+      check(await surface.locator(".slide-title").count() === 1, `${label}: each slide has one title`);
+      check(await surface.locator("button, a, input, select, textarea").count() === 0,
+        `${label}: reading controls are not slide content`);
+      check(await surface.locator(".slide-points > li").count() <= 3, `${label}: at most three speaking points`);
+      for (const point of await surface.locator(".slide-points > li").all()) {
+        check((await point.textContent()).trim().split(/\s+/).length <= 10, `${label}: short speaking points`);
+      }
+      for (const paragraph of await surface.locator("p").all()) {
+        check((await paragraph.textContent()).trim().split(/\s+/).length <= 18,
+          `${label}: short slide captions`);
+      }
+    }
+    return;
+  }
   const cards = page.locator("main > .chapter > .card");
   check(await cards.count() > 0 && await cards.count() === await page.locator(".card").count(),
     `${label}: every card belongs directly to a chapter`);
   readingText.set(path, await page.locator(".card-body").allTextContents());
   await page.locator('[data-action="expand-all"]').click();
   check(await page.locator(".card[data-open]").count() === await cards.count(), `${label}: expand all cards`);
+  check(await page.locator(".code pre").evaluateAll((nodes) => nodes
+    .filter((node) => !node.closest(".slide-content, .deck-stage"))
+    .every((node) => node.parentElement.querySelectorAll(":scope > [data-copy-command]").length === 1)),
+  `${label}: every reading command has one copy control`);
   const command = page.locator(".code").filter({ has: page.locator("[data-copy-command]") }).first();
   if (await command.count()) {
     const button = command.locator("[data-copy-command]").first();
@@ -256,6 +298,8 @@ async function articleChecks(page, path, label) {
     check(await button.evaluate((node) => node.classList.contains("ctrl") &&
       (node.matches('button[type="button"]') || node.matches('input[type="button"]'))),
     `${label}: copy commands remain native canonical controls`);
+    check(await button.locator("svg").count() === 1 && await button.textContent() === "",
+      `${label}: copy control is one accessible icon`);
     await page.evaluate(() => {
       window.__copiedCommand = null;
       Object.defineProperty(navigator, "clipboard", { configurable: true,
@@ -264,6 +308,8 @@ async function articleChecks(page, path, label) {
     await button.click();
     const expected = await command.locator("pre").first().textContent();
     check(await page.evaluate(() => window.__copiedCommand) === expected, `${label}: copy preserves exact command text`);
+    check(!String(await page.evaluate(() => window.__copiedCommand)).includes("```"),
+      `${label}: copied command contains no Markdown fence`);
   }
   for (const reveal of await page.locator(".card-body .reveal").first().all()) {
     const button = reveal.locator(":scope > .reveal-toggle");
@@ -313,11 +359,11 @@ async function deepLink(page, url, id, label) {
 }
 async function readingCaptures(page, path, url, theme) {
   const capturesByPath = {
-    "docs/index.html": [["workshop-agenda", "ch-agenda", "Local workshop agenda; not GitHub UI."]],
+    "docs/index.html": [["workshop-agenda", "agenda", "Local workshop agenda; not GitHub UI."]],
     "docs/labs/04-trusted-delivery/index.html": [
-      ["security-evidence", "codeql", "Local lab view of recorded CodeQL evidence; not GitHub UI."],
-      ["release-boundary", "release-boundary", "Local lab view of the human release boundary; not GitHub UI."],
-      ["secret-protection", "secret-protection", "Local lab view of recorded push-protection evidence; not GitHub UI."]]
+      ["release-candidate", "ch-evidence", "Local lab view of release candidate evidence; not GitHub UI."],
+      ["environment-gate", "ch-authority", "Local lab view of the environment authority boundary; not GitHub UI."],
+      ["release-decision", "ch-decision", "Local lab view of the release readiness decision; not GitHub UI."]]
   };
   for (const [name, id, description] of capturesByPath[path] || []) {
     if (id) await deepLink(page, url, id, path);
@@ -342,6 +388,13 @@ async function presentation(page, path, url, isDeck, theme, accent, viewport) {
   }, isDeck);
   const label = `${path} ${theme}/${accent} ${viewport.width}x${viewport.height}`;
   check(expected.length > 2, `${label}: complete presentation narrative`);
+  if (path === "docs/index.html") {
+    check(JSON.stringify(expected) === JSON.stringify([
+      "opening", "ch-demo", "card-puzzle", "card-inner", "card-lifecycle", "card-after-code", "ch-agenda",
+      "card-agenda", "card-agenda-afternoon", "closing"
+    ]), `${label}: ten slides connect intent, code, feedback and the two-part agenda in order`);
+    check(await page.locator(".hub-agenda").isHidden(), `${label}: agenda stays off slide surfaces`);
+  }
   await current().focus();
   await page.keyboard.press("Home");
   const progress = page.locator(isDeck ? ".deck-progress" : ".slide-progress");
@@ -359,7 +412,8 @@ async function presentation(page, path, url, isDeck, theme, accent, viewport) {
     const sizes = panels.map((panel) => panel.textContent.trim().split(/\s+/).length);
     return { diagram, busiest: sizes.indexOf(Math.max(...sizes)) };
   }, { ids: expected, deck: isDeck });
-  const samples = [...new Set([0, 1, 2, expected.length - 1, special.diagram, special.busiest])]
+  const samples = [...new Set(path === "docs/index.html" ? expected.map((_, index) => index) :
+    [0, 1, 2, expected.length - 1, special.diagram, special.busiest])]
     .filter((index) => index >= 0).sort((left, right) => left - right);
   for (const index of samples) {
     const id = expected[index];
@@ -372,6 +426,24 @@ async function presentation(page, path, url, isDeck, theme, accent, viewport) {
     check((await panel.getAttribute("aria-label"))?.startsWith(`${index + 1} of ${expected.length}: `),
       `${label}: focused slide announces position and title`);
     check(await panel.getAttribute("aria-roledescription") === "slide", `${label}: accessible slide semantics`);
+    check(await panel.evaluate((node) => node.scrollHeight <= node.clientHeight + 1 &&
+      node.scrollWidth <= node.clientWidth + 1), `${label}: ${id} fits the presentation surface`);
+    check(await panel.locator("[data-lifecycle-step]").evaluateAll((steps) => steps.every((step) => {
+      const box = step.querySelector("rect").getBBox();
+      return [...step.querySelectorAll("text")].every((text) => {
+        const label = text.getBBox();
+        return label.x >= box.x && label.y >= box.y &&
+          label.x + label.width <= box.x + box.width &&
+          label.y + label.height <= box.y + box.height;
+      });
+    })), `${label}: lifecycle labels fit their boxes`);
+    check(await panel.locator("svg:has([data-agenda-slot])").evaluateAll((diagrams) => diagrams.every((svg) => {
+      const content = svg.getBBox();
+      const canvas = svg.viewBox.baseVal;
+      return content.x >= canvas.x && content.y >= canvas.y &&
+        content.x + content.width <= canvas.x + canvas.width &&
+        content.y + content.height <= canvas.y + canvas.height;
+    })), `${label}: every agenda bullet fits without cropping`);
     if (isDeck) {
       check(await current().locator(`[id="slide-${index + 1}"]`).count() === 1, `${label}: stable legacy slide alias`);
       if (accent === "blue" && viewport.width === 1920) {
@@ -449,11 +521,12 @@ async function presentation(page, path, url, isDeck, theme, accent, viewport) {
   await page.locator('[data-action="toggle-theme"]').click();
   const activeId = await current().getAttribute("id");
   await page.locator('[data-action="toggle-accent"]').click();
-  const nextAccent = ["blue", "orange", "green"][(["blue", "orange", "green"].indexOf(accent) + 1) % 3];
+  const nextAccent = accents[(accents.indexOf(accent) + 1) % accents.length];
   check(await page.locator("html").getAttribute("data-accent") === nextAccent &&
     await current().getAttribute("id") === activeId, `${label}: accent control changes the same presentation without advancing`);
-  await page.locator('[data-action="toggle-accent"]').click();
-  await page.locator('[data-action="toggle-accent"]').click();
+  for (let step = 1; step < accents.length; step++) {
+    await page.locator('[data-action="toggle-accent"]').click();
+  }
   await current().focus();
   const animation = page.locator(isDeck ? '[data-deck="reveal"]' : '[data-action="toggle-animations"]');
   check(await animation.isDisabled(), `${label}: reduced motion disables animation control`);
@@ -515,7 +588,8 @@ async function presentation(page, path, url, isDeck, theme, accent, viewport) {
     await page.keyboard.press("Escape");
     check(await page.locator("html").getAttribute("data-view") === null &&
       !new URL(page.url()).searchParams.has("view"), `${label}: Escape exits slides and updates URL`);
-    check(await page.locator(`[id="${cardId}"] > .card-body`).isVisible(), `${label}: exit exposes current reading card`);
+    check(await page.locator(path === "docs/index.html" ? ".hub-agenda" :
+      `[id="${cardId}"] > .card-body`).isVisible(), `${label}: exit returns to readable content`);
     await page.locator('[data-action="toggle-slides"]').click();
     await page.locator('[data-action="toggle-slides"]').click();
     check(await page.locator("html").getAttribute("data-view") === null, `${label}: Slides control exits presentation`);
@@ -538,8 +612,8 @@ async function preferenceChecks() {
       await page.locator('[data-action="toggle-accent"]').click();
       await page.reload({ waitUntil: "load" });
       check(await page.locator("html").getAttribute("data-theme") === opposite(theme) &&
-        await page.locator("html").getAttribute("data-accent") === "orange", `${path}: reload persists document choices`);
-      check(await page.evaluate((docId) => localStorage.getItem(`html-docs:${docId}:accent`), id) === "orange",
+        await page.locator("html").getAttribute("data-accent") === "red", `${path}: reload persists document choices`);
+      check(await page.evaluate((docId) => localStorage.getItem(`html-docs:${docId}:accent`), id) === "red",
         `${path}: canonical document-scoped storage key`);
       await page.goto(`${url}?theme=${theme}&accent=green`, { waitUntil: "load" });
       check(await page.locator("html").getAttribute("data-theme") === theme &&
@@ -548,7 +622,7 @@ async function preferenceChecks() {
       await page.locator('[data-action="toggle-accent"]').click();
       await page.reload({ waitUntil: "load" });
       check(new URL(page.url()).searchParams.get("theme") === opposite(theme) &&
-        new URL(page.url()).searchParams.get("accent") === "blue", `${path}: toggles update query overrides`);
+        new URL(page.url()).searchParams.get("accent") === "yellow", `${path}: toggles update query overrides`);
       await page.locator('[data-action="toggle-accent"]').click();
     }
     await context.close();
@@ -579,11 +653,12 @@ async function noScriptChecks() {
         if (!await details.evaluate((node) => node.open)) await details.locator(":scope > summary").click();
         check(await details.evaluate((node) => node.open), `${path}: native recovery details work without JavaScript`);
       }
-      const reference = page.locator(article ? ".card-body, .reveal-body, .detail-body, .tabpanel" : ".slide");
+      const reference = page.locator(path === "docs/index.html" ? ".hub-agenda" :
+        article ? ".card-body, .reveal-body, .detail-body, .tabpanel" : ".slide");
       check(await reference.count() > 0, `${path}: no-JS reading reference exists`);
       for (const node of await reference.all()) check(await node.isVisible(), `${path}: no-JS reference body visible`);
       if (article) {
-        check(JSON.stringify(await page.locator(".card-body").allTextContents()) === JSON.stringify(readingText.get(path)),
+        check(JSON.stringify(await page.locator(readingSelector(path)).allTextContents()) === JSON.stringify(readingText.get(path)),
           `${path}: full no-JS reading-text parity`);
         check(await page.locator(".slide-content:visible").count() === 0, `${path}: no duplicate presentation summaries without JavaScript`);
       }
@@ -594,11 +669,59 @@ async function noScriptChecks() {
   }
 }
 
+async function landingPrintChecks() {
+  const context = await browser.newContext({ offline: true, colorScheme: "dark" });
+  try {
+    const page = await context.newPage();
+    monitor(page);
+    const url = pathToFileURL(join(root, "docs", "index.html")).href;
+    await page.goto(`${url}?theme=dark&accent=orange`, { waitUntil: "load" });
+    check(await page.locator("html").getAttribute("data-accent") === "red",
+      "Landing: legacy orange URLs select red");
+    await page.locator('[data-action="toggle-accent"]').click();
+    check(await page.locator("html").getAttribute("data-accent") === "green",
+      "Landing: legacy accent cycles to canonical green");
+    const title = await page.title();
+    for (const { target, pages: count } of await printPlan(page)) {
+      if (target === "slides") await page.locator('[data-action="toggle-slides"]').click();
+      await page.evaluate(() => dispatchEvent(new Event("beforeprint")));
+      check(await page.locator("html").getAttribute("data-print") === target,
+        `Landing: PDF follows the ${target} view`);
+      await page.evaluate(() => dispatchEvent(new Event("afterprint")));
+      check(await page.locator("html").getAttribute("data-print") === null && await page.title() === title,
+        "Landing: print restores document state");
+      await preparePrint(page, target);
+      check(await page.evaluate(() => {
+        const style = getComputedStyle(document.documentElement);
+        return style.getPropertyValue("--bg").trim() === "#fafafa" &&
+          style.getPropertyValue("--accent").trim() === style.getPropertyValue("--accent-light").trim();
+      }), `Landing: ${target} prints with the light palette`);
+      check((await printOverflow(page, target)).length === 0, `Landing: ${target} print surfaces do not clip`);
+      check(await page.locator(".hub-agenda").isVisible() === (target === "read"),
+        `Landing: ${target} PDF includes only its intended content`);
+      if (target === "read") {
+        check(await page.locator(".chapter:visible").count() === 0 &&
+          await page.locator(".agenda > li:visible").count() === 10,
+        "Landing: reading PDF contains all agenda entries and no presentation chapters");
+      }
+      const actual = pdfPages(await renderPdf(page));
+      check(count === null ? actual > 0 : actual === count,
+        `Landing: ${target} PDF page count ${actual}, expected ${count ?? "nonempty"}`);
+      console.log(`PRINT landing ${target}: ${actual} pages`);
+      await page.evaluate(() => document.documentElement.removeAttribute("data-print"));
+      await page.emulateMedia({ media: "screen" });
+      if (target === "slides") await page.keyboard.press("Escape");
+    }
+  } finally {
+    await context.close();
+  }
+}
+
 try {
   assert.equal((await fetch(`${base}/docs/`, { signal: AbortSignal.timeout(5000) })).status, 200);
   browser = process.env.BROWSER_ENDPOINT ? await chromium.connectOverCDP(process.env.BROWSER_ENDPOINT) :
     await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM });
-  for (const theme of ["light", "dark"]) for (const accent of ["blue", "orange", "green"]) {
+  for (const theme of ["light", "dark"]) for (const accent of accents) {
     const context = await browser.newContext({ colorScheme: opposite(theme), reducedMotion: "reduce" });
     const page = await context.newPage();
     monitor(page);
@@ -616,19 +739,24 @@ try {
         if (accent === "blue") await readingCaptures(page, path, url, theme);
         await page.setViewportSize({ width: 390, height: 844 });
         await page.goto(url, { waitUntil: "load" });
-        await page.locator('[data-action="expand-all"]').click();
-        await expandReadingDepth(page, `${path} mobile`);
+        if (path !== "docs/index.html") {
+          await page.locator('[data-action="expand-all"]').click();
+          await expandReadingDepth(page, `${path} mobile`);
+        }
         await documentChecks(page, `${path} ${theme}/${accent} mobile expanded`);
         if (path === "docs/index.html") {
-          for (const lab of ["01-agentic-workflow", "02-intent-to-pr", "03-operating-model",
-            "04-trusted-delivery", "05-capstone"]) {
+          for (const lab of ["01-evidence-to-goal", "02-inner-loop", "03-governed-pr",
+            "04-trusted-delivery", "05-agentic-outer-loop"]) {
             const href = `labs/${lab}/index.html`;
-            check(await page.locator(`#card-day-map a[href="${href}"]`).count() === 1,
+            check(await page.locator(`.hub-agenda a[href="${href}"]`).count() === 1 &&
+              await page.locator(`.hub-agenda a[href="${href}"]`).isVisible(),
               `${path}: agenda links directly to ${lab}`);
           }
         }
       }
-      for (const viewport of [{ width: 1440, height: 900 }, { width: 1920, height: 1080 },
+      for (const viewport of [...(selectedViewport ? [{
+        width: Number(selectedViewport.split("x")[0]), height: Number(selectedViewport.split("x")[1])
+      }] : [{ width: 1440, height: 900 }, { width: 1920, height: 1080 }]),
         ...(isDeck ? [{ width: 1280, height: 720 }] : [])]) {
         await presentation(page, path, url, isDeck, theme, accent, viewport);
       }
@@ -637,13 +765,16 @@ try {
   }
   await preferenceChecks();
   await noScriptChecks();
+  if (pages.some((file) => relative(root, file).replaceAll("\\", "/") === "docs/index.html")) {
+    await landingPrintChecks();
+  }
   if (!pageFilter) await pharmacyJourney();
   assert.deepEqual(failures, [], `Browser defects:\n${failures.join("\n")}`);
   const manifest = (records) => `${JSON.stringify({ capturedAt: new Date().toISOString(), browser: browser.version(),
     sourceHashFormat: "sha256-utf8-lf", captures: records }, null, 2)}\n`;
   if (capture) writeFileSync(join(output, "manifest.json"), manifest(captures));
   if (paletteOutput) writeFileSync(join(paletteOutput, "manifest.json"), manifest(paletteCaptures));
-  console.log(`PASS ${pages.length} materials; six palettes, opposite OS, responsive layouts, presentation order, preferences and no-JS`);
+  console.log(`PASS ${pages.length} materials; eight palettes, opposite OS, responsive layouts, presentation order, preferences and no-JS`);
   if (capture) console.log(`CAPTURE ${captures.length} source-bound browser screenshots in docs/assets/screenshots`);
   if (paletteOutput) console.log(`REVIEW ${paletteCaptures.length} source-bound palette screenshots in ${relative(root, paletteOutput)}`);
 } finally {

@@ -38,7 +38,7 @@ SOFTWARE.
   const id = document.querySelector('meta[name="doc-id"]')?.content ||
     location.pathname.replace(/\.standalone(?=\.html$)/i, "");
   const prefix = "html-docs:" + id + ":";
-  const choices = { theme: ["light", "dark"], accent: ["blue", "orange", "green"] };
+  const choices = { theme: ["light", "dark"], accent: ["blue", "red", "green", "yellow"] };
   const read = (name) => {
     try { return localStorage.getItem(prefix + name); }
     catch { return null; /* Storage may be unavailable for local files. */ }
@@ -62,13 +62,70 @@ SOFTWARE.
   for (const [name, values] of Object.entries(choices)) {
     const fallback = name === "theme" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : values[0];
     const value = [params.get(name), read(name), root.getAttribute("data-default-" + name), fallback]
+      .map(candidate => name === "accent" && candidate === "orange" ? "red" : candidate)
       .find(candidate => values.includes(candidate));
     root.setAttribute("data-" + name, value);
   }
   root.classList.add("js");
-  if (params.get("view") === "slides") root.setAttribute("data-view", "slides");
-  window.HtmlDocs = { read, write, refresh };
+  if (["slides", "sheet"].includes(params.get("view"))) root.setAttribute("data-view", params.get("view"));
+
+  // Print what is on screen. data-print selects the matching print stylesheet.
+  const printTarget = () => {
+    if (document.querySelector(".deck-stage")) return "slides";
+    const view = root.getAttribute("data-view");
+    if (view === "slides" || (view === "sheet" && document.querySelector(".sheet"))) return view;
+    return document.querySelector(".doc") || !document.querySelector(".sheet") ? "read" : "sheet";
+  };
+  let printing = null;
+  addEventListener("beforeprint", () => {
+    if (root.hasAttribute("data-print")) return; // Set by an automated export.
+    const target = printTarget();
+    printing = document.title;
+    root.setAttribute("data-print", target);
+    // The browser proposes the title as the PDF file name.
+    if (target !== "read" && document.querySelector(".doc")) {
+      document.title += target === "slides" ? " - Slides" : " - Sheet";
+    }
+  });
+  addEventListener("afterprint", () => {
+    if (printing === null) return;
+    root.removeAttribute("data-print");
+    document.title = printing;
+    printing = null;
+  });
+
+  // Keep the display awake while presenting, like presentation software does.
+  let lock = null;
+  let awake = false;
+  async function holdScreen() {
+    if (!awake || lock || document.visibilityState !== "visible" || !navigator.wakeLock) return;
+    try {
+      const sentinel = await navigator.wakeLock.request("screen");
+      if (!awake || lock) { sentinel.release(); return; }
+      lock = sentinel;
+      root.setAttribute("data-awake", "");
+      sentinel.addEventListener("release", () => {
+        if (lock !== sentinel) return;
+        lock = null;
+        root.removeAttribute("data-awake");
+      });
+    } catch { /* Denied by battery saver or an embedding policy; retried on input. */ }
+  }
+  function keepAwake(on) {
+    awake = !!on;
+    if (awake) holdScreen();
+    else if (lock) lock.release();
+  }
+  // The browser drops the lock when the tab is hidden; some require a gesture.
+  document.addEventListener("visibilitychange", holdScreen);
+  document.addEventListener("pointerdown", holdScreen);
+  document.addEventListener("keydown", holdScreen);
+
+  window.HtmlDocs = { read, write, refresh, keepAwake };
   document.addEventListener("DOMContentLoaded", refresh);
+  document.addEventListener("click", event => {
+    if (event.target.closest('[data-action="print"]')) window.print();
+  });
   document.addEventListener("click", event => {
     const button = event.target.closest('[data-action="toggle-theme"], [data-action="toggle-accent"]');
     if (!button) return;
@@ -94,7 +151,7 @@ SOFTWARE.
   --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f2; --surface-3: #e8e8e8;
   --border: #dedede; --border-strong: #b8b8b8;
   --text: #161616; --text-muted: #565656; --text-faint: #686868;
-  --accent-light: #0068bd; --accent-dark: #69b8ff;
+  --accent-light: #006da0; --accent-dark: #00a4ef;
   --accent: var(--accent-light);
   --accent-strong: var(--accent);
   --accent-quiet: var(--accent);
@@ -109,20 +166,27 @@ SOFTWARE.
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Mono", "Cascadia Code", ui-monospace, Consolas, "SF Mono", "Liberation Mono", Menlo, monospace;
 }
-[data-theme="dark"], :root:not([data-theme])[data-default-theme="dark"] {
-  color-scheme: dark;
-  --bg: #101010; --surface: #191919; --surface-2: #232323; --surface-3: #2c2c2c;
-  --border: #363636; --border-strong: #595959;
-  --text: #f2f2f2; --text-muted: #b5b5b5; --text-faint: #a0a0a0;
-  --accent: var(--accent-dark);
-  --shadow-1: 0 1px 2px rgba(0,0,0,.3);
-  --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.4);
+/* Screen only: every PDF and printout uses the light palette. */
+@media screen {
+  [data-theme="dark"], :root:not([data-theme])[data-default-theme="dark"] {
+    color-scheme: dark;
+    --bg: #101010; --surface: #191919; --surface-2: #232323; --surface-3: #2c2c2c;
+    --border: #363636; --border-strong: #595959;
+    --text: #f2f2f2; --text-muted: #b5b5b5; --text-faint: #a0a0a0;
+    --accent: var(--accent-dark);
+    --shadow-1: 0 1px 2px rgba(0,0,0,.3);
+    --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.4);
+  }
 }
+[data-accent="red"], :root:not([data-accent])[data-default-accent="red"],
 [data-accent="orange"], :root:not([data-accent])[data-default-accent="orange"] {
-  --accent-light: #a94000; --accent-dark: #ffae72;
+  --accent-light: #bc3a16; --accent-dark: #f25022;
 }
 [data-accent="green"], :root:not([data-accent])[data-default-accent="green"] {
-  --accent-light: #137344; --accent-dark: #6cd6a0;
+  --accent-light: #4c7100; --accent-dark: #7fba00;
+}
+[data-accent="yellow"], :root:not([data-accent])[data-default-accent="yellow"] {
+  --accent-light: #805b00; --accent-dark: #ffb900;
 }
 </style>
   <link rel="stylesheet" href="../../../docs/assets/html-docs/article.css">
@@ -132,258 +196,178 @@ SOFTWARE.
   <script src="../../../docs/assets/materials.js" defer></script>
 </head>
 <body>
-  <div class="controls" role="group" aria-label="Article controls">
-    <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
-    <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
-    <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
-    <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
-    <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
-  </div>
-  <div class="doc">
-    <header class="doc-header" id="opening">
-      <div class="slide-content slide-content--title"><p class="slide-eyebrow">Loop Engineering with GitHub</p><h2 class="slide-title">Show the stateful loop.<br><em>Then unpack it.</em></h2><p class="slide-lead">Protect the strategic message; keep hands-on outcomes bounded.</p></div>
-      <p class="eyebrow">09:00-16:30 · Facilitator runbook</p>
-      <h1>Show the stateful loop before unpacking it</h1>
-      <p class="subtitle">Protect the strategic message before lunch, keep hands-on work bounded, and make every continuation consume state, cite evidence and end with an accountable decision.</p>
-    </header>
-
-    <nav class="doc-nav" aria-label="Related material"><a href="../../../docs/index.html">Workshop agenda</a><a href="../../../docs/index.html?view=slides#opening">Present opening</a><a href="#main">Skip to content</a></nav>
-    <nav class="toc" aria-label="Contents"><p class="toc-label">Contents</p><ol><li><a href="#ch-preparation">Preparation</a></li><li><a href="#ch-readiness">Readiness evidence</a></li><li><a href="#ch-room">Room execution</a></li><li><a href="#ch-pacing">Pacing and transitions</a></li><li><a href="#ch-recovery">Recovery and cleanup</a></li></ol></nav>
-    <main>
-      <section class="chapter" id="ch-preparation"><h2 class="chapter-label">Preparation</h2>
-        <article class="card card--lead" id="card-local-tooling" data-open>
-          <div class="slide-content"><h2 class="slide-title">Restore the checkout<br><em>before preflight.</em></h2><p class="slide-lead">Approved feeds and locked dependencies belong in preparation, not the room.</p></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Restore the instructor checkout before preflight</span><span class="card-sub">Prepare five business days before delivery</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="main"></span><span id="prepare"></span><span id="local-tooling"></span>
-          <p>Use Node.js 20 or later and Git. From this repository's root, inspect the effective npm registry and confirm that it is approved by your platform owner before restoring the locked development dependencies:</p>
+<div class="controls" role="group" aria-label="Article controls">
+  <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
+  <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
+  <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
+  <button type="button" class="ctrl" data-action="print">PDF</button>
+  <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
+  <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
+</div>
+<div class="doc">
+  <header class="doc-header" id="opening">
+    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Facilitator runbook</p><h2 class="slide-title">Rehearse the whole loop.<br><em>Teach one boundary at a time.</em></h2><p class="slide-lead">A clean-start path for the opening walkthrough, five labs, recovery, and cleanup.</p></div>
+    <p class="eyebrow">Full workshop 09:00-15:30 &middot; Adoption and migration 15:00-15:30</p>
+    <h1>Full-day operator guide</h1>
+    <p class="subtitle">Prepare one source repository that supports both the complete opening walkthrough and the attendee fork baseline. Verify every capability, record every fallback, and preserve one progressive artifact chain.</p>
+  </header>
+  <nav class="doc-nav" aria-label="Related material"><a href="../../../docs/index.html">Workshop hub</a><a href="../../../docs/index.html?view=slides#opening">Present opening</a><a href="#main">Skip to content</a></nav>
+  <nav class="toc" aria-label="Contents"><p class="toc-label">Contents</p><ol><li><a href="#ch-preflight">Preflight</a></li><li><a href="#ch-walkthrough">Opening walkthrough</a></li><li><a href="#ch-labs">Lab execution</a></li><li><a href="#ch-profiles">Profiles and capabilities</a></li><li><a href="#ch-recovery">Recovery and cleanup</a></li></ol></nav>
+  <main id="main">
+    <section class="chapter" id="ch-preflight"><h2 class="chapter-label">Prepare and prove the environment</h2>
+      <article class="card card--lead" id="card-local" data-open>
+        <div class="slide-content"><h2 class="slide-title">Restore and validate<br><em>before the room.</em></h2><ul class="slide-points"><li class="frag">Use approved feeds.</li><li class="frag">Validate source and generated workflows.</li><li class="frag">Capture only after content is final.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Instructor checkout</span><span class="card-sub">Complete five business days before delivery.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body"><span id="pre-event-checklist"></span><span id="preflight"></span>
+          <p>Use Node.js 22 or newer. Inspect the effective registry and preserve the lockfile. On a Microsoft-managed machine with no approved project-specific registry, restore through the approved feed:</p>
           <div class="code"><pre><code>npm config get registry
-npm ci --ignore-scripts --no-audit --no-fund
-npm ls --depth=0</code></pre></div>
-          <p>Keep any approved project-specific feed and the existing <code>package-lock.json</code>. Expect <code>fflate</code> and <code>playwright</code> at the declared versions, with no missing or invalid dependency. Do not rely on packages found in a parent checkout. Restore packages during preparation, not in the room: instructor validation uses this checkout, while attendee labs run in station repositories on GitHub.</p>
-          <div class="reveal"><button type="button" class="reveal-toggle" aria-expanded="false">Explicit feed for a Microsoft-managed station</button><div class="reveal-body">
-            <p>If no approved project-specific feed is configured, use the managed feed for this command without changing the user's global configuration:</p>
-            <div class="code"><pre><code>npm ci --ignore-scripts --no-audit --no-fund --registry=https://packagefeedproxy.microsoft.io/npm/
-npm ls --depth=0</code></pre></div>
-            <p>If a locked version is unavailable or quarantined, stop and request an approved resolution. Do not edit the lockfile or switch to a public registry to bypass policy.</p>
-          </div></div>
-          <p>Workflow-source validation additionally requires the approved <code>gh aw</code> extension at <code>v0.86.2</code> when you validate workflow sources from the authoring checkout. Browser captures require a separately prepared browser; run <code>npm run validate:html</code> and <code>npm run capture</code> before delivery. Attendees need browser access to their station repository; Git, PowerShell, and <code>gh</code> are optional except where a lab step explicitly asks for them.</p>
-          </div></article>
-        <article class="card" id="card-station-preparation">
-          <div class="slide-content"><h2 class="slide-title">Prepare stations.<br><em>Protect GitHub evidence.</em></h2><ul class="slide-points"><li class="frag">Every attendee needs a reachable repository.</li><li class="frag">Preview features get an honest fallback.</li><li class="frag">Reference artifacts keep the group moving.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Prepared station repositories are the live lab environment</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body">
-          <ol class="steps">
-            <li><h4>Confirm the profile</h4><p>Confirm whether the room uses the sandbox or enterprise station profile. Keep organization names, repository prefixes, teams, environments, and preview flags in configuration, not in the learner-facing story.</p></li>
-            <li><h4>Verify station repositories</h4><p>Open the station roster and verify every repository exists, opens in the browser, has Actions enabled, and contains the prepared pharmacy service, issue forms, workflows, CODEOWNERS, Project link, and lab starter files.</p></li>
-            <li><h4>Verify write access</h4><p>Before Chapter 1, each attendee must be signed in and able to create a branch in their assigned repository. Pair anyone who cannot write. Do not spend chapter time repairing accounts.</p></li>
-            <li><h4>Confirm protection and evidence controls</h4><p>Check whether this station's plan and visibility actually enforce default-branch protection and required code-owner review. The sandbox profile creates private personal repositories; do not assume those controls are available without checking settings and a harmless rejection. If unavailable, announce that Lab 3 will record the gap and use a labelled instructor demonstration from a protected repository only when one is available. Confirm Actions and runner capacity separately.</p></li>
-            <li><h4>Confirm preview and licensed capabilities</h4><p>Record which stations can run GitHub Agentic Workflows public preview, Copilot coding agent, code scanning, Projects, environments, and Secret Protection. Announce any missing capability before the lab and use the documented fallback.</p></li>
-            <li><h4>Prepare fallback artifacts</h4><p>Keep the five lab guides and their <code>artifacts\</code> folders open. These reference files let attendees catch up without pretending a generated message verified their work.</p></li>
-            <li><h4>Prepare the instructor fallback station</h4><p>Keep one separate synthetic station signed in for the opening demonstration. If its plan supports protection, verify a harmless direct-push rejection there in advance; otherwise the Lab 3 enforcement scene is omitted. Label its artifacts as the instructor's work, not an attendee's completed result.</p></li>
-            <li><h4>Send the preparation message</h4><p>Send each attendee the source repository URL, their two-digit attendee number, sign-in instructions, and links to the five lab guides. Lab 2 Step 1 forks it as <code>github-loop-engineering-NN</code> into the workshop organization, and Step 2 opens it in a Codespace, so a browser is enough. Attendees who prefer a laptop need Git, Node.js 20 or newer, <code>gh</code>, and VS Code with Copilot Chat signed in.</p></li>
+npm ci --ignore-scripts --no-audit --no-fund --registry=https://packagefeedproxy.microsoft.io/npm/
+npm test
+npm run validate
+npm run validate:html
+npm run validate:workflows
+npm run capture</code></pre></div>
+          <p>Do not switch to a public registry when a locked version is unavailable. Resolve the approved-feed or quarantine issue before rehearsal.</p>
+        </div>
+      </article>
+      <article class="card" id="card-source">
+        <div class="slide-content"><h2 class="slide-title">The source repository is<br><em>the prepared product.</em></h2><ul class="slide-points"><li class="frag">Fork baseline equals demo baseline.</li><li class="frag">Complex controls are preconfigured.</li><li class="frag">Recovery artifacts are revisioned.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Source repository checklist</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ul>
+            <li>Service baseline and all deterministic tests pass.</li>
+            <li>Synthetic dual-case intake, feature and bug Issue forms, agents, project skills, PR template, CI, release rehearsal, review workflows, and recurring Agentic Workflow source and lock are on the default branch.</li>
+            <li>Forking, Issues, Actions, Codespaces or local clone, and local Copilot are enabled. Cloud-agent assignment and Copilot code review each pass their separate enterprise or organization policy check.</li>
+            <li>The Station organization has at least one assigned Copilot seat. Copilot CLI and <strong>Allow use of Copilot CLI billed to the organization</strong> are enabled at the policy level that enforces the setting. This is the organization-billed path for Agentic Workflows; an enterprise Copilot purchase or an enabled CLI client does not replace this separate billing policy.</li>
+            <li>Station organization access enables Code Quality for all current and future workshop repositories; the live preflight verifies each repository reports <code>configured</code>.</li>
+            <li>The instructor has prepared feature and bug Issues, two Goal Cards, local and cloud PRs, check runs, review comments, release evidence, and Agentic Workflow outcomes.</li>
+            <li>Every recorded or simulated state is labeled before presentation.</li>
+          </ul>
+          <h4>Automate what the APIs can prove</h4>
+          <ol>
+            <li>Assign the delivery account a Copilot seat in the Station organization. Verify <code>GET /orgs/ORG/copilot/billing</code> reports at least one seat and <code>GET /orgs/ORG/copilot/billing/seats</code> names the intended account.</li>
+            <li>Enable Code Quality for every Station repository through <code>PATCH /repos/OWNER/REPO/code-quality/setup</code>, then wait for its initial analysis and a PR-bound <code>Code Quality: PR #NUMBER</code> run.</li>
+            <li>Compile the checked-in Agentic Workflows and preserve their lock files. The workshop sources use <code>gpt-5.3-codex</code>, which the target-host rehearsal returned in its live Copilot model catalog.</li>
+            <li>Run the live preflight against one prepared repository. A CLI version, seat, or compiled workflow is necessary evidence, but none independently proves inference.</li>
           </ol>
-          </div></article>
-        <article class="card" id="card-pre-event-checklist">
-          <div class="slide-content"><h2 class="slide-title">Seed before the room.<br><em>Rehearse the coach.</em></h2><ul class="slide-points"><li class="frag">Station creation is a known gap.</li><li class="frag">Dry-run every write first.</li><li class="frag">Probe the coach on one station.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Pre-event checklist from repository creation to room readiness</span><span class="card-sub">Ten days out to the morning of delivery.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="pre-event-checklist"></span>
-          <aside class="callout callout--warning"><p class="callout-label">Known gap</p><p>Automation creates and pushes one rendered station repository at a time in the sandbox profile. It does not configure branch protection, rulesets, Projects, Copilot policies, or team access. The enterprise profile keeps remote provisioning disabled, so enterprise stations are created and governed by the organization owners. Plan the manual steps below; do not promise a one-command room.</p></aside>
-          <ol class="steps">
-            <li><h4>Ten days out &middot; Copy the source repository</h4><p>Lab 2 attendees fork this workshop repository itself; the station sits at its root. Import or push its default branch into the workshop organization as <code>github-loop-engineering</code>, with a credential that has the <code>workflow</code> scope, because it contains <code>.github/workflows/</code>. Refresh it from this repository before each delivery.</p><p><strong>Expected result:</strong> the repository shows an enabled <strong>Fork</strong> button, with <code>.devcontainer/</code>, <code>context/intake/backlog.md</code>, and <code>.github/agents/</code> at its root. Give attendees read access to it. In the workshop organization, allow members to fork private repositories and to fork into the organization, enable Codespaces and Copilot cloud agent for members, and record any capability you cannot enable. A fork does not copy issues, so the planned backlog lives in <code>context/intake/backlog.md</code>.</p></li>
-            <li><h4>Ten days out &middot; Create station repositories</h4><p>For each station in the roster, preview and then create the repository. The sandbox profile refuses <code>--apply</code> for any repository outside its configured owner and prefix.</p><div class="code"><pre><code>node platform/scripts/workshop.mjs plan --profile sandbox --station team01
-node platform/scripts/workshop.mjs provision --profile sandbox --station team01
-node platform/scripts/workshop.mjs provision --profile sandbox --station team01 --apply</code></pre></div><p><strong>Expected result:</strong> the repository exists, and its default branch contains the pharmacy service, <code>context/intake/</code>, <code>.github/agents/</code>, and <code>.github/instructions/</code>.</p></li>
-            <li><h4>Ten days out &middot; Seed the backlog</h4><p>Run the seed without <code>--apply</code> first. It reads existing issues and labels and prints <code>CREATE</code> or <code>SKIP</code> for each synthetic backlog item. Apply only after the plan matches your expectation. A second apply is safe: items that already carry their seed marker or exact title are skipped, and nothing is edited or deleted.</p><div class="code"><pre><code>node platform/scripts/workshop.mjs seed --profile sandbox --station team01
-node platform/scripts/workshop.mjs seed --profile sandbox --station team01 --apply</code></pre></div><p><strong>Expected result:</strong> five open issues titled <code>[Backlog] &hellip;</code> with the <code>backlog</code> and <code>workshop-seed</code> labels. If the plan reports <code>UNVERIFIED</code>, the command could not read the repository, and <code>--apply</code> refuses to run; fix access first. Apply also refuses unless the repository name matches the station and its committed <code>.workshop-station.json</code> marker names the same profile and station.</p><p><strong>Enterprise profile:</strong> stations are provisioned by organization owners, but seeding is still allowed because it only adds synthetic issues and labels. Run the same commands with <code>--profile enterprise</code> and a token that can create issues and labels in each station.</p></li>
-            <li><h4>Five days out &middot; Configure what automation does not</h4><p>Per station: check the repository plan and visibility first, then configure and verify default-branch protection, code-owner review and required CI if available. If unavailable, mark these as <strong>not enforced</strong> on that station; retain voluntary partner review and the live CI check. Create the Project and link it where supported, grant attendee write access, and confirm Actions. Record capability state for Agentic Workflows, Copilot coding agent, code scanning and Secret Protection.</p></li>
-            <li><h4>Five days out &middot; Rehearse Lab 2 from a fork</h4><p>With an attendee-like account, fork the source repository into the workshop organization as <code>github-loop-engineering-99</code>, enable Actions and Issues, and open a Codespace on it. Confirm the setup terminal ends with <code>fail 0</code> and that the Copilot Chat agent picker lists <strong>requirement-refiner</strong>. Run Lab 2 through Step 6 and confirm that <code>@copilot</code> on the pull request starts a session and pushes a commit. Delete the rehearsal repository afterwards.</p></li>
-            <li><h4>Five days out &middot; Confirm custom agent visibility</h4><p>Clone one station, start Copilot CLI in that folder, and run <code>/agent</code>. Confirm <strong>requirement-refiner</strong> is listed. Repeat in VS Code with the agent dropdown in Copilot Chat. If an organization policy disables custom agents or Copilot CLI, the coached intake runs as the paired fallback in the Lab 2 guide; announce that before Chapter 2.</p></li>
-            <li><h4>One day out &middot; Probe the coach</h4><p>Select the coaching agent and ask it to write the requirement for you. It must answer with a question, not a requirement. Then send a <code>CONFIRMED:</code> message and verify it returns a draft that marks anything you did not state as <code>NOT CONFIRMED</code>. Close the chat without creating an issue, so the station stays clean.</p></li>
-            <li><h4>One day out &middot; Rehearse the opening in a separate instructor station</h4><p>Prepare a <strong>different</strong> synthetic request so Lab 2's stock-suggestion acceptance criteria remain undisclosed: create an issue titled <code>Prevent overselling after consecutive reservations</code>. Add a test-only PR to <code>test/inventory.test.mjs</code> that reserves five units of <code>MED-001</code> twice, then requests three more and verifies the reservation result's status is 409 and remaining stock is unchanged. Run the station CI, request a human review, and record the issue, PR, check-run links and SHA. Rehearse opening each tab in ten minutes. Do not use attendee stations for this preparation. If a real chain is unavailable, show this test requirement and the existing synthetic stock tests as <em>local examples</em>, then the labelled <a href="../security-remediation/evidence/baseline-codeql.json">archived CodeQL observation</a> separately; do not describe this combination as one live release.</p></li>
-            <li><h4>Morning of delivery &middot; Recheck the evidence</h4><p>Run the station readiness check below. Confirm the source repository still shows an enabled <strong>Fork</strong> button and that no attendee fork exists yet. Keep the Lab 2 <code>feature-request.md</code> open as the facilitator reference; it is not in the station repository, so the coach cannot leak it.</p></li>
+          <h4>Complete the enterprise controls manually</h4>
+          <ol>
+            <li>In Enterprise <strong>AI controls</strong>, enable Copilot CLI, Copilot code review, AI credits paid usage, and <strong>Allow use of Copilot CLI billed to the organization</strong>. If the enterprise delegates a policy, enable it in the Station organization instead.</li>
+            <li>Open the Station organization policy page. Confirm inherited controls are visibly ON; a grey control that is OFF is an enterprise denial, not a successful organization configuration.</li>
+            <li>Create a disposable PR after the policies and seat are active. Require green deterministic CI, a successful Code Quality PR run, successful Goal Review and Documentation Review runs, and both revision-bound workflow comments.</li>
+            <li>Request native Copilot code review from the PR sidebar. Do not treat an HTTP <code>201</code> from the review-request API as proof: verify an actual Copilot review or review event on the current head. Record a missing review as a capability failure and use the facilitator fallback.</li>
           </ol>
-          </div></article>
-      </section>
-
-      <section class="chapter" id="ch-readiness"><h2 class="chapter-label">Readiness evidence</h2>
-        <article class="card" id="card-preflight">
-          <div class="slide-content"><h2 class="slide-title">Station readiness proves<br><em>the live path.</em></h2><p class="slide-lead">Check repositories, access and preview capabilities before promising the GitHub journey.</p></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Run an honest station readiness check before the room opens</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="preflight"></span>
-          <p>Readiness is a live station check: repositories exist, attendees can write, protection capability is recorded honestly, and preview-dependent steps have named fallbacks.</p>
-          <ol class="steps">
-            <li><h4>Repository reachability</h4><p>Open every station repository URL from the roster. Confirm the repository loads, the default branch exists, Actions are enabled, and the lab starter files are present.</p><div class="code"><pre><code>$stations = @(
-  "OWNER/station-team01"
-)
-foreach ($repo in $stations) {
-  gh repo view $repo --json nameWithOwner,url,viewerPermission
-}</code></pre></div><p><strong>Expected visible state:</strong> each repository opens in GitHub and reports write or admin permission for the facilitator account. Attendees still verify their own write access at sign-in.</p></li>
-            <li><h4>Attendee write access</h4><p>Have each attendee create a temporary branch in their station repository, then delete it. The visible state is a branch creation success, not a generated pass message.</p></li>
-            <li><h4>Protection evidence</h4><p>Check actual default-branch settings and probe evidence for each station, not just the CODEOWNERS file. A private personal sandbox repository may not have enforceable protection on its plan. Record a per-station <strong>enforced</strong> or <strong>not enforced</strong> status; skip the Lab 3 push probe where protection is not confirmed. Keep CI check status separate from required-check policy.</p></li>
-            <li><h4>Preview capability list</h4><p>Record which stations can run Agentic Workflows public preview and Copilot coding agent. If a capability is unavailable, mark the affected step as fallback before attendees start.</p></li>
-            <li><h4>Security and delivery capability list</h4><p>Confirm whether code scanning, Secret Protection, environments, and deployment records are live in this profile. If not, prepare the recorded first-party evidence and label it as captured evidence.</p></li>
-            <li><h4>Guide links</h4><p>Open the five lab guides from this operator guide and confirm each local link resolves. The presenter drives attendees through GitHub artifacts, not generated console receipts.</p></li>
+        </div>
+      </article>
+      <article class="card" id="card-rehearse">
+        <div class="slide-content"><h2 class="slide-title">Rehearse as an attendee.<br><em>Record the exact boundary.</em></h2><ul class="slide-points"><li class="frag">Start from a clean fork.</li><li class="frag">Use the delivery account and host.</li><li class="frag">Record capability gaps, not guesses.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Target-host rehearsal</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Authenticate the designated instructor account on the target GitHub host. Remove environment tokens that shadow the approved keyring login.</li>
+            <li>Create a uniquely named disposable rehearsal fork or repository. Never reuse a participant repository.</li>
+            <li>Run Labs 1-5 in order from the attendee guide. Record repository URL, default branch, account, start SHA, each check conclusion, preview capability, fallback used, and final SHA.</li>
+            <li>Repeat the opening walkthrough from its prepared states and time every transition.</li>
+            <li>Clean up only the exact rehearsal resources after ownership and workshop marker verification.</li>
           </ol>
-          <p>Keep the <a href="../../../docs/index.html">agenda and its Slides view</a>, Lab 1 through Lab 5, recorded security evidence, and trusted-delivery runbooks open in a dedicated browser profile.</p>
-          <p>The 13:15 delivery scene combines the <a href="../security-remediation/operator-guide.html">CodeQL remediation</a>, <a href="../secret-protection/operator-guide.html">Secret Protection</a>, and <a href="../trusted-delivery/operator-guide.html">trusted delivery</a> runbooks. Say which evidence is live and which evidence is recorded. Never claim independent separation of duties, branch enforcement, a live endpoint, or production deployment unless the selected profile proves it that day.</p>
-          </div></article>
-
-        <article class="card" id="card-go-stop">
-          <div class="slide-content"><h2 class="slide-title">A reachable repo<br><em>is not event readiness.</em></h2><ul class="slide-points"><li class="frag">Require named human sign-off.</li><li class="frag">Check live evidence for the profile.</li><li class="frag">Reduce scope rather than invent results.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Go and stop conditions require live GitHub evidence</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="go-stop"></span>
-          <p>A station repository that opens is only the first gate. Treat readiness as four independent confirmations.</p>
-          <div class="summary-grid">
-            <div class="summary-item"><span class="summary-label">Go evidence</span><h4>What must be true</h4><ul><li>Every attendee has a station repository URL and can write to it, or is paired with someone who can.</li><li>Protection and required-review capability are verified or labelled unavailable; Actions and CODEOWNERS are ready, and Lab 3's push probe is disabled where protection is absent.</li><li>Agentic Workflows public preview, Copilot coding agent, code scanning, Secret Protection, and environment features are either enabled or have an announced fallback.</li><li>The instructor can open the five lab guides and every referenced lab artifact.</li><li>A named human signs off that the selected delivery mode is ready.</li></ul></div>
-            <div class="summary-item"><span class="summary-label">Not implied</span><h4>What the readiness check does not prove</h4><ul><li>That preview Agentic Workflows will run without queueing or product change.</li><li>That every attendee has Copilot coding agent entitlement.</li><li>That a recorded security or deployment chain belongs to an attendee's current revision.</li><li>That a green check authorizes release.</li><li>That sandbox controls equal future enterprise policy.</li></ul></div>
-          </div>
-          <p><strong>Go:</strong> all live station checks pass, fallback boundaries are announced, and a named human accepts the plan. For recorded delivery, open the retained real release chain and native security records; keep any simulation or historical capture labelled as such. For live scenes, require fresh same-repository evidence.</p>
-          <aside class="callout callout--warning"><p class="callout-label">Warning</p><p><strong>Stop or downgrade:</strong> repair missing repository access or disabled Actions. If branch protection is absent, skip the attendee push probe and required-review claim; demonstrate it only in a separately verified instructor repository, or record the control as unavailable. Never call a recording live, transfer a check from another revision, or continue without sign-off.</p></aside>
-          </div></article>
-      </section>
-
-      <section class="chapter" id="ch-room"><h2 class="chapter-label">Room execution</h2>
-        <article class="card" id="card-room-commands">
-          <div class="slide-content"><h2 class="slide-title">GitHub states need<br><em>observable outcomes.</em></h2><p class="slide-lead">Each lab ends at a visible repository artifact, not a generated pass receipt.</p></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Chapters 1 and 2 move from bounded automation to verified handoff</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="room-commands"></span>
-          <p>Drive the room from the attendee's station repository. Point at the GitHub page that proves progress, state the stop condition, and use the lab artifact when an attendee falls behind.</p>
-          <ol class="steps">
-            <li><h4>Prepare · Open the station repository</h4><p><strong>Presenter action:</strong> Have attendees open their assigned repository, the <a href="../../../docs/labs/01-agentic-workflow/index.html">Lab 1 guide</a>, and the Actions tab.</p><p><strong>Expected visible state:</strong> the attendee is signed in, can create a branch and sees <code>.github\workflows\repository-pulse.md</code>; protection status was checked before the room, not inferred from the file.</p><p><strong>Stop or transition:</strong> pair anyone without write access before the timer starts.</p><p><strong>Catch-up artifact:</strong> use the instructor fallback station only as a labelled fallback.</p></li>
-            <li><h4>Chapter 1 · Narrow the agentic workflow</h4><p><strong>Presenter action:</strong> Point at the workflow contract and ask attendees to remove pull request and Actions read scope, reduce budgets, and narrow the instruction.</p><p><strong>Expected visible state:</strong> a draft pull request shows the proposed source change and a <strong>Test service</strong> check; that check does not compile the agentic workflow.</p><p><strong>Stop or transition:</strong> source-only PRs remain drafts. A facilitator may compile, commit and validate the corresponding lock on a station branch before any merge or live run.</p><p><strong>Catch-up artifact:</strong> compare <a href="../../../docs/labs/01-agentic-workflow/artifacts/repository-pulse.reference.md">repository-pulse.reference.md</a> in the draft PR; do not merge a stale lock.</p></li>
-            <li><h4>Chapter 1 · Run or inspect the workflow contract</h4><p><strong>Presenter action:</strong> Only run <strong>Repository pulse</strong> if the changed lock is validated and merged and preview is enabled. Otherwise compare the draft source and the old lock; do not suggest that an issue was produced.</p><p><strong>Expected visible state:</strong> a live run may no-op if the seven-day window has no new actionable evidence. An eligible signal may produce an owned issue with the <code>&lt;!-- workshop-pulse:v1 --&gt;</code> marker; an unchanged second run should no-op by instruction, though inference may still occur.</p><p><strong>Stop or transition:</strong> attendees can explain that per-run caps limit blast radius but do not guarantee recurrence.</p><p><strong>Catch-up artifact:</strong> use the <a href="../../../docs/labs/01-agentic-workflow/artifacts/repository-pulse.reference.md">reference contract</a>, not a nonexistent recorded run.</p></li>
-            <li><h4>Chapter 2 · Create a repository and refine intent</h4><p><strong>Presenter action:</strong> Have attendees follow Lab 2 Steps 1 to 3: fork the source repository as <code>github-loop-engineering-NN</code>, enable Actions and Issues, open a Codespace, select the <strong>requirement-refiner</strong> agent in Copilot Chat, and answer its questions.</p><p><strong>Expected visible state:</strong> each attendee has their own repository, a running Codespace, and a draft produced only after a <code>CONFIRMED:</code> message, with unconfirmed fields marked <code>NOT CONFIRMED</code>.</p><p><strong>Stop or transition:</strong> at 15 minutes, move everyone to Step 4 whether or not the draft is complete.</p><p><strong>Catch-up artifact:</strong> the paired fallback questions in the Lab 2 guide replace the agent.</p></li>
-            <li><h4>Chapter 2 · Turn intent into GitHub artifacts</h4><p><strong>Presenter action:</strong> Open the <a href="../../../docs/labs/02-intent-to-pr/index.html">Lab 2 guide</a>, the issue form, and the draft pull request.</p><p><strong>Expected visible state:</strong> a structured issue exists and the draft pull request is expected-red on <code>test\suggestion.test.mjs</code>.</p><p><strong>Stop or transition:</strong> implementation starts only after the red acceptance test proves the current gap.</p><p><strong>Catch-up artifact:</strong> use <a href="../../../docs/labs/02-intent-to-pr/artifacts/feature-request.md">feature-request.md</a> and <a href="../../../docs/labs/02-intent-to-pr/artifacts/suggestion.test.mjs">suggestion.test.mjs</a>.</p></li>
-            <li><h4>Chapter 2 · Review and merge the handoff</h4><p><strong>Presenter action:</strong> Attendees comment <code>@copilot</code> on their pull request. Where Copilot cloud agent is unavailable, they implement in the Codespace with Copilot Chat agent mode and label the fallback in the pull request.</p><p><strong>Expected visible state:</strong> the pull request changes only <code>src\inventory.mjs</code> and <code>test\suggestion.test.mjs</code>, required checks are green, review is recorded, and the issue links to the merged PR.</p><p><strong>Stop or transition:</strong> the revision is merged or explicitly blocked because checks or scope drift failed.</p><p><strong>Catch-up artifact:</strong> copy <a href="../../../docs/labs/02-intent-to-pr/artifacts/inventory.reference.mjs">inventory.reference.mjs</a> if the time box expires.</p></li>
+          <div class="code"><pre><code>$env:GH_HOST = "YOUR-GITHUB-HOST"
+$owner = gh api user --hostname $env:GH_HOST --jq .login
+node platform/scripts/workshop.mjs preflight --profile sandbox --host $env:GH_HOST --owner $owner --repository "$owner/YOUR-REPOSITORY" --live</code></pre></div>
+          <p>Resolve the owner from the authenticated session; do not commit the host, account, token, or repository name into a profile.</p>
+          <p><strong>Stop:</strong> do not call a lab live-ready if the required participant action was replaced by an unlabeled recording, the recovery artifact does not match the current source, or a cleanup target is ambiguous.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-walkthrough"><h2 class="chapter-label">09:00-09:45 &middot; Opening walkthrough</h2>
+      <article class="card" id="card-demo">
+        <div class="slide-content"><h2 class="slide-title">Show the destination<br><em>before teaching the parts.</em></h2><ul class="slide-points"><li class="frag">One story, one artifact chain.</li><li class="frag">Pause at every trust boundary.</li><li class="frag">End with the next decision.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Timed presenter path</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <dl>
+            <dt>09:00-09:05 &middot; Puzzle</dt><dd>Show the conflicting synthetic evidence. Ask why "agent, fix this" cannot determine authorized scope, done evidence, or release authority.</dd>
+            <dt>09:05-09:10 &middot; Confirmed intent</dt><dd>Show one cited brief separating feature and bug, then the independent confirmation and repository-qualified approval for each Issue.</dd>
+            <dt>09:10-09:14 &middot; Goal Cards</dt><dd>Show both approved cards in Issue context before delegation. State that the skill designs each loop but does not start work.</dd>
+            <dt>09:14-09:22 &middot; Two agent loops</dt><dd>Show the local feature loop from red to green, then the cloud-agent bug assignment and its asynchronous PR handoff.</dd>
+            <dt>09:22-09:30 &middot; Governed PRs</dt><dd>Compare the two PRs. Point to deterministic CI and Code Quality, native Copilot review, Goal Review, Documentation Review, and human decisions.</dd>
+            <dt>09:30-09:36 &middot; Trusted delivery and security</dt><dd>Trace merge SHA, smoke evidence, artifact digest, environment approval, and rollback. Briefly switch to the verified public demo repository for CodeQL, push protection, secret scanning, and Autofix; label its evidence as separate.</dd>
+            <dt>09:36-09:42 &middot; Agentic recurrence</dt><dd>Compare triage, deployment readiness, and repository pulse through triggers, permissions, safe outputs, budgets, reconciliation, and remaining authority.</dd>
+            <dt>09:42-09:45 &middot; Map the day</dt><dd>Define inner loop, outer loop, and recurrence; point participants to Lab 1.</dd>
+          </dl>
+          <p><strong>Presenter stop conditions:</strong> switch to the next prepared state after two minutes of network, queue, authentication, or model delay. Say which state is live and which is prepared. Do not debug platform setup in front of the room.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-labs"><h2 class="chapter-label">Run the progressive labs</h2>
+      <article class="card" id="card-lab1">
+        <div class="slide-content"><h2 class="slide-title">Lab 1 creates<br><em>two bounded needs.</em></h2><ul class="slide-points"><li class="frag">Fork before writing.</li><li class="frag">Separate feature from bug.</li><li class="frag">Approve each write.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">09:45-10:30 &middot; Evidence to engineering intent</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>Verify each attendee works in their own fork and can open a Codespace or approved local clone. Lab 1 ends with one feature Issue and one bug Issue. The refiner may not combine them or use one approval for both writes.</p>
+          <p><strong>Recovery at minute 35:</strong> use the two reference Issue artifacts while preserving the attendee's evidence classification and approval decisions.</p>
+        </div>
+      </article>
+      <article class="card" id="card-lab2">
+        <div class="slide-content"><h2 class="slide-title">Lab 2 compares<br><em>local and cloud loops.</em></h2><ul class="slide-points"><li class="frag">Publish context before delegation.</li><li class="frag">Observe red before green.</li><li class="frag">Receive two PR handoffs.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">10:45-11:45 &middot; Goal Cards and two agent loops</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>Require both approved Goal Cards to be present in Issue comments before assigning the bug. Stop the local path after the red test and before commit. Monitor the asynchronous bug PR without making the room wait for model execution.</p>
+          <p><strong>Recovery at minute 45:</strong> use the feature reference test or implementation and the instructor's source-bound cloud PR. Label a delayed or unavailable assignment rather than impersonating it.</p>
+        </div>
+      </article>
+      <article class="card" id="card-lab3">
+        <div class="slide-content"><h2 class="slide-title">Lab 3 challenges<br><em>both handoffs.</em></h2><ul class="slide-points"><li class="frag">Two PRs, two revision identities.</li><li class="frag">Deterministic and reasoning evidence differ.</li><li class="frag">Humans decide each merge.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">11:45-12:35 &middot; Governed pull requests</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>Use the feature PR for the full review path and compare the cloud PR handoff. Request native review on current heads. Code Quality and organization-billed Agentic Workflow execution are live only when preflight marks each one PASS; attendees inspect findings but do not change billing or organization policy. Merge the feature only when its required evidence is complete.</p>
+          <p><strong>Recovery at minute 30:</strong> use the instructor PRs to compare scopes, then record any missing station capability rather than fabricate a pass.</p>
+        </div>
+      </article>
+      <article class="card" id="card-lab4">
+        <div class="slide-content"><h2 class="slide-title">Lab 4 binds<br><em>revision, bytes, and authority.</em></h2><ul class="slide-points"><li class="frag">Package current main only.</li><li class="frag">Verify smoke and digest evidence.</li><li class="frag">Exercise an environment gate.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">13:20-14:10 &middot; Trusted delivery and operational readiness</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>Ensure the feature is merged and <code>workshop-preview</code> has a required reviewer. Pair dispatchers with different reviewers. The workflow packages only current <code>main</code>, verifies the digest after approval, and explicitly performs no external production deployment.</p>
+          <p><strong>Recovery at minute 35:</strong> use the source-bound recorded release run, label environment enforcement unavailable, and complete a BLOCKED decision when authority or rollback evidence is missing.</p>
+        </div>
+      </article>
+      <article class="card" id="card-lab5">
+        <div class="slide-content"><h2 class="slide-title">Lab 5 authors<br><em>two bounded agentic steps.</em></h2><ul class="slide-points"><li class="frag">Triage comments once.</li><li class="frag">Readiness advises only.</li><li class="frag">Pulse reconciles owned state.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">14:20-15:00 &middot; Author agentic outer loops</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>Participants author triage, complete the readiness scaffold, and compile both only with the approved toolchain. They then inspect repository pulse for ownership and no-op reconciliation. Live execution remains capability-gated.</p>
+          <p><strong>Recovery at minute 25:</strong> use the readiness reference and review both sources without claiming execution. Keep SRE agent comparison optional and capability-gated.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-profiles"><h2 class="chapter-label">Profiles, adoption, and migration</h2>
+      <article class="card" id="card-profiles">
+        <div class="slide-content"><h2 class="slide-title">Configuration changes.<br><em>The learning model does not.</em></h2><ul class="slide-points"><li class="frag">Sandbox labels missing enforcement.</li><li class="frag">Station demonstrates central policy.</li><li class="frag">Neither changes the core artifact chain.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Capability briefing</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>Before Lab 1, announce the selected profile and a short capability matrix for forking, Codespaces, local Copilot, cloud-agent assignment, Copilot code review, Agent Skills, Actions, Code Quality, environment review, rulesets, Agentic Workflow compilation, and organization-billed Agentic Workflow execution. Present CodeQL, secret scanning, push protection, and Autofix as a separate verified facilitator demo.</p>
+          <p>From 15:00 to 15:30, move from the completed loop to adoption and Azure DevOps migration. Map intent, code, evidence, authority, identity, and release boundaries before discussing individual product features. Extended deliveries add one hour for repository and pipeline inventory, coexistence, Actions Importer output, OIDC, and migration waves.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-recovery"><h2 class="chapter-label">Reset, cleanup, and evidence retention</h2>
+      <article class="card" id="card-cleanup">
+        <div class="slide-content"><h2 class="slide-title">Dry-run cleanup.<br><em>Delete only proven workshop resources.</em></h2><ul class="slide-points"><li class="frag">Resolve exact targets.</li><li class="frag">Verify ownership markers.</li><li class="frag">Retain the rehearsal record.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Cleanup procedure</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Export the rehearsal record and links required for presenter evidence.</li>
+            <li>List exact disposable repository and branch names. Confirm owner, prefix, and committed workshop marker.</li>
+            <li>Run the workshop cleanup script without apply. Read every target.</li>
+            <li>Apply only to the confirmed rehearsal resources. Never use wildcard or broad organization deletion.</li>
+            <li>Re-run preflight before the next delivery rather than trusting retained state.</li>
           </ol>
-          <aside class="callout callout--warning"><p class="callout-label">Warning</p><p>GitHub Agentic Workflows are public preview, and Copilot coding agent requires entitlement and repository enablement. Use those capabilities live only when the station proves access. Otherwise use the labelled fallback path in the relevant lab guide.</p></aside>
-          </div></article>
-        <article class="card" id="card-room-change">
-          <div class="slide-content"><h2 class="slide-title">Turn policy into<br><em>visible GitHub control.</em></h2><ul class="slide-points"><li class="frag">Owners appear in pull requests.</li><li class="frag">Protected branches reject shortcuts.</li><li class="frag">Security proof stays revision-bound.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Chapters 3 and 4 make governance and delivery controls observable</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body">
-          <ol class="steps">
-            <li><h4>Chapter 3 · Add workflow ownership</h4><p><strong>Presenter action:</strong> Open the <a href="../../../docs/labs/03-operating-model/index.html">Lab 3 guide</a> and <code>.github\CODEOWNERS</code>. Have attendees add the named workflow owner on a branch.</p><p><strong>Expected visible state:</strong> the pull request names or requests the workflow reviewer; only an enforced protected station can call that review required.</p><p><strong>Stop or transition:</strong> the room can explain who may propose, who may approve, and whether bypass is configured.</p><p><strong>Catch-up artifact:</strong> use <a href="../../../docs/labs/03-operating-model/artifacts/CODEOWNERS.reference">CODEOWNERS.reference</a> with the real station reviewer substituted.</p></li>
-            <li><h4>Chapter 3 · Prove or classify stop authority</h4><p><strong>Presenter action:</strong> Guide the direct-push probe only for stations whose enforcement was confirmed beforehand. Otherwise skip the push and show a rejection from a separately verified instructor station, labelled as such, if available.</p><p><strong>Expected visible state:</strong> an actual rejection on a protected station, or a written gap for stations without protection.</p><p><strong>Stop or transition:</strong> record which station produced the proof; never attribute an instructor rejection to an attendee station.</p><p><strong>Catch-up artifact:</strong> when unavailable, move to the governance decision record with a missing-control entry.</p></li>
-            <li><h4>Chapter 3 · Record seven decisions</h4><p><strong>Presenter action:</strong> Have attendees copy the governance template to <code>docs\governance-decisions.md</code>, answer seven decisions, and open a pull request.</p><p><strong>Expected visible state:</strong> the merged decision record names owners, budget authority, bypass, escalation, and policy scope.</p><p><strong>Stop or transition:</strong> vague answers are rejected before merge.</p><p><strong>Catch-up artifact:</strong> use <a href="../../../docs/labs/03-operating-model/artifacts/governance-decisions.md">governance-decisions.md</a> and fill it with station-specific names.</p></li>
-            <li><h4>Chapter 4 · Harden the title workflow</h4><p><strong>Presenter action:</strong> Open the <a href="../../../docs/labs/04-trusted-delivery/index.html">Lab 4 guide</a>, read the unsafe fragment without executing it, and have attendees create the hardened workflow PR.</p><p><strong>Expected visible state:</strong> the hardening pull request is reviewed and merged; <code>PR_TITLE</code> is passed through <code>env</code> and printed with <code>printf '%s\n' "$PR_TITLE"</code>.</p><p><strong>Stop or transition:</strong> the reviewer can explain why the title is now data.</p><p><strong>Catch-up artifact:</strong> compare with <a href="../../../docs/labs/04-trusted-delivery/artifacts/title-check.reference.yml">title-check.reference.yml</a>.</p></li>
-            <li><h4>Chapter 4 · Prove hostile input stays text</h4><p><strong>Presenter action:</strong> Have attendees open a proof pull request titled <code>Lab 4 proof $(printf SAFE_PAYLOAD)</code>.</p><p><strong>Expected visible state:</strong> the <strong>Pull request title check</strong> log prints the literal payload, not command-substitution output.</p><p><strong>Stop or transition:</strong> close or merge the proof PR according to the station rule after a partner has seen the log.</p><p><strong>Catch-up artifact:</strong> if the check does not run, confirm the hardening PR merged first; then use the instructor station proof.</p></li>
-            <li><h4>Chapter 4 · Run CodeQL and state release authority</h4><p><strong>Presenter action:</strong> Enable the prepared CodeQL workflow if the station profile permits it, then open the Security tab and release-boundary statement.</p><p><strong>Expected visible state:</strong> a CodeQL run completes and either shows the seeded finding or a zero-alert result for the station revision.</p><p><strong>Stop or transition:</strong> the room states that checks inform release but do not authorize it.</p><p><strong>Catch-up artifact:</strong> use recorded CodeQL evidence from the security-remediation guide if code scanning is unavailable, and label it captured evidence.</p></li>
-          </ol>
-          </div></article>
-        <article class="card" id="card-room-recurrence">
-          <div class="slide-content"><p class="slide-eyebrow">Capstone</p><h2 class="slide-title">Bind real evidence<br><em>before deciding.</em></h2><ul class="slide-points"><li class="frag">Pick one revision.</li><li class="frag">Name defects honestly.</li><li class="frag">Record the next decision.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Chapter 5 closes the loop with the attendee's own evidence</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body">
-          <ol class="steps">
-            <li><h4>Chapter 5 · Identify the revision</h4><p><strong>Presenter action:</strong> Open the <a href="../../../docs/labs/05-capstone/index.html">Lab 5 guide</a> and have attendees find their Lab 2 merged pull request.</p><p><strong>Expected visible state:</strong> each table records the pull request number, head SHA, merge SHA, and chosen revision.</p><p><strong>Stop or transition:</strong> nobody evaluates a green check until they can name the SHA under review.</p><p><strong>Catch-up artifact:</strong> use <a href="../../../docs/labs/05-capstone/artifacts/evidence-checklist.md">evidence-checklist.md</a> to structure the search.</p></li>
-            <li><h4>Chapter 5 · Bind checks, review and governance</h4><p><strong>Presenter action:</strong> Point at the PR Checks, Conversation, CODEOWNERS, governance decision record, and Security tab.</p><p><strong>Expected visible state:</strong> each relied-on signal names the chosen revision or is recorded as a defect.</p><p><strong>Stop or transition:</strong> missing, stale, or wrong-revision evidence blocks or escalates; it is not partial credit.</p><p><strong>Catch-up artifact:</strong> the evidence checklist provides the minimum rows.</p></li>
-            <li><h4>Chapter 5 · Write the release decision</h4><p><strong>Presenter action:</strong> Have attendees copy the template to <code>docs\decisions\lab-05-release-decision.md</code>, choose release, block, or escalate, and open a pull request.</p><p><strong>Expected visible state:</strong> the decision PR names the revision, relied-on evidence, defects, release owner, and next decision owner.</p><p><strong>Stop or transition:</strong> the decision is reviewed and merged, or left open with a named blocker.</p><p><strong>Catch-up artifact:</strong> use <a href="../../../docs/labs/05-capstone/artifacts/release-decision.md">release-decision.md</a> without inventing evidence.</p></li>
-            <li><h4>Chapter 5 · Close the issue loop</h4><p><strong>Presenter action:</strong> Have attendees open the Lab 1 owned issue if one exists; otherwise create <code>Repository pulse next decision</code> and label it attendee-created, not workflow output.</p><p><strong>Expected visible state:</strong> a comment records the capstone decision, evidence or defect to consume next, next action vocabulary, and human owner.</p><p><strong>Stop or transition:</strong> a justified no-op, wait, escalate, or retry is visible in GitHub before the adoption discussion starts.</p><p><strong>Catch-up artifact:</strong> use the Lab 5 recovery guidance for missing Lab 1 issue or incomplete earlier evidence.</p></li>
-            <li><h4>Close · Preserve repository evidence</h4><p><strong>Presenter action:</strong> Ask attendees to leave pull requests, issues, checks, reviews, and decisions in the station repository unless central cleanup instructions say otherwise.</p><p><strong>Expected visible state:</strong> durable GitHub artifacts remain available for debrief and adoption planning.</p><p><strong>Stop or transition:</strong> only temporary proof branches may be deleted after their evidence is captured.</p><p><strong>Catch-up artifact:</strong> the station repository itself is the evidence store.</p></li>
-          </ol>
-          </div></article>
-      </section>
-
-      <section class="chapter" id="ch-pacing"><h2 class="chapter-label">Pacing and transitions</h2>
-        <article class="card" id="card-day-flow">
-          <div class="slide-content"><h2 class="slide-title">Lead with the complete loop.<br><em>Then earn understanding.</em></h2><ul class="slide-points"><li class="frag">See the outcome.</li><li class="frag">Work within a bounded path.</li><li class="frag">Connect evidence, state and authority.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">The day flow protects strategy and hands-on outcomes</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="flow"></span>
-          <ol class="steps">
-            <li><h4>08:45-09:00 · Doors and help</h4><p><strong>Visible artifact:</strong> Station repository URL, sign-in state, and write-access probe.</p><p><strong>Presenter action:</strong> Recover failed sign-ins or repository access and pair anyone still blocked. Ask who has a signed-in Copilot surface with the station cloned, and seat attendees without one next to a partner for Lab 2 Step 1. Do not repair optional tooling during Chapter 1.</p><p><strong>Stop condition:</strong> Every participant has a reachable station repository or a paired seat.</p></li>
-            <li><h4>09:00-09:05 · Frame</h4><p><strong>Visible artifact:</strong> Platform title and three questions.</p><p><strong>Presenter action:</strong> Ask where intent, agent provenance, and deterministic authority live today.</p><p><strong>Stop condition:</strong> Audience recognizes the coordination problem.</p></li>
-            <li><h4>09:05-09:12 · Map</h4><p><strong>Visible artifact:</strong> Prompt, context, harness, loop, and compact contract.</p><p><strong>Presenter action:</strong> Show objective, eligible intake, scope, external verifier, persisted state, two-attempt teaching limit and human owners. GitHub governs; Copilot is primary; optional harnesses retain different boundaries.</p><p><strong>Stop condition:</strong> The room can distinguish repository conventions from run state, and a worktree from a security boundary.</p></li>
-            <li><h4>09:12-09:22 · See the complete platform path</h4><p><strong>Visible artifact:</strong> The prepared instructor-station reservation test issue, linked pull request, check run and review; the Lab 4 release boundary.</p><p><strong>Presenter action:</strong> Read only the consecutive-reservation regression test's acceptance criteria, never the Lab 2 stock-suggestion requirement. Inspect the diff and SHA, independent check and human review. Open the <a href="../../../docs/labs/04-trusted-delivery/index.html#release-boundary">release-boundary explanation</a>; identify the approval and deployment evidence still needed before a release claim. If the instructor station or network is unavailable, show existing stock-test source and archived Lab 4 evidence separately. Never imply they share a run, revision or production deployment.</p><p><strong>Stop condition:</strong> The room can identify intent, proposal, verification and human decision, and distinguish a green check from a release.</p></li>
-            <li><h4>09:22-09:30 · Connect strategy</h4><p><strong>Visible artifact:</strong> Pilot tracks.</p><p><strong>Presenter action:</strong> Explain governance, Azure DevOps coexistence, and the three bounded pilots.</p><p><strong>Stop condition:</strong> Strategic message is complete.</p></li>
-            <li><h4>09:30-09:50 · See bounded continuous AI</h4><p><strong>Visible artifact:</strong> Copilot-engine repository pulse source, lock file, illustrative issue and reconciliation contract.</p><p><strong>Presenter action:</strong> Reveal eligible intake, reads, network, component budgets and both owned issue-output types: <code>create-issue</code> and <code>update-issue</code>, maximum one each per run. Distinguish per-output caps, instruction-level issue reconciliation and the deterministic controller's report, no-op and blocked decisions; a schedule alone does not establish recurrence.</p><p><strong>Stop condition:</strong> Audience names both bounded output types and explains why their separate caps are not a single transaction or cross-run deduplication guarantee.</p></li>
-            <li><h4>09:50-10:10 · Work with continuous AI</h4><p><strong>Visible artifact:</strong> Draft source-contract PR and service CI; a changed lock and owned issue only if the compiler and preview are available.</p><p><strong>Presenter action:</strong> Have attendees narrow permissions, budget and report scope in their station repository. Use the Lab 1 reference contract if they fall behind.</p><p><strong>Stop condition:</strong> Every group has a reviewable draft PR. Do not merge or run a source-only change; a no-op is expected without new eligible evidence.</p></li>
-            <li><h4>10:10-10:20 · Connect continuous AI</h4><p><strong>Visible artifact:</strong> Use-case spectrum.</p><p><strong>Presenter action:</strong> Contrast reporting and triage with production deployment and ambiguous high-impact action.</p><p><strong>Stop condition:</strong> Groups identify one good pilot and one prohibited use.</p></li>
-          </ol>
-          </div></article>
-        <article class="card" id="card-morning-flow">
-          <div class="slide-content"><h2 class="slide-title">Make the contract reviewable.<br><em>Then place the policy.</em></h2><ul class="slide-points"><li class="frag">Trace acceptance into tests.</li><li class="frag">Inspect the verified handoff.</li><li class="frag">Assign ownership at the correct scope.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Late morning connects a verified handoff to enterprise governance</span><span class="card-sub">10:35–12:30</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body">
-          <ol class="steps">
-            <li><h4>10:35-10:40 · See intent to PR</h4><p><strong>Visible artifact:</strong> Your merged Lab 2 pull request: issue, red-then-green checks, Copilot commit, review.</p><p><strong>Presenter action:</strong> Show the finished chain once, without reading the requirement wording aloud, then start the lab. Attendees refine the need themselves.</p><p><strong>Stop condition:</strong> Attendees know the end state and have the source repository link and their attendee number.</p></li>
-            <li><h4>10:40-11:30 · Work with intent</h4><p><strong>Visible artifact:</strong> Attendee forks, Codespaces, coached issue drafts, issues, expected-red draft pull requests, Copilot commits, then green reviewed and merged pull requests.</p><p><strong>Presenter action:</strong> Budget the first ten minutes for sign-in, forks, and Codespaces, and help anyone blocked there first. Keep the coached intake to about ten minutes. Use Copilot cloud agent only where it is available; otherwise attendees use Copilot in the Codespace or the reference implementation and label the fallback.</p><p><strong>Stop condition:</strong> Every attendee has a merged or explicitly blocked pull request with checks, review, and issue linkage visible.</p></li>
-            <li><h4>11:30-11:35 · Connect verified handoff</h4><p><strong>Visible artifact:</strong> One attendee's issue, checks, review, and merged pull request.</p><p><strong>Presenter action:</strong> Name the chain: confirmed issue, failing test, bounded Copilot commit, green check, human review. Chat is not the system of record.</p><p><strong>Stop condition:</strong> A named GitHub artifact can seed later work.</p></li>
-            <li><h4>11:35-11:50 · See operating model</h4><p><strong>Visible artifact:</strong> Sandbox and enterprise architecture.</p><p><strong>Presenter action:</strong> Show teams, ownership, rulesets, policies, environments, and protected agent configuration.</p><p><strong>Stop condition:</strong> Four policy scopes are distinct.</p></li>
-            <li><h4>11:50-12:10 · Work with operating model</h4><p><strong>Visible artifact:</strong> CODEOWNERS PR and decision record; a required-review badge and rejected push only in protected stations.</p><p><strong>Presenter action:</strong> Guide attendees through ownership, a push probe only where enforcement is verified, and seven governance decisions.</p><p><strong>Stop condition:</strong> Each group records either its own rejection or a labelled missing-control finding and reviews the decision record.</p></li>
-            <li><h4>12:10-12:30 · Connect migration</h4><p><strong>Visible artifact:</strong> Azure DevOps transition path.</p><p><strong>Presenter action:</strong> Discuss inventory, target governance, representative pilots, migration waves, and coexistence.</p><p><strong>Stop condition:</strong> No automatic one-to-one migration claim remains.</p></li>
-          </ol>
-          </div></article>
-        <article class="card" id="card-afternoon-flow">
-          <div class="slide-content"><h2 class="slide-title">Evidence governs delivery.<br><em>State governs recurrence.</em></h2><ul class="slide-points"><li class="frag">Keep repair authority separate from release.</li><li class="frag">Read retained decisions in a fresh process.</li><li class="frag">Close with owners and stopping limits.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Afternoon connects governed delivery to stoppable recurrence</span><span class="card-sub">13:15–16:30</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body">
-          <ol class="steps">
-            <li><h4>13:15-13:40 · See trusted delivery</h4><p><strong>Visible artifact:</strong> CodeQL, push protection, reviewed release.</p><p><strong>Presenter action:</strong> Use 8 minutes for the recorded CodeQL finding and Copilot fix, 5 minutes for the <a href="../secret-protection/operator-guide.html">native Secret Protection REST rejection</a>, and 12 minutes for review, the required <code>test</code> environment, OIDC release, provenance, and captured health. Say which evidence is recorded and which action, if any, ran now.</p><p><strong>Stop condition:</strong> The 25-minute budget holds and agent advice, deterministic controls, and human authority are classified.</p></li>
-            <li><h4>13:40-14:15 · Work with trusted delivery</h4><p><strong>Visible artifact:</strong> Hardened workflow PR, hostile-title proof PR log, CodeQL run or recorded finding, and release-boundary statement.</p><p><strong>Presenter action:</strong> Keep the unsafe fragment read-only, merge the hardened workflow, prove the payload prints literally, and classify security evidence.</p><p><strong>Stop condition:</strong> Every group can say what evidence informs release and who still authorizes it.</p></li>
-            <li><h4>14:15-14:35 · Connect delivery</h4><p><strong>Visible artifact:</strong> Reusable control architecture.</p><p><strong>Presenter action:</strong> Discuss runners, OIDC, environments, code security, and the labelled MDASH preview. A specific trusted failure may authorize one repair; it never authorizes release.</p><p><strong>Stop condition:</strong> Product, review and release authority remain outside the implementation agent.</p></li>
-            <li><h4>14:50-15:00 · See capstone</h4><p><strong>Visible artifact:</strong> One concise same-revision trace.</p><p><strong>Presenter action:</strong> Reopen only the artifacts needed to establish identity and evidence. Do not repeat the morning artifact tour.</p><p><strong>Stop condition:</strong> The room knows which state and receipt the controller will consume.</p></li>
-            <li><h4>15:00-15:12 · Read and decide</h4><p><strong>Visible artifact:</strong> Lab 2 pull request, check runs, review, CODEOWNERS, security evidence, and chosen revision SHA.</p><p><strong>Presenter action:</strong> Have attendees bind evidence to one revision before writing any decision. Missing or wrong-revision evidence becomes a defect.</p><p><strong>Stop condition:</strong> Each table can point to the exact SHA it is judging.</p></li>
-            <li><h4>15:12-15:50 · Verify and connect</h4><p><strong>Visible artifact:</strong> Release decision pull request and either a Lab 1 owned issue or an attendee-created decision issue comment.</p><p><strong>Presenter action:</strong> Require release, block, or escalate language; then record no-op, wait, escalate, or retry as the next bounded loop decision.</p><p><strong>Stop condition:</strong> Every decision cites durable GitHub evidence; missing evidence is honestly blocked or escalated.</p></li>
-            <li><h4>15:50-16:20 · Adopt</h4><p><strong>Visible artifact:</strong> Pilot scorecard.</p><p><strong>Presenter action:</strong> Prefer frequent, externally verifiable and reversible work. Define accepted-outcome, human-attention, failure, duplicate and cost measures before access expands.</p><p><strong>Stop condition:</strong> Each pilot has an owner, stopping limit and measurable outcome.</p></li>
-            <li><h4>16:20-16:30 · Commit</h4><p><strong>Visible artifact:</strong> Four-to-eight-week plan.</p><p><strong>Presenter action:</strong> Name owners, prerequisites, success measures, and unresolved decisions.</p><p><strong>Stop condition:</strong> Each pilot has a next action and owner.</p></li>
-          </ol>
-          </div></article>
-
-        <article class="card" id="card-transitions">
-          <div class="slide-content"><h2 class="slide-title">Each transition<br><em>carries the same story.</em></h2><p class="slide-lead">A safe output creates a contract; deterministic evidence governs its next boundary.</p></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Transition cues connect the same progressive story</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="transitions"></span>
-          <ol class="steps">
-            <li><h4>Briefing to continuous AI</h4><p>“We have seen the loop. Now inspect the reasoning automation that keeps it moving.”</p></li>
-            <li><h4>Continuous AI to intent</h4><p>“A safe output is useful only when it creates a high-quality engineering contract.”</p></li>
-            <li><h4>Intent to operating model</h4><p>“The repository contract works; now decide where enterprise policy should sit.”</p></li>
-            <li><h4>Operating model to delivery</h4><p>“Policy defines the boundary. Deterministic evidence decides whether this proposal may cross it.”</p></li>
-            <li><h4>Delivery to capstone</h4><p>“No new concept now—only the complete chain, owned by your team.”</p></li>
-          </ol>
-          </div></article>
-      </section>
-
-      <section class="chapter" id="ch-recovery"><h2 class="chapter-label">Recovery and cleanup</h2>
-        <article class="card" id="card-fallbacks">
-          <div class="slide-content"><h2 class="slide-title">Fallbacks preserve insight.<br><em>Not a false live claim.</em></h2><p class="slide-lead">Keep each attendee's repository evidence separate from recorded platform examples.</p></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">The fallback ladder preserves the learning outcome honestly</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="fallbacks"></span>
-          <div class="summary-grid">
-            <div class="summary-item"><span class="summary-label">Station access</span><p><strong>Symptom:</strong> attendee cannot write to the assigned repository. <strong>Move immediately:</strong> pair them with a table partner or the instructor fallback station.</p><p><strong>Preserved insight:</strong> they still inspect live GitHub artifacts and participate in review decisions.</p></div>
-            <div class="summary-item"><span class="summary-label">Agentic Workflows preview</span><p><strong>Symptom:</strong> Compiler or preview is unavailable. <strong>Move immediately:</strong> leave the Lab 1 source PR in draft, compare its reference contract to the old compiled lock, and proceed to Lab 2.</p><p><strong>Preserved insight:</strong> contract narrowing and recurrence limits remain visible; no runtime outcome is claimed.</p></div>
-            <div class="summary-item"><span class="summary-label">Copilot coding agent</span><p><strong>Symptom:</strong> no entitlement or repository enablement. <strong>Move immediately:</strong> use the Lab 2 manual fallback and label it in the pull request.</p><p><strong>Preserved insight:</strong> issue quality, acceptance tests, scoped diff review, and green Actions still prove the handoff.</p></div>
-            <div class="summary-item"><span class="summary-label">Actions queued</span><p><strong>Symptom:</strong> pull request checks queue. <strong>Move immediately:</strong> discuss the diff and required evidence while the queue runs; use the instructor station only as labelled example evidence.</p><p><strong>Preserved insight:</strong> attendees learn not to transfer another revision's green check.</p></div>
-          </div>
-          <div class="summary-grid">
-            <div class="summary-item"><span class="summary-label">Code scanning unavailable</span><p><strong>Symptom:</strong> CodeQL upload or Security tab is unavailable. <strong>Move immediately:</strong> open the <a href="../../../docs/labs/04-trusted-delivery/index.html#codeql">recorded native CodeQL finding and remediation path</a> and say it was captured.</p><p><strong>Preserved insight:</strong> deterministic security findings return to the developer loop without pretending the station has licensed scanning.</p></div>
-            <div class="summary-item"><span class="summary-label">Secret Protection unavailable</span><p><strong>Symptom:</strong> Secret Protection API scene unavailable. <strong>Move immediately:</strong> open <a href="../../../docs/labs/04-trusted-delivery/index.html#secret-protection">the recorded native response path</a> and say it was captured. Do not use a real credential, a push, or a bypass.</p><p><strong>Preserved insight:</strong> supported secret patterns can be rejected before commit or ref change.</p></div>
-            <div class="summary-item"><span class="summary-label">Azure unavailable</span><p><strong>Symptom:</strong> Azure release scene unavailable. <strong>Move immediately:</strong> use the <a href="../../../docs/labs/04-trusted-delivery/index.html#release-boundary">recorded release and health response</a> and label it historical.</p><p><strong>Preserved insight:</strong> approval, OIDC, and revision traceability remain visible without claiming a live endpoint.</p></div>
-            <div class="summary-item"><span class="summary-label">Protected push succeeds</span><p><strong>Symptom:</strong> Lab 3 direct push to the default branch succeeds. <strong>Move immediately:</strong> stop that station's governance proof and use the instructor station rejection.</p><p><strong>Preserved insight:</strong> write access is not merge authority only when protection actually enforces it.</p></div>
-          </div>
-          <div class="summary-grid">
-            <div class="summary-item"><span class="summary-label">Reference artifact</span><p><strong>Symptom:</strong> an attendee falls behind. <strong>Move immediately:</strong> copy the relevant file from the lab's <code>artifacts\</code> folder and continue at the next GitHub checkpoint.</p><p><strong>Preserved insight:</strong> catch-up keeps the visible PR, check, review, issue, or decision path intact.</p></div>
-            <div class="summary-item"><span class="summary-label">Branch mistake</span><p><strong>Symptom:</strong> work happened on the wrong branch. <strong>Move immediately:</strong> recreate the branch from the default branch, copy the intended file content, and open a clean pull request.</p><p><strong>Preserved insight:</strong> the default branch stays the system of record; do not claim protection unless verified.</p></div>
-            <div class="summary-item"><span class="summary-label">Coaching agent</span><p><strong>Symptom:</strong> the requirement-refiner agent is not listed, custom agents are disabled by policy, or the agent writes the answer. <strong>Move immediately:</strong> switch the table to the paired fallback questions in Lab 2 Step 1.</p><p><strong>Preserved insight:</strong> attendees still separate need from noise and compare their draft with the confirmed requirement.</p></div>
-            <div class="summary-item"><span class="summary-label">Capstone gaps</span><p><strong>Symptom:</strong> earlier evidence is missing. <strong>Move immediately:</strong> record the gap as block or escalation evidence in the release decision.</p><p><strong>Preserved insight:</strong> missing evidence is a valid governed outcome.</p></div>
-          </div>
-          </div></article>
-
-        <article class="card" id="card-cleanup">
-          <div class="slide-content"><h2 class="slide-title">Retain evidence.<br><em>Clean only by policy.</em></h2><p class="slide-lead">Station repositories are the record until central cleanup is approved.</p></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Cleanup preserves station repositories by default</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="cleanup"></span>
-          <p>Do not delete station repositories during the workshop. They contain the evidence attendees need for debrief: issues, Project items, pull requests, reviews, check runs, rejected-push notes, security findings, release decisions, and owned loop comments.</p>
-          <ol class="steps">
-            <li><h4>End of room</h4><p>Ask attendees to close unneeded proof pull requests, leave merged decisions intact, and note any blocked or escalated evidence for follow-up.</p></li>
-            <li><h4>Sandbox cleanup</h4><p>Keep repositories unless the delivery owner explicitly requests removal. Delete only resources carrying the workshop identifier after a reviewed list of targets.</p></li>
-            <li><h4>Enterprise cleanup</h4><p>Central cleanup must run from an approved plan, target only repositories with the station prefix and delivery identifier, and retain exported evidence when the customer asks for it.</p></li>
-          </ol>
-          </div></article>
-      </section>
-    </main>
-    <section class="takeaway" id="closing"><p>Every continuation must consume state, cite evidence and leave an accountable next decision.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Read the state.<br><em>Own the next decision.</em></h2></div></section>
-    <footer class="doc-footer"><span>Facilitator material · Keep the original internal delivery plan in <code>PLAN.md</code> as the source of intent.</span></footer>
-  </div>
+          <p>Do not delete participant repositories unless the event's explicit retention policy and owner approval require it.</p>
+        </div>
+      </article>
+    </section>
+  </main>
+  <section class="takeaway" id="closing"><p>The workshop is ready only when a clean-start attendee path and the exact presenter path both work, every unavailable control is labeled, and every fallback preserves the original trust boundary.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Rehearse the evidence.<br><em>Protect the boundary.</em></h2></div></section>
+  <footer class="doc-footer">Facilitator material &middot; Synthetic pharmacy data only &middot; Return to the <a href="../../../docs/index.html">workshop hub</a>.</footer>
+</div>
 </body>
 </html>

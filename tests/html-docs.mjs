@@ -1,5 +1,5 @@
 import { spawnSync } from "node:child_process";
-import { join, relative } from "node:path";
+import { isAbsolute, join, relative } from "node:path";
 import { materialFiles, root } from "./validation.mjs";
 
 const args = process.argv.slice(2);
@@ -13,7 +13,7 @@ const files = selected.length ? selected.map((file) => join(root, file))
 const runtime = join(root, "docs", "assets", "html-docs");
 
 function run(script, arguments_) {
-  const result = spawnSync(process.execPath, [join(runtime, script), ...arguments_], {
+  const result = spawnSync(process.execPath, [isAbsolute(script) ? script : join(runtime, script), ...arguments_], {
     cwd: root, encoding: "utf8", timeout: 180000, maxBuffer: 8 * 1024 * 1024,
     env: { ...process.env, PLAYWRIGHT_MODULE: process.env.PLAYWRIGHT_MODULE || join(root, "node_modules", "playwright") }
   });
@@ -28,6 +28,11 @@ function run(script, arguments_) {
 run("sync-head.js", ["--check", ...files]);
 for (const file of files) {
   console.log(`VALIDATE ${relative(root, file)} ${viewport}`);
-  console.log(run("validate.js", [file, "--viewport", viewport]).split(/\r?\n/).at(-1));
+  // The hub is a landing page, not an accordion article. Validate its actual
+  // reading surface and canonical slides through the repository browser checks.
+  const landing = relative(root, file).replaceAll("\\", "/") === "docs/index.html";
+  console.log(run(landing ? join(root, "tests", "browser.mjs") : "validate.js",
+    landing ? ["--page", "docs\\index.html", "--viewport", viewport] :
+      [file, "--viewport", viewport]).split(/\r?\n/).at(-1));
 }
-console.log(`PASS ${files.length} materials at ${viewport}: six palettes, offline, navigation and no-JS reference.`);
+console.log(`PASS ${files.length} materials at ${viewport}: eight palettes, offline, navigation, print and no-JS reference.`);

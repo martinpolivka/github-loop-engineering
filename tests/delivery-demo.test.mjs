@@ -83,7 +83,7 @@ test("workflows pin actions and isolate the OIDC permission", () => {
 test("remote scripts default to plans and cleanup has two guards", () => {
   const common = [
     "--workshop-id", "trusted-delivery-test",
-    "--repo", "tkubica12/trusted-delivery-test",
+    "--repo", "workshop-owner/trusted-delivery-test",
     "--app-name", "ghw-trusted-delivery-test"
   ];
   const setup = execFileSync(process.execPath, [
@@ -122,8 +122,8 @@ test("operator and lab distinguish live evidence from recorded examples", () => 
   assert.match(operator, /not (?:an )?independent (?:protected-environment )?approval/i);
   assert.match(operator, /F1/);
   assert.match(operator, /no production (?:claim|deployment is represented)/i);
-  assert.match(lab, /not your station.s scan/i);
-  assert.match(lab, /not proof that your change was deployed/i);
+  assert.match(lab, /creates a real deployment and approval record/i);
+  assert.match(lab, /does not mean cloud resources or production changed/i);
 });
 
 test("demo contains no committed credential-shaped values or non-synthetic pharmacy data", () => {

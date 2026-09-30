@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Loop Engineering with GitHub: one full-day workshop, an opening platform demonstration and five hands-on labs.">
-  <title>Loop Engineering with GitHub</title>
+  <meta name="description" content="A short introduction to Loop Engineering with GitHub, the day's schedule, and links to five hands-on labs.">
+  <title>Loop Engineering with GitHub | Introduction and labs</title>
   <meta name="doc-id" content="workshop-hub">
   <!--
 MIT License
@@ -38,7 +38,7 @@ SOFTWARE.
   const id = document.querySelector('meta[name="doc-id"]')?.content ||
     location.pathname.replace(/\.standalone(?=\.html$)/i, "");
   const prefix = "html-docs:" + id + ":";
-  const choices = { theme: ["light", "dark"], accent: ["blue", "orange", "green"] };
+  const choices = { theme: ["light", "dark"], accent: ["blue", "red", "green", "yellow"] };
   const read = (name) => {
     try { return localStorage.getItem(prefix + name); }
     catch { return null; /* Storage may be unavailable for local files. */ }
@@ -62,13 +62,70 @@ SOFTWARE.
   for (const [name, values] of Object.entries(choices)) {
     const fallback = name === "theme" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : values[0];
     const value = [params.get(name), read(name), root.getAttribute("data-default-" + name), fallback]
+      .map(candidate => name === "accent" && candidate === "orange" ? "red" : candidate)
       .find(candidate => values.includes(candidate));
     root.setAttribute("data-" + name, value);
   }
   root.classList.add("js");
-  if (params.get("view") === "slides") root.setAttribute("data-view", "slides");
-  window.HtmlDocs = { read, write, refresh };
+  if (["slides", "sheet"].includes(params.get("view"))) root.setAttribute("data-view", params.get("view"));
+
+  // Print what is on screen. data-print selects the matching print stylesheet.
+  const printTarget = () => {
+    if (document.querySelector(".deck-stage")) return "slides";
+    const view = root.getAttribute("data-view");
+    if (view === "slides" || (view === "sheet" && document.querySelector(".sheet"))) return view;
+    return document.querySelector(".doc") || !document.querySelector(".sheet") ? "read" : "sheet";
+  };
+  let printing = null;
+  addEventListener("beforeprint", () => {
+    if (root.hasAttribute("data-print")) return; // Set by an automated export.
+    const target = printTarget();
+    printing = document.title;
+    root.setAttribute("data-print", target);
+    // The browser proposes the title as the PDF file name.
+    if (target !== "read" && document.querySelector(".doc")) {
+      document.title += target === "slides" ? " - Slides" : " - Sheet";
+    }
+  });
+  addEventListener("afterprint", () => {
+    if (printing === null) return;
+    root.removeAttribute("data-print");
+    document.title = printing;
+    printing = null;
+  });
+
+  // Keep the display awake while presenting, like presentation software does.
+  let lock = null;
+  let awake = false;
+  async function holdScreen() {
+    if (!awake || lock || document.visibilityState !== "visible" || !navigator.wakeLock) return;
+    try {
+      const sentinel = await navigator.wakeLock.request("screen");
+      if (!awake || lock) { sentinel.release(); return; }
+      lock = sentinel;
+      root.setAttribute("data-awake", "");
+      sentinel.addEventListener("release", () => {
+        if (lock !== sentinel) return;
+        lock = null;
+        root.removeAttribute("data-awake");
+      });
+    } catch { /* Denied by battery saver or an embedding policy; retried on input. */ }
+  }
+  function keepAwake(on) {
+    awake = !!on;
+    if (awake) holdScreen();
+    else if (lock) lock.release();
+  }
+  // The browser drops the lock when the tab is hidden; some require a gesture.
+  document.addEventListener("visibilitychange", holdScreen);
+  document.addEventListener("pointerdown", holdScreen);
+  document.addEventListener("keydown", holdScreen);
+
+  window.HtmlDocs = { read, write, refresh, keepAwake };
   document.addEventListener("DOMContentLoaded", refresh);
+  document.addEventListener("click", event => {
+    if (event.target.closest('[data-action="print"]')) window.print();
+  });
   document.addEventListener("click", event => {
     const button = event.target.closest('[data-action="toggle-theme"], [data-action="toggle-accent"]');
     if (!button) return;
@@ -94,7 +151,7 @@ SOFTWARE.
   --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f2; --surface-3: #e8e8e8;
   --border: #dedede; --border-strong: #b8b8b8;
   --text: #161616; --text-muted: #565656; --text-faint: #686868;
-  --accent-light: #0068bd; --accent-dark: #69b8ff;
+  --accent-light: #006da0; --accent-dark: #00a4ef;
   --accent: var(--accent-light);
   --accent-strong: var(--accent);
   --accent-quiet: var(--accent);
@@ -109,120 +166,273 @@ SOFTWARE.
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Mono", "Cascadia Code", ui-monospace, Consolas, "SF Mono", "Liberation Mono", Menlo, monospace;
 }
-[data-theme="dark"], :root:not([data-theme])[data-default-theme="dark"] {
-  color-scheme: dark;
-  --bg: #101010; --surface: #191919; --surface-2: #232323; --surface-3: #2c2c2c;
-  --border: #363636; --border-strong: #595959;
-  --text: #f2f2f2; --text-muted: #b5b5b5; --text-faint: #a0a0a0;
-  --accent: var(--accent-dark);
-  --shadow-1: 0 1px 2px rgba(0,0,0,.3);
-  --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.4);
+/* Screen only: every PDF and printout uses the light palette. */
+@media screen {
+  [data-theme="dark"], :root:not([data-theme])[data-default-theme="dark"] {
+    color-scheme: dark;
+    --bg: #101010; --surface: #191919; --surface-2: #232323; --surface-3: #2c2c2c;
+    --border: #363636; --border-strong: #595959;
+    --text: #f2f2f2; --text-muted: #b5b5b5; --text-faint: #a0a0a0;
+    --accent: var(--accent-dark);
+    --shadow-1: 0 1px 2px rgba(0,0,0,.3);
+    --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.4);
+  }
 }
+[data-accent="red"], :root:not([data-accent])[data-default-accent="red"],
 [data-accent="orange"], :root:not([data-accent])[data-default-accent="orange"] {
-  --accent-light: #a94000; --accent-dark: #ffae72;
+  --accent-light: #bc3a16; --accent-dark: #f25022;
 }
 [data-accent="green"], :root:not([data-accent])[data-default-accent="green"] {
-  --accent-light: #137344; --accent-dark: #6cd6a0;
+  --accent-light: #4c7100; --accent-dark: #7fba00;
+}
+[data-accent="yellow"], :root:not([data-accent])[data-default-accent="yellow"] {
+  --accent-light: #805b00; --accent-dark: #ffb900;
 }
 </style>
   <link rel="stylesheet" href="assets/html-docs/article.css">
   <link rel="stylesheet" href="assets/html-docs/slides.css">
-  <script src="assets/html-docs/article.js" defer></script>
   <script src="assets/html-docs/slides.js" defer></script>
   <script src="assets/materials.js" defer></script>
+  <style>
+    .hub-agenda { margin: 12px 0 0; }
+    .hub-agenda > h2 { margin: 0 0 24px; font-size: 1.4rem; }
+    .agenda { list-style: none; padding: 0; margin: 0; }
+    .agenda > li { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 24px; margin: 0 0 12px; align-items: start; }
+    .agenda-time { padding-top: 24px; color: var(--text-muted); font: 0.85rem var(--font-mono); white-space: nowrap; }
+    .agenda-entry { position: relative; display: block; padding: 20px 24px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); color: var(--text); text-decoration: none; }
+    .agenda-kind { display: block; margin-bottom: 6px; color: var(--text-muted); font-size: 0.72rem; font-weight: 650; letter-spacing: 0.09em; text-transform: uppercase; }
+    .agenda-title { display: block; font-size: 1.15rem; font-weight: 650; line-height: 1.3; }
+    .agenda-description { display: block; margin-top: 8px; color: var(--text-muted); font-size: 0.94rem; }
+    a.agenda-entry { padding-right: 60px; border-left: 3px solid var(--accent); }
+    a.agenda-entry .agenda-kind { color: var(--accent); }
+    a.agenda-entry::after { content: ""; position: absolute; right: 27px; top: 30px; width: 9px; height: 9px; border-top: 2px solid var(--accent); border-right: 2px solid var(--accent); transform: rotate(45deg); }
+    a.agenda-entry:hover { background: var(--accent-soft); border-color: var(--accent-border); color: var(--text); }
+    .agenda-break .agenda-time { padding-top: 10px; }
+    .agenda-break .agenda-entry { padding: 8px 24px; border-color: transparent; background: none; color: var(--text-muted); font-size: 0.9rem; }
+    html:not([data-view="slides"]):not([data-print="slides"]) main > .chapter { display: none; }
+    [data-view="slides"] .hub-agenda, [data-print="slides"] .hub-agenda { display: none; }
+    html:not([data-view="slides"]):not([data-print="slides"]) .takeaway { padding: 0; margin-top: 28px; border: 0; background: none; font-size: 1rem; font-weight: 400; color: var(--text-muted); }
+    @media (max-width: 760px) {
+      .agenda > li { grid-template-columns: minmax(0, 1fr); gap: 6px; margin-bottom: 18px; }
+      .agenda-time, .agenda-break .agenda-time { padding: 0 4px; }
+      .agenda-entry { padding: 18px 20px; }
+      .agenda-break .agenda-entry { padding: 0 4px 8px; }
+    }
+    @media print {
+      .agenda > li { break-inside: avoid; gap: 16px; margin-bottom: 8px; }
+      .agenda-entry { padding: 12px 16px; }
+      .agenda-time { padding-top: 16px; }
+      a.agenda-entry::after { display: none; }
+      .agenda-description { font-size: 0.85rem; }
+    }
+  </style>
 </head>
 <body>
 <div class="controls" role="group" aria-label="Article controls">
-  <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
-  <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
   <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
+  <button type="button" class="ctrl" data-action="print">PDF</button>
   <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
   <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
 </div>
 <div class="doc">
   <header class="doc-header" id="opening">
-    <div class="slide-content slide-content--title">
-      <p class="slide-eyebrow">One full-day workshop</p>
-      <h2 class="slide-title">From intent to<br><em>verified outcomes.</em></h2>
-      <p class="slide-lead">See the whole GitHub loop, then build it in five labs.</p>
-    </div>
-    <p class="eyebrow">09:00-16:30 &middot; Synthetic pharmacy scenario</p>
+    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Hands-on workshop</p><h2 class="slide-title">Loop Engineering<br><em>with GitHub Copilot</em></h2><p class="slide-lead">Define the goal. Let the loops do the work.</p></div>
+    <p class="eyebrow">Full-day technical workshop &middot; 09:00-15:30</p>
     <h1>Loop Engineering with GitHub</h1>
-    <p class="subtitle">Follow one synthetic pharmacy service through issues, Copilot-assisted changes, pull requests, deterministic checks, security evidence and human decisions. Open a lab directly from the agenda; use <strong>Slides</strong> on this page or in any lab for presenter cues.</p>
+    <p class="subtitle">Define the goal. Let agents act, check, and adjust. Keep human judgment at the boundaries.</p>
+    <p>Start with evidence and intent, not code. One synthetic pharmacy service connects the inner coding loop to the outer loop of review, delivery, and feedback in GitHub.</p>
   </header>
-  <nav class="doc-nav" aria-label="Workshop navigation">
-    <a href="#main">Skip to content</a>
-    <a href="#ch-agenda">Today's agenda</a>
-    <a href="#ch-demo">Opening demonstration</a>
-    <a href="labs/01-agentic-workflow/index.html">Start Lab 1</a>
-  </nav>
-  <nav class="toc" aria-label="Contents"><p class="toc-label">Workshop path</p><ol>
-    <li><a href="#ch-agenda">Agenda</a></li>
-    <li><a href="#ch-demo">See the whole loop</a></li>
-    <li><a href="#ch-labs">Work through five labs</a></li>
-    <li><a href="#ch-adoption">Connect it to your team</a></li>
-  </ol></nav>
+  <nav class="doc-nav" aria-label="Workshop navigation"><a href="labs/01-evidence-to-goal/index.html">Start Lab 1</a><a href="?view=slides#opening">Present the introduction</a></nav>
   <main id="main">
-    <section class="chapter" id="ch-agenda"><h2 class="chapter-label">Agenda</h2>
-      <article class="card card--lead" id="card-day-map" data-open>
-        <div class="slide-content"><h2 class="slide-title">See it.<br><em>Work with it.</em><br>Connect it.</h2><p class="slide-lead">One story, five hands-on outcomes.</p></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">The day begins with the destination, then builds toward it</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-        <div class="card-body">
-          <p>Open the session or lab from its agenda entry. Each lab has its own explanation, short presentation cues and complete step-by-step guide in the same HTML file. All hands-on work happens in your own repository, <code>github-loop-engineering-NN</code>, your fork of the workshop repository from Lab 2. Never work in this authoring repository.</p>
-          <dl>
-            <dt>09:00-09:30</dt><dd><a href="#ch-demo">Executive platform briefing and opening demonstration</a> &mdash; follow a synthetic pharmacy request across the entire GitHub ecosystem.</dd>
-            <dt>09:30-10:20</dt><dd><a href="labs/01-agentic-workflow/index.html">Lab 1: Bounded continuous AI with GitHub Agentic Workflows</a> &mdash; constrain a repository workflow.</dd>
-            <dt>10:20-10:35</dt><dd>Break.</dd>
-            <dt>10:35-11:35</dt><dd><a href="labs/02-intent-to-pr/index.html">Lab 2: From intent to a verified handoff</a> &mdash; refine a need and review a Copilot-assisted change.</dd>
-            <dt>11:35-12:30</dt><dd><a href="labs/03-operating-model/index.html">Lab 3: GitHub Enterprise operating model</a> &mdash; name ownership and governance boundaries.</dd>
-            <dt>12:30-13:15</dt><dd>Lunch.</dd>
-            <dt>13:15-14:35</dt><dd><a href="labs/04-trusted-delivery/index.html">Lab 4: Trusted delivery with CI/CD and DevSecOps</a> &mdash; secure a workflow and inspect deterministic evidence.</dd>
-            <dt>14:35-14:50</dt><dd>Break.</dd>
-            <dt>14:50-15:50</dt><dd><a href="labs/05-capstone/index.html">Lab 5: The governed human-agent delivery loop</a> &mdash; decide from evidence tied to a revision.</dd>
-            <dt>15:50-16:30</dt><dd><a href="#ch-adoption">Adoption roadmap and discussion</a> &mdash; choose a reversible pilot and its success measures.</dd>
-          </dl>
+    <section class="hub-agenda" id="agenda" aria-labelledby="agenda-title">
+      <h2 id="agenda-title">Your day, one loop at a time</h2>
+      <ol class="agenda">
+        <li><span class="agenda-time"><time datetime="09:00">09:00</time>-<time datetime="09:45">09:45</time></span><div class="agenda-entry"><span class="agenda-kind">Opening &middot; 45 min</span><span class="agenda-title">The complete engineering loop</span><span class="agenda-description">An opening walkthrough from evidence to code, review, delivery, and feedback.</span></div></li>
+        <li><span class="agenda-time"><time datetime="09:45">09:45</time>-<time datetime="10:30">10:30</time></span><a class="agenda-entry" href="labs/01-evidence-to-goal/index.html"><span class="agenda-kind">Lab 1 &middot; 45 min</span><span class="agenda-title">Evidence to engineering intent</span><span class="agenda-description">Fork the station; turn synthetic evidence into one approved feature Issue and one bug Issue.</span></a></li>
+        <li class="agenda-break"><span class="agenda-time"><time datetime="10:30">10:30</time>-<time datetime="10:45">10:45</time></span><div class="agenda-entry">Break &middot; 15 min</div></li>
+        <li><span class="agenda-time"><time datetime="10:45">10:45</time>-<time datetime="11:45">11:45</time></span><a class="agenda-entry" href="labs/02-inner-loop/index.html"><span class="agenda-kind">Lab 2 &middot; 60 min</span><span class="agenda-title">Goal Cards and two agent loops</span><span class="agenda-description">Define the goals; implement locally and with the cloud agent to open two pull requests.</span></a></li>
+        <li><span class="agenda-time"><time datetime="11:45">11:45</time>-<time datetime="12:35">12:35</time></span><a class="agenda-entry" href="labs/03-governed-pr/index.html"><span class="agenda-kind">Lab 3 &middot; 50 min</span><span class="agenda-title">Governed pull requests</span><span class="agenda-description">Combine checks, independent reviews, and human judgment before merge.</span></a></li>
+        <li class="agenda-break"><span class="agenda-time"><time datetime="12:35">12:35</time>-<time datetime="13:20">13:20</time></span><div class="agenda-entry">Lunch &middot; 45 min</div></li>
+        <li><span class="agenda-time"><time datetime="13:20">13:20</time>-<time datetime="14:10">14:10</time></span><a class="agenda-entry" href="labs/04-trusted-delivery/index.html"><span class="agenda-kind">Lab 4 &middot; 50 min</span><span class="agenda-title">Trusted delivery and operational readiness</span><span class="agenda-description">Verify the release artifact, approval boundary, and rollback decision.</span></a></li>
+        <li class="agenda-break"><span class="agenda-time"><time datetime="14:10">14:10</time>-<time datetime="14:20">14:20</time></span><div class="agenda-entry">Break &middot; 10 min</div></li>
+        <li><span class="agenda-time"><time datetime="14:20">14:20</time>-<time datetime="15:00">15:00</time></span><a class="agenda-entry" href="labs/05-agentic-outer-loop/index.html"><span class="agenda-kind">Lab 5 &middot; 40 min</span><span class="agenda-title">Author agentic outer loops</span><span class="agenda-description">Author bounded Agentic Workflows for triage and delivery readiness.</span></a></li>
+        <li><span class="agenda-time"><time datetime="15:00">15:00</time>-<time datetime="15:30">15:30</time></span><div class="agenda-entry"><span class="agenda-kind">Discussion &middot; 30 min</span><span class="agenda-title">Bring the loop into your practice</span><span class="agenda-description">Connect the day's decisions to adoption and migration choices.</span></div></li>
+      </ol>
+    </section>
+    <section class="chapter" id="ch-demo"><h2 class="chapter-label">Opening principles</h2>
+      <article class="card card--lead" id="card-puzzle" data-open>
+        <div class="slide-content"><h2 class="slide-title">Stop managing prompts.<br><em>Define the goal.</em></h2><ul class="slide-points"><li class="frag">Specify the outcome and proof of completion.</li><li class="frag">Let the agent act, check, and adjust.</li><li class="frag">Keep scope, permissions, and stopping limits explicit.</li></ul></div>
+      </article>
+      <article class="card" id="card-inner">
+        <div class="slide-content">
+          <h2 class="slide-title">Start locally.<br><em>Connect the loop through GitHub.</em></h2>
+          <svg viewBox="0 0 960 300" role="img" aria-labelledby="loops-title loops-desc">
+            <title id="loops-title">A pull request connects the inner and outer loops</title>
+            <desc id="loops-desc">The inner loop cycles through goal, code, checks, and adjustment. A pull request connects it to review, authorized delivery, feedback, and the next Issue in GitHub.</desc>
+            <defs><marker id="loops-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker></defs>
+            <g fill="none" stroke="var(--accent)" stroke-width="3" marker-end="url(#loops-arrow)">
+              <path d="M210 50A100 100 0 0 1 310 150"/><path d="M310 150A100 100 0 0 1 210 250"/>
+              <path d="M210 250A100 100 0 0 1 110 150"/><path d="M110 150A100 100 0 0 1 210 50"/>
+              <path d="M710 50A100 100 0 0 1 810 150"/><path d="M810 150A100 100 0 0 1 710 250"/>
+              <path d="M710 250A100 100 0 0 1 610 150"/><path d="M610 150A100 100 0 0 1 710 50"/>
+              <path d="M390 150H560"/>
+            </g>
+            <g fill="var(--text)" font-size="22" text-anchor="middle">
+              <text x="210" y="30">Goal</text><text x="345" y="157">Code</text>
+              <text x="210" y="284">Check</text><text x="60" y="157">Adjust</text>
+              <text x="710" y="30">Review</text><text x="875" y="157">Delivery</text>
+              <text x="710" y="284">Feedback</text><text x="565" y="183">Issue</text>
+              <text x="475" y="130">Pull request</text>
+              <text x="210" y="157" font-weight="600">Inner loop</text>
+              <text x="710" y="157" font-weight="600">Outer loop</text>
+            </g>
+          </svg>
+        </div>
+      </article>
+      <article class="card" id="card-lifecycle">
+        <div class="slide-content">
+          <h2 class="slide-title">Copilot starts<br><em>before the first line of code.</em></h2>
+          <svg viewBox="0 0 1080 240" role="img" aria-labelledby="before-code-title before-code-desc">
+            <title id="before-code-title">From intent to checked implementation</title>
+            <desc id="before-code-desc">A PRD clarifies needs, users, and outcomes. Architecture and ADRs record contracts and tradeoffs. A Goal Card sets the outcome, proof, and limits. User stories describe behaviors and acceptance. Tests make the success criteria executable before implementation. Revisit these artifacts as evidence changes; existing code can also supply evidence.</desc>
+            <defs><marker id="before-code-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--border-strong)"/></marker></defs>
+            <g fill="none" stroke="var(--border-strong)" stroke-width="2" marker-end="url(#before-code-arrow)">
+              <path d="M170 120H180"/><path d="M350 120H360"/><path d="M530 120H540"/><path d="M710 120H720"/><path d="M890 120H900"/>
+            </g>
+            <g text-anchor="middle" font-size="22" fill="var(--text)">
+              <g data-lifecycle-step="prd" transform="translate(4 40)">
+                <rect width="164" height="160" rx="10" fill="var(--surface-2)" stroke="var(--border)"/>
+                <text x="82" y="42" font-weight="650">PRD</text>
+                <text x="82" y="90" font-size="20" fill="var(--text-muted)">Needs, users,</text>
+                <text x="82" y="118" font-size="20" fill="var(--text-muted)">outcomes.</text>
+              </g>
+              <g data-lifecycle-step="architecture" transform="translate(184 40)">
+                <rect width="164" height="160" rx="10" fill="var(--surface-2)" stroke="var(--border)"/>
+                <text x="82" y="34" font-weight="650">Architecture</text><text x="82" y="62" font-weight="650">ADRs</text>
+                <text x="82" y="102" font-size="20" fill="var(--text-muted)">Contracts,</text>
+                <text x="82" y="130" font-size="20" fill="var(--text-muted)">tradeoffs.</text>
+              </g>
+              <g data-lifecycle-step="goal" transform="translate(364 40)">
+                <rect width="164" height="160" rx="10" fill="var(--surface-2)" stroke="var(--border)"/>
+                <text x="82" y="42" font-weight="650">Goal Card</text>
+                <text x="82" y="90" font-size="20" fill="var(--text-muted)">Outcome, proof,</text>
+                <text x="82" y="118" font-size="20" fill="var(--text-muted)">limits.</text>
+              </g>
+              <g data-lifecycle-step="stories" transform="translate(544 40)">
+                <rect width="164" height="160" rx="10" fill="var(--surface-2)" stroke="var(--border)"/>
+                <text x="82" y="42" font-weight="650">User stories</text>
+                <text x="82" y="90" font-size="20" fill="var(--text-muted)">Behaviors,</text>
+                <text x="82" y="118" font-size="20" fill="var(--text-muted)">acceptance.</text>
+              </g>
+              <g data-lifecycle-step="tests" transform="translate(724 40)">
+                <rect width="164" height="160" rx="10" fill="var(--surface-2)" stroke="var(--border)"/>
+                <text x="82" y="42" font-weight="650">Tests</text>
+                <text x="82" y="90" font-size="20" fill="var(--text-muted)">Executable</text>
+                <text x="82" y="118" font-size="20" fill="var(--text-muted)">criteria.</text>
+              </g>
+              <g data-lifecycle-step="code" transform="translate(904 40)">
+                <rect width="164" height="160" rx="10" fill="var(--accent-soft)" stroke="var(--accent)"/>
+                <text x="82" y="42" font-weight="650" fill="var(--accent)">Code</text>
+                <text x="82" y="90" font-size="20" fill="var(--text-muted)">Implement,</text>
+                <text x="82" y="118" font-size="20" fill="var(--text-muted)">verify.</text>
+              </g>
+            </g>
+          </svg>
+          <p class="slide-lead">Existing code can also supply evidence.</p>
+        </div>
+      </article>
+      <article class="card" id="card-after-code">
+        <div class="slide-content">
+          <h2 class="slide-title">Copilot continues<br><em>after the code is written.</em></h2>
+          <svg viewBox="0 0 1080 240" role="img" aria-labelledby="after-code-title after-code-desc">
+            <title id="after-code-title">From checked code to the next engineering goal</title>
+            <desc id="after-code-desc">Security and quality reviews examine threats, vulnerabilities, tests, and maintainability; these reviews can run in parallel. Authorized deployment includes rollback readiness. A bounded SRE agent can assess operational signals and incidents. User feedback informs the next goal. These are conceptual agent roles, not a claim that every role is a built-in GitHub feature. Agents propose; humans retain authority.</desc>
+            <defs><marker id="after-code-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--border-strong)"/></marker></defs>
+            <g fill="none" stroke="var(--border-strong)" stroke-width="2" marker-end="url(#after-code-arrow)">
+              <path d="M170 120H180"/><path d="M350 120H360"/><path d="M530 120H540"/><path d="M710 120H720"/><path d="M890 120H900"/>
+            </g>
+            <g text-anchor="middle" font-size="22" fill="var(--text)">
+              <g data-lifecycle-step="code" transform="translate(4 40)">
+                <rect width="164" height="160" rx="10" fill="var(--accent-soft)" stroke="var(--accent)"/>
+                <text x="82" y="42" font-weight="650" fill="var(--accent)">Code</text>
+                <text x="82" y="90" font-size="20" fill="var(--text-muted)">Checked</text>
+                <text x="82" y="118" font-size="20" fill="var(--text-muted)">change.</text>
+              </g>
+              <g data-lifecycle-step="security" transform="translate(184 40)">
+                <rect width="164" height="160" rx="10" fill="var(--surface-2)" stroke="var(--border)"/>
+                <text x="82" y="34" font-weight="650">Security</text><text x="82" y="62" font-weight="650">review</text>
+                <text x="82" y="102" font-size="20" fill="var(--text-muted)">Threats,</text>
+                <text x="82" y="130" font-size="20" fill="var(--text-muted)">vulnerabilities.</text>
+              </g>
+              <g data-lifecycle-step="quality" transform="translate(364 40)">
+                <rect width="164" height="160" rx="10" fill="var(--surface-2)" stroke="var(--border)"/>
+                <text x="82" y="34" font-weight="650">Quality</text><text x="82" y="62" font-weight="650">review</text>
+                <text x="82" y="102" font-size="20" fill="var(--text-muted)">Tests,</text>
+                <text x="82" y="130" font-size="20" fill="var(--text-muted)">maintainability.</text>
+              </g>
+              <g data-lifecycle-step="deployment" transform="translate(544 40)">
+                <rect width="164" height="160" rx="10" fill="var(--surface-2)" stroke="var(--border)"/>
+                <text x="82" y="42" font-weight="650">Deployment</text>
+                <text x="82" y="90" font-size="20" fill="var(--text-muted)">Approval,</text>
+                <text x="82" y="118" font-size="20" fill="var(--text-muted)">rollback.</text>
+              </g>
+              <g data-lifecycle-step="sre" transform="translate(724 40)">
+                <rect width="164" height="160" rx="10" fill="var(--surface-2)" stroke="var(--border)"/>
+                <text x="82" y="42" font-weight="650">SRE agent</text>
+                <text x="82" y="90" font-size="20" fill="var(--text-muted)">Signals,</text>
+                <text x="82" y="118" font-size="20" fill="var(--text-muted)">incidents.</text>
+              </g>
+              <g data-lifecycle-step="feedback" transform="translate(904 40)">
+                <rect width="164" height="160" rx="10" fill="var(--surface-2)" stroke="var(--border)"/>
+                <text x="82" y="34" font-weight="650">User</text><text x="82" y="62" font-weight="650">feedback</text>
+                <text x="82" y="102" font-size="20" fill="var(--text-muted)">Needs,</text>
+                <text x="82" y="130" font-size="20" fill="var(--text-muted)">next goal.</text>
+              </g>
+            </g>
+          </svg>
+          <p class="slide-lead">Agents advise; humans authorize. Feedback shapes the next goal.</p>
         </div>
       </article>
     </section>
-    <section class="chapter" id="ch-demo"><h2 class="chapter-label">Opening demonstration</h2>
-      <article class="card" id="card-platform-loop">
-        <div class="slide-content"><h2 class="slide-title">GitHub carries the<br><em>whole engineering loop.</em></h2><ul class="slide-points"><li class="frag">An issue names intent.</li><li class="frag">A pull request makes work reviewable.</li><li class="frag">Checks and people decide what ships.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Follow one pharmacy request from issue to next decision</span><span class="card-sub">09:00-09:30 &middot; Facilitator demonstration; no attendee setup.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-        <div class="card-body">
-          <p>Watch the facilitator open a prepared <strong>synthetic</strong> pharmacy instructor station. A request to prevent overselling after consecutive reservations becomes a GitHub issue with acceptance criteria. A test-only change is proposed in a pull request. Actions runs service tests independently of any agent. A reviewer decides whether to accept the change; a separate release decision would need its own revision-bound evidence.</p>
-          <ol>
-            <li>Open the station issue and identify the need, owner and acceptance criteria.</li>
-            <li>Open its linked pull request and inspect the proposed diff and review.</li>
-            <li>Open the Actions checks and distinguish a passing test from an agent's claim.</li>
-            <li>Inspect security evidence, the release boundary and the named next decision.</li>
-          </ol>
-          <p><strong>Expected outcome:</strong> you can trace intent, proposal, independent verification and human authority through durable GitHub artifacts. A green check does not itself deploy anything. The five labs build and inspect these same boundaries in your own station.</p>
-          <p><strong>Live path:</strong> the facilitator rehearses this chain in a separate instructor station and shows its actual GitHub issue, pull request, checks and review. If the live chain is unavailable, inspect the <a href="../test/inventory.test.mjs">local synthetic stock tests</a> as an illustrative source example, plus <a href="labs/04-trusted-delivery/index.html#codeql">Lab 4's labelled historical security observation</a>. They are not one live chain and do not prove a deployment. GitHub Agentic Workflows are public preview; no preview run is required for this opening.</p>
+    <section class="chapter" id="ch-agenda"><h2 class="chapter-label">Agenda and labs</h2>
+      <article class="card" id="card-agenda" data-open>
+        <div class="slide-content">
+          <p class="slide-eyebrow">Morning &middot; 09:00-12:35</p>
+          <h2 class="slide-title">One service.<br><em>Five hands-on labs.</em></h2>
+          <svg viewBox="0 0 1100 350" role="img" aria-labelledby="morning-title morning-desc">
+            <title id="morning-title">Morning agenda</title>
+            <desc id="morning-desc">09:00-09:45 opening walkthrough. 09:45-10:30 Lab 1: evidence to engineering intent. 10:30-10:45 break. 10:45-11:45 Lab 2: Goal Cards and agent loops. 11:45-12:35 Lab 3: governed pull requests.</desc>
+            <g font-size="28" fill="var(--text)">
+              <g data-agenda-slot="09:00-09:45" transform="translate(0 42)"><circle cx="8" cy="-8" r="5" fill="var(--accent)"/><text x="30" font-size="24" fill="var(--text-muted)">09:00-09:45</text><text x="275">Opening walkthrough</text></g>
+              <g data-agenda-slot="09:45-10:30" transform="translate(0 108)"><circle cx="8" cy="-8" r="5" fill="var(--accent)"/><text x="30" font-size="24" fill="var(--text-muted)">09:45-10:30</text><text x="275">Lab 1: Evidence to engineering intent</text></g>
+              <g data-agenda-slot="10:30-10:45" transform="translate(0 174)"><circle cx="8" cy="-8" r="5" fill="var(--border-strong)"/><text x="30" font-size="24" fill="var(--text-muted)">10:30-10:45</text><text x="275" fill="var(--text-muted)">Break</text></g>
+              <g data-agenda-slot="10:45-11:45" transform="translate(0 240)"><circle cx="8" cy="-8" r="5" fill="var(--accent)"/><text x="30" font-size="24" fill="var(--text-muted)">10:45-11:45</text><text x="275">Lab 2: Goal Cards and agent loops</text></g>
+              <g data-agenda-slot="11:45-12:35" transform="translate(0 306)"><circle cx="8" cy="-8" r="5" fill="var(--accent)"/><text x="30" font-size="24" fill="var(--text-muted)">11:45-12:35</text><text x="275">Lab 3: Governed pull requests</text></g>
+            </g>
+          </svg>
         </div>
       </article>
-      <article class="card" id="card-loop-boundary">
-        <div class="slide-content"><h2 class="slide-title">The loop reads back<br><em>before acting again.</em></h2><ul class="slide-points"><li class="frag">Persist what happened.</li><li class="frag">Compare the next signal.</li><li class="frag">Retry, wait, escalate or stop.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">The next run needs prior state, not just another prompt</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-        <div class="card-body"><p>The operating sequence is intake, delegate, act, verify, persist and decide. GitHub holds the issue, pull request, checks and decision record. Copilot is the primary worker; deterministic checks and required human review remain separate authorities. Per-run limits reduce exposure but cannot prevent duplicate work across runs without stable identity and a read-back of earlier evidence.</p><p>The sandbox path needs no dedicated enterprise organization. Enterprise policies, security licensing and environment approvals require a capability check; unavailable controls have labelled lab fallbacks and are never presented as active enforcement.</p></div>
-      </article>
-    </section>
-    <section class="chapter" id="ch-labs"><h2 class="chapter-label">Five progressive labs</h2>
-      <article class="card" id="card-lab-path">
-        <div class="slide-content"><h2 class="slide-title">Every lab proves<br><em>one part of the loop.</em></h2><ul class="slide-points"><li class="frag">Open a lab from the agenda.</li><li class="frag">Present its cues with Slides.</li><li class="frag">Follow the guide in reading view.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Use the same lab file for explanation and hands-on work</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-        <div class="card-body"><p>Each lab opens with the outcome, access requirements and prepared state; then shows the procedure, expected GitHub evidence, recovery and optional extensions. Use <strong>Slides</strong> on that page for its concise explanation, and exit the slide view for the full instructions. Your repository's green checks, reviews, rejected pushes and published issues are the proof; no local pass-printing runner is required.</p><p>If you fall behind, use the reference file in that lab's <code>artifacts/</code> folder to rejoin the storyline without claiming that a recorded example is your own result.</p></div>
-      </article>
-    </section>
-    <section class="chapter" id="ch-adoption"><h2 class="chapter-label">Adoption roadmap</h2>
-      <article class="card" id="card-pilot">
-        <div class="slide-content"><h2 class="slide-title">Start where outcomes<br><em>can be verified.</em></h2><ul class="slide-points"><li class="frag">Choose reversible, low-risk work.</li><li class="frag">Name the accountable owner.</li><li class="frag">Measure accepted outcomes and cost.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Select a governed pilot, not an autonomous feature tour</span><span class="card-sub">15:50-16:30 &middot; Discussion and next steps.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-        <div class="card-body"><p>Choose a frequent task with clear acceptance, quick tests and reversible changes. Agree who owns the issue, agent permissions, review, release and stop decision. Track accepted outcomes, time spent on human attention, duplicate avoidance, failure handling and cost over four to eight weeks. If moving from Azure DevOps, migrate repositories and pipelines in bounded waves; verify identity, policy and evidence parity before retiring existing controls.</p></div>
+      <article class="card" id="card-agenda-afternoon">
+        <div class="slide-content">
+          <p class="slide-eyebrow">Afternoon &middot; 12:35-15:30</p>
+          <h2 class="slide-title">Complete the loop.<br><em>Deliver, learn, and adjust.</em></h2>
+          <svg viewBox="0 0 1100 350" role="img" aria-labelledby="afternoon-title afternoon-desc">
+            <title id="afternoon-title">Afternoon agenda</title>
+            <desc id="afternoon-desc">12:35-13:20 lunch. 13:20-14:10 Lab 4: trusted delivery and operational readiness. 14:10-14:20 break. 14:20-15:00 Lab 5: agentic outer loops. 15:00-15:30 adoption and discussion.</desc>
+            <g font-size="28" fill="var(--text)">
+              <g data-agenda-slot="12:35-13:20" transform="translate(0 42)"><circle cx="8" cy="-8" r="5" fill="var(--border-strong)"/><text x="30" font-size="24" fill="var(--text-muted)">12:35-13:20</text><text x="275" fill="var(--text-muted)">Lunch</text></g>
+              <g data-agenda-slot="13:20-14:10" transform="translate(0 108)"><circle cx="8" cy="-8" r="5" fill="var(--accent)"/><text x="30" font-size="24" fill="var(--text-muted)">13:20-14:10</text><text x="275">Lab 4: Trusted delivery and operational readiness</text></g>
+              <g data-agenda-slot="14:10-14:20" transform="translate(0 174)"><circle cx="8" cy="-8" r="5" fill="var(--border-strong)"/><text x="30" font-size="24" fill="var(--text-muted)">14:10-14:20</text><text x="275" fill="var(--text-muted)">Break</text></g>
+              <g data-agenda-slot="14:20-15:00" transform="translate(0 240)"><circle cx="8" cy="-8" r="5" fill="var(--accent)"/><text x="30" font-size="24" fill="var(--text-muted)">14:20-15:00</text><text x="275">Lab 5: Agentic outer loops</text></g>
+              <g data-agenda-slot="15:00-15:30" transform="translate(0 306)"><circle cx="8" cy="-8" r="5" fill="var(--accent)"/><text x="30" font-size="24" fill="var(--text-muted)">15:00-15:30</text><text x="275">Adoption and discussion</text></g>
+            </g>
+          </svg>
+        </div>
       </article>
     </section>
   </main>
-  <section class="takeaway" id="closing"><p>Carry one verified result and an accountable next decision from each chapter into the next.</p><div class="slide-content slide-content--end"><h2 class="slide-title">One workshop.<br><em>One connected story.</em></h2></div></section>
-  <footer class="doc-footer">Synthetic pharmacy data only. Check preview and enterprise capabilities before the live session.</footer>
+  <section class="takeaway" id="closing"><p>Define the goal. Let the loops do the work. Keep judgment and authority explicit.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Define the goal.<br><em>Let the loops do the work.</em></h2></div></section>
+  <footer class="doc-footer">Loop Engineering with GitHub &middot; Synthetic pharmacy scenario &middot; Start with <a href="labs/01-evidence-to-goal/index.html">Lab 1</a>.</footer>
 </div>
 </body>
 </html>

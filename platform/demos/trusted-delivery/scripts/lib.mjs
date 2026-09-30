@@ -60,7 +60,7 @@ function cleanName(value, label) {
   return value;
 }
 
-export function loadConfig(options = {}) {
+export function loadConfig(options = {}, { requireRepository = true } = {}) {
   const state = readState();
   const workshopId = cleanName(
     options["workshop-id"] ??
@@ -73,16 +73,16 @@ export function loadConfig(options = {}) {
     options.repo ??
     process.env.TRUSTED_DELIVERY_REPOSITORY ??
     state.repository ??
-    `tkubica12/${workshopId}`;
-  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)) {
+    "";
+  if (requireRepository && !/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository)) {
     throw new Error("repository must be OWNER/REPOSITORY");
   }
   const resourceStem = workshopId.slice(0, 32);
   return {
     workshopId,
     repository,
-    owner: repository.split("/")[0],
-    repositoryName: repository.split("/")[1],
+    owner: repository ? repository.split("/")[0] : "",
+    repositoryName: repository ? repository.split("/")[1] : "",
     subscriptionId:
       options.subscription ??
       process.env.AZURE_SUBSCRIPTION_ID ??

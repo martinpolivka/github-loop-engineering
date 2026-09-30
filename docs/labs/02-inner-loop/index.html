@@ -1,0 +1,311 @@
+<!doctype html>
+<html lang="en" data-default-accent="blue">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Lab 2: guide Copilot through a bounded test-driven inner loop and stop on verified evidence.">
+  <title>Lab 2 &middot; Inner loop with Copilot | GitHub workshop</title>
+  <meta name="doc-id" content="workshop-lab-02-inner-loop">
+  <script data-doc-bootstrap>
+/* Inline in the head before styles with sync-head.js. No deferred bootstrap. */
+(() => {
+  "use strict";
+  const root = document.documentElement;
+  const params = new URLSearchParams(location.search);
+  const id = document.querySelector('meta[name="doc-id"]')?.content ||
+    location.pathname.replace(/\.standalone(?=\.html$)/i, "");
+  const prefix = "html-docs:" + id + ":";
+  const choices = { theme: ["light", "dark"], accent: ["blue", "red", "green", "yellow"] };
+  const read = (name) => {
+    try { return localStorage.getItem(prefix + name); }
+    catch { return null; /* Storage may be unavailable for local files. */ }
+  };
+  const write = (name, value) => {
+    try { localStorage.setItem(prefix + name, value); }
+    catch { /* The current view still works without persistence. */ }
+  };
+  function refresh() {
+    for (const name of Object.keys(choices)) {
+      const current = root.getAttribute("data-" + name);
+      const next = choices[name][(choices[name].indexOf(current) + 1) % choices[name].length];
+      document.querySelectorAll('[data-action="toggle-' + name + '"]').forEach(button => {
+        button.textContent = name === "theme" ? (next === "dark" ? "Dark" : "Light") :
+          "Accent: " + current[0].toUpperCase() + current.slice(1);
+        button.setAttribute("aria-label", name === "theme" ? "Switch to " + next + " theme" :
+          "Accent: " + current + ". Switch to " + next);
+      });
+    }
+  }
+  for (const [name, values] of Object.entries(choices)) {
+    const fallback = name === "theme" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : values[0];
+    const value = [params.get(name), read(name), root.getAttribute("data-default-" + name), fallback]
+      .map(candidate => name === "accent" && candidate === "orange" ? "red" : candidate)
+      .find(candidate => values.includes(candidate));
+    root.setAttribute("data-" + name, value);
+  }
+  root.classList.add("js");
+  if (["slides", "sheet"].includes(params.get("view"))) root.setAttribute("data-view", params.get("view"));
+
+  // Print what is on screen. data-print selects the matching print stylesheet.
+  const printTarget = () => {
+    if (document.querySelector(".deck-stage")) return "slides";
+    const view = root.getAttribute("data-view");
+    if (view === "slides" || (view === "sheet" && document.querySelector(".sheet"))) return view;
+    return document.querySelector(".doc") || !document.querySelector(".sheet") ? "read" : "sheet";
+  };
+  let printing = null;
+  addEventListener("beforeprint", () => {
+    if (root.hasAttribute("data-print")) return; // Set by an automated export.
+    const target = printTarget();
+    printing = document.title;
+    root.setAttribute("data-print", target);
+    // The browser proposes the title as the PDF file name.
+    if (target !== "read" && document.querySelector(".doc")) {
+      document.title += target === "slides" ? " - Slides" : " - Sheet";
+    }
+  });
+  addEventListener("afterprint", () => {
+    if (printing === null) return;
+    root.removeAttribute("data-print");
+    document.title = printing;
+    printing = null;
+  });
+
+  // Keep the display awake while presenting, like presentation software does.
+  let lock = null;
+  let awake = false;
+  async function holdScreen() {
+    if (!awake || lock || document.visibilityState !== "visible" || !navigator.wakeLock) return;
+    try {
+      const sentinel = await navigator.wakeLock.request("screen");
+      if (!awake || lock) { sentinel.release(); return; }
+      lock = sentinel;
+      root.setAttribute("data-awake", "");
+      sentinel.addEventListener("release", () => {
+        if (lock !== sentinel) return;
+        lock = null;
+        root.removeAttribute("data-awake");
+      });
+    } catch { /* Denied by battery saver or an embedding policy; retried on input. */ }
+  }
+  function keepAwake(on) {
+    awake = !!on;
+    if (awake) holdScreen();
+    else if (lock) lock.release();
+  }
+  // The browser drops the lock when the tab is hidden; some require a gesture.
+  document.addEventListener("visibilitychange", holdScreen);
+  document.addEventListener("pointerdown", holdScreen);
+  document.addEventListener("keydown", holdScreen);
+
+  window.HtmlDocs = { read, write, refresh, keepAwake };
+  document.addEventListener("DOMContentLoaded", refresh);
+  document.addEventListener("click", event => {
+    if (event.target.closest('[data-action="print"]')) window.print();
+  });
+  document.addEventListener("click", event => {
+    const button = event.target.closest('[data-action="toggle-theme"], [data-action="toggle-accent"]');
+    if (!button) return;
+    const name = button.getAttribute("data-action").slice(7);
+    const values = choices[name];
+    const next = values[(values.indexOf(root.getAttribute("data-" + name)) + 1) % values.length];
+    root.setAttribute("data-" + name, next);
+    write(name, next);
+    // Replace a URL override too, so reloading preserves a deliberate change.
+    const url = new URL(location.href);
+    if (url.searchParams.has(name)) {
+      url.searchParams.set(name, next);
+      history.replaceState(null, "", url.href);
+    }
+    refresh();
+  });
+})();
+</script>
+  <style data-doc-tokens>
+/* Canonical tokens. Inline with sync-head.js; one accent family at a time. */
+:root {
+  color-scheme: light;
+  --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f2; --surface-3: #e8e8e8;
+  --border: #dedede; --border-strong: #b8b8b8;
+  --text: #161616; --text-muted: #565656; --text-faint: #686868;
+  --accent-light: #006da0; --accent-dark: #00a4ef;
+  --accent: var(--accent-light);
+  --accent-strong: var(--accent);
+  --accent-quiet: var(--accent);
+  --accent-soft: color-mix(in srgb, var(--accent) 9%, var(--bg));
+  --accent-border: color-mix(in srgb, var(--accent) 36%, var(--bg));
+  --warn: var(--accent); --warn-soft: var(--accent-soft); --warn-border: var(--accent-border);
+  --code-bg: var(--surface-2); --code-border: var(--border);
+  --focus: var(--accent);
+  --shadow-1: 0 1px 2px rgba(0,0,0,.04);
+  --shadow-2: 0 2px 4px rgba(0,0,0,.04), 0 12px 28px rgba(0,0,0,.06);
+  --radius: 10px; --radius-sm: 6px; --canvas: 1160px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Mono", "Cascadia Code", ui-monospace, Consolas, "SF Mono", "Liberation Mono", Menlo, monospace;
+}
+/* Screen only: every PDF and printout uses the light palette. */
+@media screen {
+  [data-theme="dark"], :root:not([data-theme])[data-default-theme="dark"] {
+    color-scheme: dark;
+    --bg: #101010; --surface: #191919; --surface-2: #232323; --surface-3: #2c2c2c;
+    --border: #363636; --border-strong: #595959;
+    --text: #f2f2f2; --text-muted: #b5b5b5; --text-faint: #a0a0a0;
+    --accent: var(--accent-dark);
+    --shadow-1: 0 1px 2px rgba(0,0,0,.3);
+    --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.4);
+  }
+}
+[data-accent="red"], :root:not([data-accent])[data-default-accent="red"],
+[data-accent="orange"], :root:not([data-accent])[data-default-accent="orange"] {
+  --accent-light: #bc3a16; --accent-dark: #f25022;
+}
+[data-accent="green"], :root:not([data-accent])[data-default-accent="green"] {
+  --accent-light: #4c7100; --accent-dark: #7fba00;
+}
+[data-accent="yellow"], :root:not([data-accent])[data-default-accent="yellow"] {
+  --accent-light: #805b00; --accent-dark: #ffb900;
+}
+</style>
+  <link rel="stylesheet" href="../../assets/html-docs/article.css">
+  <link rel="stylesheet" href="../../assets/html-docs/slides.css">
+  <link rel="stylesheet" href="../../assets/lab-tables.css">
+  <script src="../../assets/html-docs/article.js" defer></script>
+  <script src="../../assets/html-docs/slides.js" defer></script>
+  <script src="../../assets/materials.js" defer></script>
+</head>
+<body>
+<div class="controls" role="group" aria-label="Article controls">
+  <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
+  <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
+  <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
+  <button type="button" class="ctrl" data-action="print">PDF</button>
+  <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
+  <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
+</div>
+<div class="doc">
+  <header class="doc-header" id="opening">
+    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 2</p><h2 class="slide-title">One Goal Card pattern.<br><em>Two agent surfaces.</em></h2><p class="slide-lead">Run one loop beside the agent and delegate the other through an Issue.</p></div>
+    <p class="eyebrow">10:45-11:45 &middot; 60 minutes</p>
+    <h1>Goal Cards and two coding loops</h1>
+    <p class="subtitle">Turn both approved Issues into immutable Goal Cards. Execute the feature with a local agent while Copilot cloud agent works on the smaller bug from its Issue. Compare how both paths produce reviewable pull requests from the same evidence discipline.</p>
+    <p><strong>Result:</strong> two Issues with approved Goal Card comments, one feature PR created through a visible local inner loop, and one bug-fix PR delegated to Copilot cloud agent.</p>
+  </header>
+  <nav class="doc-nav" aria-label="Workshop navigation"><a href="../../index.html#ch-agenda">All labs</a><a href="#main">Skip to content</a><a href="../01-evidence-to-goal/index.html">Previous lab</a><a href="../03-governed-pr/index.html">Next lab</a></nav>
+  <nav class="toc" aria-label="Contents"><p class="toc-label">Contents</p><ol><li><a href="#ch-goals">Approve the Goal Cards</a></li><li><a href="#ch-cloud">Delegate the bug</a></li><li><a href="#ch-local">Run the local loop</a></li><li><a href="#ch-compare">Compare the PRs</a></li><li><a href="#ch-recover">Recovery</a></li></ol></nav>
+  <main id="main">
+    <section class="chapter" id="ch-goals"><h2 class="chapter-label">Approve the Goal Cards</h2>
+      <article class="card card--lead" id="card-goals" data-open>
+        <div class="slide-content"><h2 class="slide-title">The Issue states the need.<br><em>The Goal Card fixes done.</em></h2><ul class="slide-points"><li class="frag">Design checks before coding.</li><li class="frag">Approve each finish line.</li><li class="frag">Publish before delegation.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Create two Goal Cards</span><span class="card-sub">15 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>The <code>goal-card</code> skill defines the outcome and finish line; it does not execute the task. Create each card before choosing its coding surface. The executor may repair allowed outputs but may not weaken the card to make its work pass.</p>
+          <ol>
+            <li>Ask the agent to create the feature Goal Card:
+              <div class="code"><pre><code>/goal-card Turn Issue #FEATURE_NUMBER into a ready Goal Card at specs/stock-substitution.goal-card.md. Do not implement it yet.</code></pre></div>
+            </li>
+            <li>Answer focused questions only when a missing decision changes the outcome, checks, authority, or limits. Review C01-C03 and compare with the <a href="artifacts/stock-substitution.goal-card.md">reference feature card</a> only if you need recovery.</li>
+            <li>Create the bug Goal Card:
+              <div class="code"><pre><code>/goal-card Turn Issue #BUG_NUMBER into a ready Goal Card at specs/partial-stock-visibility.goal-card.md. Do not implement it yet.</code></pre></div>
+            </li>
+            <li>Verify that the bug card preserves the API and stock while changing only the visible HTTP 409 result. Use the <a href="artifacts/partial-stock-visibility.goal-card.md">reference bug card</a> only to recover.</li>
+          </ol>
+          <p><strong>Expected result:</strong> both Goal Card files have observable checks, bounded writes, repair paths, approval ownership, and terminal states. Neither implementation has started.</p>
+        </div>
+      </article>
+      <article class="card" id="card-publish-goals">
+        <div class="slide-content"><h2 class="slide-title">Cloud delegation captures<br><em>context at assignment.</em></h2><ul class="slide-points"><li class="frag">Publish the complete approved card.</li><li class="frag">Assign only after the comment exists.</li><li class="frag">Keep later steering on the PR.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Let the agent publish both Goal Cards</span><span class="card-sub">8 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>Copilot cloud agent receives the Issue title, body, and comments that already exist when the Issue is assigned. It does not receive later Issue comments. Let your current agent use GitHub MCP to publish each complete reviewed card, not a link to an uncommitted local file.</p>
+          <ol>
+            <li>Review both local files, then send:
+              <div class="code"><pre><code>Resolve this workspace's exact nameWithOwner, verify it is my fork rather than its parent, then use GitHub MCP to publish the complete reviewed Goal Cards as new comments on OWNER/REPOSITORY#FEATURE_NUMBER and OWNER/REPOSITORY#BUG_NUMBER.
+
+Prefix each comment with "## APPROVED GOAL CARD". Show the exact repository-qualified Issue target and complete comment body, and ask for separate approval before each GitHub write. Do not edit either Issue, assign anyone, or start implementation. After each write, read the comment back and verify that the complete Goal Card is present.</code></pre></div>
+            </li>
+            <li>Approve each proposed write only after checking the repository-qualified target, Issue number, and complete comment. Two writes require two approvals.</li>
+            <li>Open both Issues and compare the read-back comments with the local files. From this point, revise a published Goal Card only through another explicit owner-approved write.</li>
+            <li>After both read-backs pass, ask the agent to remove the local <code>specs/partial-stock-visibility.goal-card.md</code>. The cloud agent will recreate that card from the bug Issue; keeping it out of the local workspace prevents the feature branch from carrying the unrelated bug Goal Card.</li>
+          </ol>
+          <p><strong>Expected result:</strong> GitHub shows two agent-authored, human-approved Goal Card comments, and the agent has verified both persisted writes through GitHub MCP.</p>
+          <aside class="callout callout--rule"><p class="callout-label">Assignment boundary</p><p>Assign the bug only after its approved comment is visible. Follow-up information after assignment belongs on the resulting PR with <code>@copilot</code>, where it becomes part of the implementation conversation.</p></aside>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-cloud"><h2 class="chapter-label">Delegate the bounded bug</h2>
+      <article class="card" id="card-cloud">
+        <div class="slide-content"><h2 class="slide-title">Assignment turns an Issue<br><em>into asynchronous work.</em></h2><ul class="slide-points"><li class="frag">The bug is small and explicit.</li><li class="frag">Copilot owns branch mechanics.</li><li class="frag">The output is always a PR.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Assign the bug to Copilot</span><span class="card-sub">7 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Open the bug Issue on GitHub. Under <strong>Assignees</strong>, select <strong>Copilot</strong>. Assigning an Issue starts a cloud-agent session and always creates a pull request.</li>
+            <li>In <strong>Optional prompt</strong>, enter:
+              <div class="code"><pre><code>Treat the APPROVED GOAL CARD in this Issue as the immutable definition of done. Add it to specs/partial-stock-visibility.goal-card.md, execute its checks and stop conditions, and create the pull request with revision-bound evidence.</code></pre></div>
+            </li>
+            <li>Confirm the target repository is your fork and the base branch is <code>main</code>. Start the assignment, then leave it running while you execute the feature locally.</li>
+          </ol>
+          <p><strong>Expected result:</strong> the Issue shows an active Copilot session. You do not wait for it; asynchronous delegation creates time for the second loop.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-local"><h2 class="chapter-label">Run the visible inner loop</h2>
+      <article class="card" id="card-local-loop">
+        <div class="slide-content"><h2 class="slide-title">Work beside the agent.<br><em>Choose from failed checks.</em></h2><ul class="slide-points"><li class="frag">Branch creation is part of the task.</li><li class="frag">The first check proves the gap.</li><li class="frag">Evidence selects each repair.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 4 &mdash; Execute the feature Goal Card locally</span><span class="card-sub">23 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>Use any approved local agent surface in the repository. At this point the only uncommitted Goal Card in the workspace is <code>specs/stock-substitution.goal-card.md</code>. The instruction owns branch mechanics and makes that card the DoD; it does not require a particular IDE button or Git command.</p>
+          <ol>
+            <li>Send:
+              <div class="code"><pre><code>Create and use a feature branch for Issue #FEATURE_NUMBER.
+
+Treat the APPROVED GOAL CARD in the Issue and specs/stock-substitution.goal-card.md as the immutable definition of done. Execute its assess-act-check-adjust loop.
+
+First establish the acceptance check and show its initial failure before changing production code. Work only within the card's permissions and stop conditions. Stop before committing and present the diff, check results, remaining gaps, and any requested repair.</code></pre></div>
+            </li>
+            <li>Inspect the first failed check. It must fail because <code>suggestion</code> is absent, not because of syntax, imports, or weakened existing assertions.</li>
+            <li>Authorize only the smallest action justified by that failure. Require the agent to rerun invalidated checks after each repair and reconcile C01-C03 against the final diff.</li>
+            <li>Require the complete deterministic suite before DONE:
+              <div class="code"><pre><code>npm test</code></pre></div>
+            </li>
+            <li>When the evidence supports DONE, ask the agent to commit, push, and open a PR against your fork's <code>main</code>. Require the PR body to link the feature Issue, name the Goal Card, and list the checks run.</li>
+          </ol>
+          <p><strong>Expected result:</strong> a feature PR contains the approved Goal Card, focused red-then-green evidence, the smallest permitted implementation, and no direct commit to <code>main</code>.</p>
+          <aside class="callout callout--rule"><p class="callout-label">Protected finish line</p><p>If a test contradicts the confirmed Issue, stop for an owner-approved Goal Card revision. Never edit the card or weaken the test merely to obtain green output.</p></aside>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-compare"><h2 class="chapter-label">Compare the two handoffs</h2>
+      <article class="card" id="card-compare">
+        <div class="slide-content"><h2 class="slide-title">The harness changes.<br><em>The evidence boundary stays.</em></h2><ul class="slide-points"><li class="frag">Local work exposes each decision.</li><li class="frag">Cloud work exposes delegation.</li><li class="frag">Both terminate in a PR.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 5 &mdash; Inspect both pull requests</span><span class="card-sub">7 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Open the local feature PR and record its head SHA, changed files, local evidence, and unresolved gaps.</li>
+            <li>Return to the bug Issue. If Copilot finished, open its PR and verify that it copied the approved card, stayed inside the write boundary, and reported C01-C03. If it is still running, record <strong>IN PROGRESS</strong> and continue; do not manufacture completion.</li>
+            <li>Compare the handoffs: which decisions were visible in the synchronous session, which were delegated, and which evidence must still be independently checked on GitHub?</li>
+          </ol>
+          <p><strong>Checkpoint:</strong> local DONE and cloud-agent completion are proposals tied to branch revisions. Neither is approval, merge authority, deployment evidence, or release authority.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-recover"><h2 class="chapter-label">Recovery and alternatives</h2>
+      <article class="card" id="card-recover">
+        <div class="slide-content"><h2 class="slide-title">A delayed agent<br><em>does not block learning.</em></h2><ul class="slide-points"><li class="frag">Keep truthful session state.</li><li class="frag">Use references only for recovery.</li><li class="frag">Never invent a second PR.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">If you get stuck</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <dl>
+            <dt>The feature acceptance test does not fail</dt><dd>Compare it with <a href="artifacts/suggestion.test.mjs">the reference test</a>. Confirm it runs against unchanged production code before using the <a href="artifacts/inventory.reference.mjs">reference implementation</a>.</dd>
+            <dt>The skill is unavailable</dt><dd>Copy the matching reference Goal Card, bind its real Issue number, review every field, then publish it before execution.</dd>
+            <dt>Cloud assignment is unavailable</dt><dd>Keep the bug Issue unassigned and use the facilitator's source-bound cloud-agent example in Lab 3. Do not claim that a local fallback was Issue assignment.</dd>
+            <dt>The cloud agent is still running</dt><dd>Continue with the local feature PR. Revisit the session during Lab 3; its actual state is valid evidence.</dd>
+            <dt>A loop reaches a cap</dt><dd>Keep the branch or PR unmerged, record CAPPED and the failed checks, and use the matching reference artifact only to restore the workshop path.</dd>
+          </dl>
+        </div>
+      </article>
+    </section>
+  </main>
+  <section class="takeaway" id="closing"><p>You executed one Goal Card beside a local agent and delegated another through an Issue to Copilot cloud agent. Both paths produced revision-bound proposals without transferring approval authority to the agent.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Same Goal Card.<br><em>Different execution surface.</em></h2></div></section>
+  <footer class="doc-footer">Lab 2 of 5 &middot; Two bounded coding loops &middot; Synthetic pharmacy data only.</footer>
+</div>
+</body>
+</html>

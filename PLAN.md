@@ -1,227 +1,141 @@
 # Loop Engineering with GitHub - Delivery Roadmap
 
-## 1. Purpose and central proposition
+## 1. Purpose
 
-This repository prepares one public, audience-neutral **Loop Engineering with GitHub** full-day workshop, defined in `AGENDA.md`, using a synthetic pharmacy stock and reservation service.
+This repository authors one customer-neutral full-day workshop around a synthetic pharmacy stock and reservation service. It is also the source repository attendees fork, so the opening demo, agent configuration, service baseline, checks, labs, recovery artifacts, and platform contracts must be complete before delivery.
 
 The central proposition is:
 
-> Use GitHub Copilot as the primary worker and GitHub as the governed system of record for a bounded loop: intake, delegation, action, verification, persistence, and an accountable next decision.
+> Use an inner loop to reduce implementation uncertainty, an outer loop to coordinate evidence and authority, and bounded Agentic Workflows only where repeated repository operation is valuable.
 
-The operating lifecycle is `Intake -> Delegate -> Act -> Verify -> Persist -> Decide`, with retry, wait, escalate, no-op, and verified exit as explicit paths. The inner change story remains `Intent -> Propose -> Prove -> Approve -> Release -> Improve`. Prompt, context, harness, and loop are complementary layers: repository instructions are not run state, a worktree is not a security boundary, and per-run output caps do not deduplicate later runs.
+## 2. Learning architecture
 
-GitHub Copilot is the primary coding harness in every required demonstration and lab. Optional external harnesses may be discussed conceptually, but they are not required to run the day and must still land work through GitHub issues, branches, pull requests, checks, reviews, and deployment records. Azure DevOps migration is a workshop topic, not an assumed starting condition for every delivery.
-
-## 2. Attention-aware workshop design
-
-### Design for the real audience curve
-
-| Time window | Expected audience condition | Design response |
-| --- | --- | --- |
-| First 10% | Some participants may arrive late. | Open with concise framing and a visual platform map; avoid placing the only critical demonstration in the first few minutes. |
-| 10-25% | Highest combined manager and technical attention. | Deliver the strategic thesis and GitHub Agentic Workflows. |
-| 25-60% | Strong working attention before lunch. | Explain how issues, specifications, Copilot, pull requests, governance, and migration make the vision practical. |
-| Lunch boundary | Some managers may leave. | Complete all essential strategic, governance, and migration messages before lunch. |
-| 60-80% | Primarily technical audience. | Go deeper into CI/CD, security, identity, environments, and implementation patterns. |
-| After afternoon break | Attendance and energy may fall. | Introduce no essential strategic proposition. Use a technical capstone that integrates concepts already presented. |
-
-### Show the destination, then unpack it
-
-A purely foundational progression would delay the most distinctive content until the weakest attention window. A purely excitement-driven order would feel chaotic. Use this balance:
-
-1. **Executive platform briefing:** Present the complete map and strategic messages.
-2. **Bounded continuous AI:** Show the differentiated destination and the compact operating contract before the first break.
-3. **Intent-to-change workflow:** Explain the GitHub artifacts on which humans and agents operate.
-4. **Enterprise operating model:** Establish governance, harness choice, ownership, and migration.
-5. **Trusted delivery:** Deep dive into deterministic controls, security, and release evidence.
-6. **Capstone:** Reassemble the full human-agent delivery loop.
-
-### Chapter rhythm
-
-Use a repeated **see it - work with it - connect it** pattern:
-
-1. **See it:** Demonstrate the complete outcome, including advanced or permission-sensitive scenarios that should not be rebuilt live.
-2. **Work with it:** Let participants make one meaningful change or decision in their prepared station repository.
-3. **Connect it:** Discuss architecture, controls, tradeoffs, and adoption.
-
-### Recommended content balance
-
-| Activity | Approximate share | Purpose |
-| --- | ---: | --- |
-| Technical demonstration and explanation | 40% | Establish the art of the possible and show complete platform experiences. |
-| Guided hands-on work | 35% | Build direct experience without letting setup dominate. |
-| Architecture and adoption discussion | 25% | Connect capabilities to engineering governance, migration, and operating model decisions. |
-
-Hands-on segments are guided, not open-ended. Participants should use prepared station repositories and platform evidence rather than spend workshop time installing tools or debugging account setup.
-
-## 3. Narrative for the day
+### Inner loop
 
 ```text
-Business intent
-  -> GitHub Issues, Projects, specifications, decisions, and context
-  -> Human developers and coding harnesses, with Copilot primary
-  -> GitHub pull requests
-  -> Deterministic CI/CD, security gates, and Agentic Workflows
-  -> Governed software delivery
+goal -> assess -> act -> check -> inspect -> adjust or stop
 ```
 
-Keep four durable artifacts visible all day: issue, pull request, workflow run, and deployment or security record. Chat transcripts are not the system of record.
+The Goal Card fixes the finish line immediately before implementation. Failed checks select the next action. Repair caps and explicit terminal states prevent endless prompting or silent scope growth.
 
-## 4. Detailed schedule
+### Outer loop
 
-| Time | Duration | Session |
+```text
+Issue -> goal -> branch -> PR -> checks and reviews -> merge decision
+      -> artifact and environment evidence -> observation -> next decision
+```
+
+GitHub persists the shared artifacts. Deterministic controls execute known invariants; reasoning reviews interpret context; policy and humans authorize protected transitions.
+
+### Agentic recurrence
+
+A recurring workflow reads prior state, reconciles stable work identity, gathers bounded evidence, and uses declared safe outputs. It may recommend a next decision. It does not gain code, merge, deployment, or assignment authority merely because it runs repeatedly.
+
+## 3. One progressive participant story
+
+The workshop deliberately keeps the required chain small:
+
+1. Two synthetic tickets, a request log, Teams-style conversation and meeting, Outlook-style approval, and backlog evidence become one cited brief with a feature and a bug kept separate.
+2. Separate confirmation and repository-qualified approvals authorize one feature Issue and one bug Issue in the participant's fork.
+3. The `goal-card` project skill turns each confirmed Issue into an approved Goal Card published before implementation.
+4. A visible local agent follows the feature Goal Card through assess-act-check-adjust and opens a PR. Copilot cloud agent receives the complete bug Goal Card at assignment time and opens a second PR.
+5. Lab 3 compares both handoffs. Deterministic CI and Code Quality run separately from native Copilot code review and PR-triggered Goal Card and documentation reviews before human merge decisions.
+6. Lab 4 packages the exact merged feature revision, runs tests and smoke checks, records an artifact digest, waits at a GitHub Environment, and produces a reversible READY or BLOCKED decision without claiming production deployment.
+7. The opening shows a bounded recurring repository pulse. In Lab 5, attendees author Issue-triage and deployment-readiness workflows, then inspect the pulse as a scheduled reconciliation pattern.
+
+Do not create parallel required PRDs, requirements documents, user-story documents, and goal files for this single feature. Larger requirement decomposition and spec-driven development are extensions after participants understand the core chain.
+
+## 4. Schedule and chapter outcomes
+
+| Time | Duration | Outcome |
 | --- | ---: | --- |
-| 09:00-09:30 | 30 min | Executive platform briefing |
-| 09:30-10:20 | 50 min | Chapter 1: Bounded continuous AI with GitHub Agentic Workflows |
-| 10:20-10:35 | 15 min | Break |
-| 10:35-11:35 | 60 min | Chapter 2: From intent to a verified handoff |
-| 11:35-12:30 | 55 min | Chapter 3: GitHub Enterprise operating model |
-| 12:30-13:15 | 45 min | Lunch |
-| 13:15-14:35 | 80 min | Chapter 4: Trusted delivery with CI/CD and DevSecOps |
-| 14:35-14:50 | 15 min | Break |
-| 14:50-15:50 | 60 min | Chapter 5: Capstone: the governed human-agent delivery loop |
-| 15:50-16:30 | 40 min | Adoption roadmap and discussion |
+| 09:00-09:45 | 45 min | Opening walkthrough shows the finished system and explains inner loop, outer loop, recurrence, controls, profiles, and the day's artifact chain. |
+| 09:45-10:30 | 45 min | Lab 1 creates the fork and two approved evidence-backed Issues. |
+| 10:30-10:45 | 15 min | Break and recovery. |
+| 10:45-11:45 | 60 min | Lab 2 creates two Goal Cards, completes one local loop, starts one cloud loop, and produces two PRs. |
+| 11:45-12:35 | 50 min | Lab 3 compares and governs both PRs with deterministic and reasoning evidence. |
+| 12:35-13:20 | 45 min | Lunch. |
+| 13:20-14:10 | 50 min | Lab 4 binds the merged revision to tested bytes, environment authority, and rollback evidence. |
+| 14:10-14:20 | 10 min | Break. |
+| 14:20-15:00 | 40 min | Lab 5 authors triage and deployment-readiness workflows and inspects scheduled reconciliation. |
+| 15:00-15:30 | 30 min | Adoption discussion and Azure DevOps migration; extended deliveries add one hour. |
 
-## 5. Chapter roadmaps
+Every chapter follows **see it - work with it - connect it**. The opening walkthrough carries the strongest platform message before the first break. Required hands-on work is guided and bounded; optional depth stays in extensions.
 
-### Executive platform briefing - 09:00 to 09:30
+## 5. Prepared source-repository baseline
 
-- **Outcome:** Participants understand GitHub as the durable control plane for human and agent work, not just a code host.
-- **Demonstrate:** The complete map through a prepared instructor-station reservation regression issue, test-only PR, CI and review; keep Lab 2's stock-suggestion requirement undisclosed.
-- **Hands-on:** None; this protects the highest-attention strategic window.
-- **Connect:** Copilot as primary worker, GitHub artifacts as durable record, deterministic controls as non-negotiable, and Azure DevOps migration as an incremental path.
+The repository must contain before attendees fork it:
 
-### Chapter 1: Bounded continuous AI - 09:30 to 10:20
+- the dependency-free Node.js service and deterministic tests;
+- the complete synthetic intake packet and planned backlog;
+- feature and bug Issue forms;
+- the open-standard `requirement-refiner`, `goal-card`, `documentation-review`, and `goal-review` project skills;
+- the PR template;
+- deterministic CI, hardened title handling, release rehearsal, automatic PR review Agentic Workflows, and recurring-workflow source and lock files;
+- reference Issue, goal, test, implementation, workflow, security, and release artifacts;
+- presenter preflight, reset, cleanup, prepared states, and capability-specific fallbacks.
 
-- **Outcome:** Participants can explain how an agentic workflow is bounded by trigger, tools, permissions, network, budget, safe outputs, and human review.
-- **Demonstrate:** A repository workflow that reports or triages through constrained output, followed by inspection of the generated lock workflow and Actions boundary.
-- **Lab:** `docs\labs\01-agentic-workflow\index.html` proposes a narrower `repository-pulse` in a draft PR. Station CI tests the service, not Agentic Workflow source; merge and live execution require a facilitator to compile, commit and validate the matching lock.
-- **Connect:** GitHub Agentic Workflows are public preview; they complement CI/CD and should start with comments, reports, or draft pull requests rather than autonomous high-impact changes.
+The source repository supports the opening walkthrough. There is no separate hidden implementation whose concepts differ from the attendee fork. `docs/index.html` is only the short introduction, agenda, and lab directory, with presentation mode in the same file. Detailed procedures stay in the labs and internal operator material.
 
-### Chapter 2: From intent to a verified handoff - 10:35 to 11:35
+## 6. Trust architecture
 
-- **Outcome:** Noisy organizational context becomes a confirmed need, then a structured issue, a failing acceptance test, a bounded Copilot implementation, and a reviewed, merged pull request.
-- **Demonstrate:** Coached intake, issue form, red acceptance test, `@copilot` on the pull request, green check, and review.
-- **Lab:** `docs\labs\02-intent-to-pr\index.html` starts with each attendee forking the workshop repository as `github-loop-engineering-NN` and opening it in a GitHub Codespace (a local clone is the alternative). A read-only `requirement-refiner` custom agent then coaches them through the synthetic chat thread, ticket digest, stakeholder email, and planned backlog in `context\intake\`, and drafts a requirement only after the attendee confirms it. The attendee files the issue, pushes a failing acceptance test on a draft pull request, delegates the implementation by commenting `@copilot` on that pull request, and merges only after the check is green and the diff is reviewed (ADR 0011, ADR 0013).
-- **Connect:** Pull requests are the common control point for human- and agent-authored work; a proposal remains untrusted until scope, diff, tests, and review are clear.
+Keep these categories separate in both code and teaching:
 
-### Chapter 3: GitHub Enterprise operating model - 11:35 to 12:30
-
-- **Outcome:** Participants can place the same station workflow into a scalable model for ownership, policy, budgets, identity, and migration waves.
-- **Demonstrate:** Teams, CODEOWNERS, rulesets or branch protection, required review, reusable workflows, Projects, and links from work item to evidence.
-- **Lab:** `docs\labs\03-operating-model\index.html` makes workflow ownership visible and records governance decisions. A direct-push rejection is shown only where protection is verified; unsupported sandbox stations record the missing control.
-- **Connect:** Harness and model choice can vary, but controls should converge on GitHub artifacts, explicit ownership, least privilege, and measurable migration exit criteria.
-
-### Chapter 4: Trusted delivery with CI/CD and DevSecOps - 13:15 to 14:35
-
-- **Outcome:** Participants see that deterministic automation remains the authority for build, test, security, packaging, deployment approval, and release evidence.
-- **Demonstrate:** Live trusted-delivery path with GitHub Actions, dependency or code security signal, Secret Protection where available, environment approval, and OIDC deployment boundary. If a capability is unavailable, label the fallback as captured evidence or simulation.
-- **Lab:** `docs\labs\04-trusted-delivery\index.html` hardens a workflow against untrusted pull request input and reads native security evidence.
-- **Connect:** Agentic investigation may authorize one bounded repair attempt; it never grants merge or release authority. MDASH remains an optional, clearly labelled preview discussion, not a dependency.
-
-### Chapter 5: Capstone: governed human-agent delivery loop - 14:50 to 15:50
-
-- **Outcome:** Participants make an accountable next decision from the evidence produced during the day.
-- **Demonstrate:** Prior-state read-back, accepted evidence, failure or no-op decision, and escalation boundary.
-- **Lab:** `docs\labs\05-capstone\index.html` produces a release decision bound to one revision, naming evidence, defects, and the owner of the next action.
-- **Connect:** Continuity requires stable work identity, persisted state, external verification, and a justified next decision; a per-run cap is not enough.
-
-### Adoption roadmap and discussion - 15:50 to 16:30
-
-- **Outcome:** Participants leave with candidate pilots and success measures.
-- **Discuss:** Business value, repository quality, test speed, reversibility, data sensitivity, regulatory impact, owning team readiness, and fit for repeated bounded automation.
-- **Outputs:** A small set of candidate pilots, governance owners, prerequisites, unresolved decisions, and four-to-eight-week measures for accepted outcomes, human attention saved, duplicate avoidance, failure handling, and cost.
-
-## 6. Shared pharmacy storyline and lab model
-
-The fictional **Pharmacy Stock and Reservation Service** stays small enough for a live room and realistic enough to exercise APIs, tests, dependency and code scanning, ownership, delivery evidence, and operational maintenance. Use only synthetic products, stores, personas, and transactions.
-
-Attendee labs run in each participant's GitHub station repository. Each lab is one directory containing `index.html` and an `artifacts\` folder. Verification uses the GitHub evidence actually available in that profile: a green service check, review, rejected push where enforced, a security signal or a published issue. A draft source proposal is not a compiled executable workflow. Do not add local pass/fail runners or metadata manifests to the learner path.
-
-The single attendee entry point is `docs\index.html`, with direct timed-agenda links to `01-agentic-workflow`, `02-intent-to-pr`, `03-operating-model`, `04-trusted-delivery`, and `05-capstone` under `docs\labs\`. Each lab's HTML combines reading and presentation modes.
-
-## 7. Environment preparation
-
-Complete before delivery:
-
-- prepare station repositories with the pharmacy service, tests, workflows, CODEOWNERS, issues, Project view, and lab artifacts;
-- seed each station's synthetic backlog with `workshop.mjs seed`, dry run first and `--apply` second; the command creates only missing items and never edits or deletes;
-- confirm the `requirement-refiner` custom agent is visible in Copilot CLI and VS Code for one station, and probe that it asks rather than answers;
-- confirm every participant can sign in, open the assigned station repository, and create a branch;
-- verify whether default-branch protection, required checks and code-owner review are enforceable for each repository's plan and visibility; record missing controls and skip push probes on unprotected stations; confirm Actions availability and runner capacity;
-- identify which stations can use Agentic Workflows public preview, Copilot coding agent, code scanning, Secret Protection, environments, and deployment records;
-- prepare explicit fallbacks for unavailable previews, entitlements, security products, queues, or deployment targets;
-- restore instructor dependencies from approved feeds and run repository validation;
-- keep a clean instructor station repository for live fallback.
-
-The Copilot coding agent requires the appropriate entitlement and repository policy. GitHub Agentic Workflows are public preview. Enterprise station provisioning is represented by configuration contracts and preparation guidance; automated enterprise organization rollout is not implemented here. Sandbox automation creates one station repository at a time and does not configure protection, Projects, or access; the operator guide's pre-event checklist lists those manual steps.
-
-## 8. Demonstration reliability and fallbacks
-
-| Scenario | Primary demonstration | Prepared fallback |
+| Category | Examples | Claim |
 | --- | --- | --- |
-| Copilot or coding harness access fails | Live Copilot plan or change | Continue from a prepared branch; participants inspect the diff, pull request, and evidence. |
-| Agentic Workflow compiler or preview is unavailable | Validated lock and live run after review | Keep the source-only PR in draft; compare it with the old lock and permissions without claiming an executed result. |
-| Private sandbox cannot enforce protection | Protected-station push probe | Record the missing control without attempting a push; use a labelled instructor demonstration if a protected station is available. |
-| Actions queue is slow | Live workflow run | Open a completed run from the same prepared path and inspect logs and checks. |
-| Security feature is unavailable | Live native security signal | Use labelled captured evidence or a safe synthetic exercise; do not present it as fresh platform enforcement. |
-| Azure deployment target is unavailable | OIDC deployment to test environment | Show workflow, environment approval, identity boundary, and captured successful deployment evidence. |
-| Participant setup is incomplete | Individual station work | Pair participants or use the instructor station while keeping the evidence boundary visible. |
+| Deterministic quality | Unit and integration tests, syntax, workflow validation, linting | A declared invariant passed on a named revision. |
+| Security and delivery | CodeQL, Code Quality, push protection, immutable action pins, artifact identity, environments, OIDC | A specific control observed or constrained a specific transition. |
+| Reasoning | Intake refinement, native Copilot code review, goal review, documentation impact, triage | An advisory interpretation that requires evidence and can be wrong. |
+| Authority | Repository rules, required review, environment approval, owner decision | An authorized actor may advance protected state. |
 
-Fallbacks must preserve the technical insight. They may show captured evidence, but they must not claim a simulation or old run is a live control for a participant's current station revision.
+Agent output is untrusted until these controls apply. Issue, PR, review, and repository text are also untrusted inputs to workflows.
 
-## 9. Portable delivery profiles
+## 7. Platform profiles
 
-Develop and validate one implementation with two profiles:
+One implementation supports:
 
-| Profile | Purpose | Boundary |
+- **Sandbox:** no dedicated organization or enterprise license assumption. Use public repositories where necessary for native security capability. Label missing enforcement and use source-bound or instructor evidence.
+- **Station:** one isolated repository per station or team inside a dedicated enterprise organization, with centrally enabled Code Quality, identity, policy, security, Actions, and cleanup.
+
+Organization, tenant, subscription, repository prefix, team, environment, and identity values come from configuration. No attendee-facing material hard-codes them.
+
+## 8. Reliability and recovery
+
+| Failure | Primary path | Honest fallback |
 | --- | --- | --- |
-| Sandbox | Public GitHub delivery without assuming enterprise licensing, managed users, or dedicated organization policy. | Enterprise-only controls are live where public repositories support them; otherwise they are teacher demonstrations or labelled simulations. |
-| Future enterprise organization | Repository-per-team stations with centrally governed teams, rulesets, security features, Actions policy, environments, identity, and cleanup. | Configuration is present as a contract; organization provisioning remains a future implementation step. |
+| Copilot unavailable | Live plan and edit | Continue from reference test or implementation; inspect and verify the diff. |
+| Codespace unavailable | Browser Codespace | Use an approved local clone with Node.js 22+. |
+| Agentic Workflow compiler unavailable | Compile source and lock in one PR | Keep source PR draft and review the proposed contract without claiming execution. |
+| Preview engine unavailable | Manual live run | Use the pre-captured run and label it recorded evidence. |
+| Actions delayed | Current PR checks | Use a completed prepared run tied to its original SHA; do not transfer the result to the current PR. |
+| Code Quality unavailable | Native PR quality findings | Use deterministic CI and label Code Quality unavailable; do not substitute a reasoning review. |
+| Advanced security unavailable | Facilitator public-repository demo | Use only its recorded or source-bound evidence and never transfer the result to the attendee PR. |
+| Enterprise enforcement unavailable | Station ruleset | Inspect configuration or instructor demo and record the sandbox gap. |
+| Deployment unavailable | Governed environment | Analyze release evidence and design the boundary without claiming deployment. |
 
-Source profiles live under `platform\profiles\`. Keep organization names, repository prefixes, teams, environments, and feature flags configurable. Remote creation must be explicit; destructive cleanup must target only resources carrying the workshop identifier.
+Recovery never weakens the control being taught and never prints a synthetic pass result.
 
-## 10. One attendee journey
+## 9. Delivery readiness
 
-Start in `docs\index.html`: show the complete GitHub issue-to-reviewed-PR-to-checks-and-release-boundary story in a prepared instructor station, then open each lab directly from the timed agenda. The facilitator uses the same page's Slides mode to introduce the day and each lab's Slides mode for its own chapter. There is no separate showcase, guide or slide deck. If the instructor chain cannot be shown live, distinguish the local Lab 2 reference change from Lab 4's historical security evidence; neither proves a current release.
+Before each workshop:
 
-## 11. Open decisions to confirm before delivery
+1. Run local material, HTML, workflow, and browser validation.
+2. Run presenter preflight against the selected profile.
+3. Confirm forking, Codespaces or local clone, local and cloud Copilot, Actions, review agents, Code Quality, the preview environment, and Agentic Workflow capability.
+4. Rehearse all five labs from a clean fork on the target GitHub host.
+5. Capture the exact revision, account, repository, capability outcome, and fallback used.
+6. Run educator, student-path, teacher-path, technical, and security reviews against real artifacts.
+7. Keep cleanup dry-run first and scope deletion only to workshop-owned resources.
 
-- Participant count, role mix, and expected attendance pattern.
-- Station profile: sandbox or future enterprise organization.
-- Whether Agentic Workflows public preview may be used live.
-- Whether Copilot coding agent entitlement is available for presenters and participants.
-- Which security capabilities are enabled live: code scanning, Secret Protection, dependency review, and environment approvals.
-- Whether an Azure test deployment target is available, or whether deployment is shown through labelled evidence.
-- Current Azure DevOps migration interests: repositories, pipelines, packages, work items, identities, and coexistence requirements.
-- Runner capacity, network policy, and any restrictions on hosted runners or outbound access.
-- Who owns stop, escalation, merge, release, and cleanup decisions during the event.
+## 10. Adoption and Azure DevOps migration
 
-## 12. Public research references
+The migration discussion runs from 15:00 to 15:30 so the five-lab 09:00-15:00 core remains complete and the full workshop has a deliberate adoption close. Start migration planning from loops and control boundaries:
 
-Revalidate product status shortly before delivery because several capabilities are preview, entitlement-dependent, or policy-dependent.
+- inventory repositories, pipelines, boards, packages, identities, approvals, secrets, environments, evidence, and owners;
+- classify deterministic gates separately from reasoning automation;
+- establish repository and team boundaries before introducing coding agents;
+- convert service connections to short-lived identity where supported;
+- migrate product slices with reversible coexistence, measured exit criteria, and named stop authority;
+- add AI pilots only where goals are observable, checks are fast, consequences are bounded, and human attention is available.
 
-### GitHub Agentic Workflows
-
-- [GitHub Agentic Workflows is now in public preview](https://github.blog/changelog/2026-06-11-github-agentic-workflows-is-now-in-public-preview/)
-- [Automate repository tasks with GitHub Agentic Workflows](https://github.blog/ai-and-ml/automate-repository-tasks-with-github-agentic-workflows/)
-- [GitHub Agentic Workflows repository and documentation](https://github.com/github/gh-aw)
-- [gh-aw engine reference](https://github.github.com/gh-aw/reference/engines/)
-- [gh-aw authentication reference](https://github.github.com/gh-aw/reference/auth/)
-
-### Coding agents and harness boundaries
-
-- [Claude and Codex coding agents public preview on GitHub](https://github.blog/changelog/2026-02-04-claude-and-codex-are-now-available-in-public-preview-on-github/)
-- [About GitHub Copilot coding agent](https://docs.github.com/en/copilot/concepts/coding-agent/about-coding-agent)
-
-### Migration and delivery
-
-- [Understand migrations from Azure DevOps to GitHub](https://docs.github.com/en/migrations/using-github-enterprise-importer/migrating-from-azure-devops-to-github-enterprise-cloud/overview-of-a-migration-from-azure-devops-to-github-enterprise-cloud)
-- [Migrate from Azure DevOps with GitHub Actions Importer](https://docs.github.com/en/actions/migrating-to-github-actions/automated-migrations/migrating-from-azure-devops-with-github-actions-importer)
-- [Configuring OpenID Connect in Azure](https://docs.github.com/en/actions/how-tos/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-azure)
-
-### Security and preview scanning
-
-- [GitHub code scanning](https://docs.github.com/en/code-security/code-scanning)
-- [GitHub Secret Protection](https://docs.github.com/en/code-security/secret-scanning)
-- [Codename MDASH overview](https://learn.microsoft.com/en-us/security-exposure-management/ai-code-security-overview)
+Extended deliveries add one hour for migration inventory, Actions Importer output, coexistence design, and wave planning.

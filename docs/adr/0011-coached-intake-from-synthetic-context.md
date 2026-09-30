@@ -1,6 +1,6 @@
 # 0011: Coached intake from synthetic organizational context
 
-- Status: Accepted
+- Status: Superseded by [ADR 0014](0014-evidence-to-approved-issue.md)
 - Date: 2026-09-22
 
 ## Context

@@ -5,7 +5,10 @@
 
 ## Context
 
-The workshop must be fully developed and tested in `tkubica12` today, while future student delivery may use a dedicated GitHub Enterprise organization with stronger isolation and policy controls.
+The workshop must be fully developed and tested with a public sandbox account,
+while future delivery may use a dedicated GitHub Enterprise organization with
+stronger isolation and policy controls. No account name may be compiled into the
+materials.
 
 ## Decision drivers
 
@@ -22,7 +25,10 @@ The workshop must be fully developed and tested in `tkubica12` today, while futu
 
 ## Decision
 
-Use JSON platform profiles. The sandbox profile targets `tkubica12`; the enterprise example leaves organization, teams, policies, and station isolation configurable. Content describes concepts once and labels live, demonstrated, and simulated states.
+Use JSON platform profiles. The sandbox profile receives its owner at runtime;
+the enterprise example leaves organization, teams, policies, and station
+isolation configurable. Content describes concepts once and labels live,
+demonstrated, and simulated states.
 
 ## Consequences
 

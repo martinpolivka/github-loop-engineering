@@ -1,0 +1,11 @@
+# Synthetic reservation-service log excerpt
+2026-09-21T08:12:03Z request_id=REQ-S12-4102 route=POST_/reservations sku=MED-003 quantity=1
+2026-09-21T08:12:03Z request_id=REQ-S12-4102 inventory sku=MED-003 category=respiratory available=0
+2026-09-21T08:12:03Z request_id=REQ-S12-4102 inventory sku=MED-004 category=respiratory available=6
+2026-09-21T08:12:03Z request_id=REQ-S12-4102 response_status=409 response_body={"error":"insufficient stock","available":0}
+
+# Separate bug: the API reports partial availability, but the kiosk hides it
+2026-09-21T09:40:18Z request_id=REQ-S07-4113 route=POST_/reservations sku=MED-002 quantity=5
+2026-09-21T09:40:18Z request_id=REQ-S07-4113 inventory sku=MED-002 category=antibiotic available=4
+2026-09-21T09:40:18Z request_id=REQ-S07-4113 response_status=409 response_body={"error":"insufficient stock","available":4}
+2026-09-21T09:40:18Z request_id=REQ-S07-4113 kiosk_status=409 visible_message="Requested stock unavailable"

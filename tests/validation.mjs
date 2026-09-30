@@ -130,8 +130,8 @@ export function validateRepository() {
       !hub.includes('data-action="toggle-slides"')) {
     errors.push("workshop hub needs an agenda, opening demonstration and slide control");
   }
-  for (const [index, lab] of ["01-agentic-workflow", "02-intent-to-pr", "03-operating-model",
-    "04-trusted-delivery", "05-capstone"].entries()) {
+  for (const [index, lab] of ["01-evidence-to-goal", "02-inner-loop", "03-governed-pr",
+    "04-trusted-delivery", "05-agentic-outer-loop"].entries()) {
     const target = `labs/${lab}/index.html`;
     if (!hub.includes(`href="${target}"`)) errors.push(`agenda needs a direct link to Lab ${index + 1}`);
     const source = htmlMarkup(readFileSync(join(root, "docs", "labs", lab, "index.html"), "utf8"));

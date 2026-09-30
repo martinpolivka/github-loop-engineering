@@ -1,61 +1,86 @@
 # Loop Engineering with GitHub
 
-## From business intent to verified outcomes and bounded continuous improvement
+## From evidence to trusted outcomes and bounded recurrence
 
-**Format:** Full-day, Microsoft-led technical workshop  
-**Audience:** Engineering leaders, architects, developers, platform engineers, DevOps and application security teams  
-**Approach:** High-impact technical demonstrations, guided hands-on exploration and architecture discussion.
+**Format:** Full-day technical workshop
+**Audience:** Engineering leaders, architects, developers, platform engineers, DevOps, and application security teams
+**Scenario:** A synthetic pharmacy stock and reservation service
+**Learning rhythm:** See it, work with it, connect it
 
-## Workshop goals
+## Outcome
 
-By the end of the day, participants will understand how GitHub Enterprise can:
+Participants build and explain one complete engineering loop:
 
-- operate a bounded engineering loop that reads prior state, verifies outcomes and stops explicitly;
-- connect planning, architecture, development, delivery and security in one platform;
-- run GitHub Copilot as the primary coding harness inside a governed development workflow, while understanding where optional external harnesses such as Claude Code and experimental OpenCode retain different boundaries;
-- combine predictable CI/CD with secure reasoning-based repository automation;
-- enable people and different AI agents to collaborate through issues, pull requests and review controls;
-- provide a practical, incremental path from Azure DevOps.
+```text
+synthetic evidence
+  -> confirmed feature and bug Issues
+  -> two approved Goal Cards
+  -> local and cloud-agent implementation loops
+  -> two governed pull requests
+  -> deterministic and reasoning evidence
+  -> trusted delivery decision
+  -> bounded Agentic Workflow next decision
+```
 
-## Agenda
+GitHub is the durable coordination and governance layer. GitHub Copilot is the primary coding harness. Agent output remains a proposal until deterministic checks and required human controls pass.
 
-| Time | Chapter | What we will explore |
+## Core schedule
+
+| Time | Session | Participant outcome |
 | --- | --- | --- |
-| 09:00-09:30 | **Executive platform briefing** | The complete Loop Engineering picture: prompt, context, harness and loop; the compact operating contract; GitHub as system of record; Copilot as primary worker; deterministic controls; enterprise governance; and a pragmatic Azure DevOps transition. |
-| 09:30-10:20 | **1. Bounded continuous AI with GitHub Agentic Workflows** | Intake, safe delegation, explicit outputs and next decisions for issue triage, documentation, CI investigation, reporting and remediation, using the Copilot coding engine within GitHub Actions guardrails. |
-| 10:20-10:35 | **Break** |  |
-| 10:35-11:35 | **2. From intent to a verified handoff** | Coached intake from synthetic organizational context with a custom agent, your own fork of the workshop repository, GitHub Codespaces, GitHub Issues, a failing acceptance test, GitHub Copilot cloud agent on a pull request, trusted checks and a durable handoff. |
-| 11:35-12:30 | **3. GitHub Enterprise operating model** | Organization and repository structure, policies, ownership, stop and escalation authority, budgets, multi-harness choices, platform governance and migration from Azure DevOps. |
-| 12:30-13:15 | **Lunch** |  |
-| 13:15-14:35 | **4. Trusted delivery with CI/CD and DevSecOps** | GitHub Actions, reusable workflows, Azure deployment with federated identity, environments, approvals and security. Verification may authorize a bounded repair; it never grants release authority. |
-| 14:35-14:50 | **Break** |  |
-| 14:50-15:50 | **5. Capstone: the governed human-agent delivery loop** | Consume persisted evidence, decide whether to act, wait, escalate or stop, and connect the result to human review and release controls. |
-| 15:50-16:30 | **Adoption roadmap and discussion** | Select frequent, verifiable and reversible pilots; define accepted-outcome, human-attention, failure, duplicate and cost measures; and identify migration next steps. |
+| 09:00-09:45 | **Opening walkthrough: the complete engineering loop** | See the finished path from two evidence-backed needs through local and cloud coding loops, PR governance, trusted delivery, security controls, and bounded recurrence. Learn the inner loop, outer loop, Agentic Workflow, and trust model before building them. |
+| 09:45-10:30 | **Lab 1: Evidence to engineering intent** | Fork the source repository, open a Codespace, correlate the synthetic intake packet, and approve one feature Issue and one bug Issue without starting implementation. |
+| 10:30-10:45 | **Break** | Recovery margin. |
+| 10:45-11:45 | **Lab 2: Goal Cards and two agent loops** | Publish an approved Goal Card on each Issue, run the feature through a visible local assess-act-check-adjust loop, assign the smaller bug to Copilot cloud agent, and receive two pull requests. |
+| 11:45-12:35 | **Lab 3: Governed pull requests** | Compare the two PR handoffs, combine deterministic CI and Code Quality with native and contextual reviews, respond to evidenced findings, and make human merge decisions. |
+| 12:35-13:20 | **Lunch** | Prepared recovery branches and pull requests remain available. |
+| 13:20-14:10 | **Lab 4: Trusted delivery and operational readiness** | Package the exact merged revision, inspect tests, smoke evidence and artifact digest, exercise a GitHub Environment approval, and record a reversible READY or BLOCKED decision. |
+| 14:10-14:20 | **Break** | Reset for the final outer loop. |
+| 14:20-15:00 | **Lab 5: Author agentic outer loops** | Author bounded Issue triage and deployment-readiness workflows, compile and review generated authority, then inspect a recurring repository-pulse reconciliation. |
+| 15:00-15:30 | **Adoption, discussion, and Azure DevOps migration** | Select pilots, map identity and controls, plan bounded migration waves, and identify governance owners. Extended deliveries add one hour for migration depth. |
 
-## Chapter format
+## What participants complete
 
-Every technical chapter follows the same rhythm:
+- one fork that remains their station for the day;
+- one evidence-backed feature Issue and one evidence-backed bug Issue;
+- two Goal Cards with stable checks and stop conditions;
+- one visible local-agent implementation loop and one asynchronous cloud-agent implementation;
+- two pull requests with independent handoff evidence;
+- deterministic CI and Code Quality evidence;
+- native Copilot code review plus independent documentation and Goal Card reviews;
+- one revision-bound release artifact and environment decision;
+- one reviewed Agentic Workflow source-and-lock proposal or an honestly labeled source-only fallback;
+- two attendee-authored Agentic Workflow sources and one reviewed recurring pattern.
 
-1. **See it:** A focused technical demonstration of the art of the possible, including advanced and forward-looking scenarios.
-2. **Work with it:** A guided hands-on segment covering a meaningful part of the demonstrated capability.
-3. **Connect it:** An architecture and adoption discussion linking the experience to enterprise governance, scale and your own use cases.
+Complex platform plumbing is prepared before the workshop. Participants finish meaningful slices rather than spend the day installing tools or recreating governance.
 
-## Hands-on storyline
+## Concepts introduced in order
 
-Participants will work with a fictional pharmacy stock and reservation service. During the day, they will progressively:
+1. **Evidence before intent:** retrieved context is untrusted evidence, not instruction.
+2. **Outcome before implementation:** the goal fixes observable checks, boundaries, caps, and terminal states.
+3. **Inner loop before governance:** the participant first experiences agent-assisted engineering against a concrete goal.
+4. **Outer loop before recurrence:** GitHub persists shared evidence, independent challenge, and authority around a revision.
+5. **Trusted delivery before autonomy:** security and release controls remain deterministic or human-authorized.
+6. **Recurrence last:** Agentic Workflows repeat a bounded evidence-and-recommendation function; they do not inherit merge or release authority.
 
-- configure a safe repository-level agentic workflow with bounded intake and explicit outcomes;
-- refine noisy synthetic intake into a confirmed requirement, then a structured issue and lightweight specification;
-- use GitHub Copilot to prepare a change and collaborate through a pull request;
-- run build, test, security and deployment controls in GitHub Actions;
-- investigate and remediate a security finding;
-- consume persisted state, justify a no-op or escalation, and connect the complete human-agent delivery loop under explicit permissions and human review.
+## Platform profiles
 
-## Expected outcomes
+The same learner concepts work in two profiles:
 
-Participants will leave with:
+- **Sandbox:** public GitHub without a dedicated enterprise organization. Unsupported controls use a clearly labeled source review, recording, or instructor demonstration.
+- **Station:** a dedicated enterprise organization with isolated repositories and centrally configured policy.
 
-- practical experience with GitHub Issues, Projects, pull requests, Actions, security controls and Agentic Workflows;
-- an understanding of how GitHub Copilot and optional external harnesses can participate in a GitHub-based engineering lifecycle without assuming equal permissions, security properties or availability;
-- a reference approach for combining deterministic delivery controls with AI-assisted engineering;
-- initial ideas for suitable pilot workloads and an incremental transition from Azure DevOps.
+Profile differences are configuration, not duplicated course content. Preview, enterprise-only, unavailable, recorded, and simulated experiences are labeled where they appear.
+
+## Adoption and migration discussion
+
+The post-15:00 segment maps the complete loop rather than only source repositories:
+
+- Azure Repos to GitHub repositories, teams, CODEOWNERS, and rulesets;
+- Azure Boards to Issues or Projects where that improves flow, with coexistence where it does not;
+- Azure Pipelines to Actions, reusable workflows, environments, and approvals;
+- service connections and long-lived credentials to OIDC and environment-scoped authority;
+- existing audit, security, package, and release evidence to GitHub-native or integrated controls;
+- coding-agent pilots only after identity, ownership, tests, and protected transitions are explicit.
+
+The migration goal is not feature parity in one cutover. It is a sequence of product slices with a reversible boundary, accepted evidence, named owners, and measurable exit criteria.

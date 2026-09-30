@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Lab 4: harden a pull-request workflow, prove shell input is handled as data, enable CodeQL, and separate delivery evidence from release authority.">
-  <title>Lab 4 &middot; Trusted delivery with CI/CD and DevSecOps | GitHub workshop</title>
+  <meta name="description" content="Lab 4: package an exact reviewed revision, verify smoke evidence and artifact identity, and exercise an environment approval boundary.">
+  <title>Lab 4 &middot; Trusted delivery and operational readiness | GitHub workshop</title>
   <meta name="doc-id" content="workshop-lab-04-trusted-delivery">
   <script data-doc-bootstrap>
 /* Inline in the head before styles with sync-head.js. No deferred bootstrap. */
@@ -15,7 +15,7 @@
   const id = document.querySelector('meta[name="doc-id"]')?.content ||
     location.pathname.replace(/\.standalone(?=\.html$)/i, "");
   const prefix = "html-docs:" + id + ":";
-  const choices = { theme: ["light", "dark"], accent: ["blue", "orange", "green"] };
+  const choices = { theme: ["light", "dark"], accent: ["blue", "red", "green", "yellow"] };
   const read = (name) => {
     try { return localStorage.getItem(prefix + name); }
     catch { return null; /* Storage may be unavailable for local files. */ }
@@ -39,13 +39,70 @@
   for (const [name, values] of Object.entries(choices)) {
     const fallback = name === "theme" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : values[0];
     const value = [params.get(name), read(name), root.getAttribute("data-default-" + name), fallback]
+      .map(candidate => name === "accent" && candidate === "orange" ? "red" : candidate)
       .find(candidate => values.includes(candidate));
     root.setAttribute("data-" + name, value);
   }
   root.classList.add("js");
-  if (params.get("view") === "slides") root.setAttribute("data-view", "slides");
-  window.HtmlDocs = { read, write, refresh };
+  if (["slides", "sheet"].includes(params.get("view"))) root.setAttribute("data-view", params.get("view"));
+
+  // Print what is on screen. data-print selects the matching print stylesheet.
+  const printTarget = () => {
+    if (document.querySelector(".deck-stage")) return "slides";
+    const view = root.getAttribute("data-view");
+    if (view === "slides" || (view === "sheet" && document.querySelector(".sheet"))) return view;
+    return document.querySelector(".doc") || !document.querySelector(".sheet") ? "read" : "sheet";
+  };
+  let printing = null;
+  addEventListener("beforeprint", () => {
+    if (root.hasAttribute("data-print")) return; // Set by an automated export.
+    const target = printTarget();
+    printing = document.title;
+    root.setAttribute("data-print", target);
+    // The browser proposes the title as the PDF file name.
+    if (target !== "read" && document.querySelector(".doc")) {
+      document.title += target === "slides" ? " - Slides" : " - Sheet";
+    }
+  });
+  addEventListener("afterprint", () => {
+    if (printing === null) return;
+    root.removeAttribute("data-print");
+    document.title = printing;
+    printing = null;
+  });
+
+  // Keep the display awake while presenting, like presentation software does.
+  let lock = null;
+  let awake = false;
+  async function holdScreen() {
+    if (!awake || lock || document.visibilityState !== "visible" || !navigator.wakeLock) return;
+    try {
+      const sentinel = await navigator.wakeLock.request("screen");
+      if (!awake || lock) { sentinel.release(); return; }
+      lock = sentinel;
+      root.setAttribute("data-awake", "");
+      sentinel.addEventListener("release", () => {
+        if (lock !== sentinel) return;
+        lock = null;
+        root.removeAttribute("data-awake");
+      });
+    } catch { /* Denied by battery saver or an embedding policy; retried on input. */ }
+  }
+  function keepAwake(on) {
+    awake = !!on;
+    if (awake) holdScreen();
+    else if (lock) lock.release();
+  }
+  // The browser drops the lock when the tab is hidden; some require a gesture.
+  document.addEventListener("visibilitychange", holdScreen);
+  document.addEventListener("pointerdown", holdScreen);
+  document.addEventListener("keydown", holdScreen);
+
+  window.HtmlDocs = { read, write, refresh, keepAwake };
   document.addEventListener("DOMContentLoaded", refresh);
+  document.addEventListener("click", event => {
+    if (event.target.closest('[data-action="print"]')) window.print();
+  });
   document.addEventListener("click", event => {
     const button = event.target.closest('[data-action="toggle-theme"], [data-action="toggle-accent"]');
     if (!button) return;
@@ -71,7 +128,7 @@
   --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f2; --surface-3: #e8e8e8;
   --border: #dedede; --border-strong: #b8b8b8;
   --text: #161616; --text-muted: #565656; --text-faint: #686868;
-  --accent-light: #0068bd; --accent-dark: #69b8ff;
+  --accent-light: #006da0; --accent-dark: #00a4ef;
   --accent: var(--accent-light);
   --accent-strong: var(--accent);
   --accent-quiet: var(--accent);
@@ -86,20 +143,27 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Mono", "Cascadia Code", ui-monospace, Consolas, "SF Mono", "Liberation Mono", Menlo, monospace;
 }
-[data-theme="dark"], :root:not([data-theme])[data-default-theme="dark"] {
-  color-scheme: dark;
-  --bg: #101010; --surface: #191919; --surface-2: #232323; --surface-3: #2c2c2c;
-  --border: #363636; --border-strong: #595959;
-  --text: #f2f2f2; --text-muted: #b5b5b5; --text-faint: #a0a0a0;
-  --accent: var(--accent-dark);
-  --shadow-1: 0 1px 2px rgba(0,0,0,.3);
-  --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.4);
+/* Screen only: every PDF and printout uses the light palette. */
+@media screen {
+  [data-theme="dark"], :root:not([data-theme])[data-default-theme="dark"] {
+    color-scheme: dark;
+    --bg: #101010; --surface: #191919; --surface-2: #232323; --surface-3: #2c2c2c;
+    --border: #363636; --border-strong: #595959;
+    --text: #f2f2f2; --text-muted: #b5b5b5; --text-faint: #a0a0a0;
+    --accent: var(--accent-dark);
+    --shadow-1: 0 1px 2px rgba(0,0,0,.3);
+    --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.4);
+  }
 }
+[data-accent="red"], :root:not([data-accent])[data-default-accent="red"],
 [data-accent="orange"], :root:not([data-accent])[data-default-accent="orange"] {
-  --accent-light: #a94000; --accent-dark: #ffae72;
+  --accent-light: #bc3a16; --accent-dark: #f25022;
 }
 [data-accent="green"], :root:not([data-accent])[data-default-accent="green"] {
-  --accent-light: #137344; --accent-dark: #6cd6a0;
+  --accent-light: #4c7100; --accent-dark: #7fba00;
+}
+[data-accent="yellow"], :root:not([data-accent])[data-default-accent="yellow"] {
+  --accent-light: #805b00; --accent-dark: #ffb900;
 }
 </style>
   <link rel="stylesheet" href="../../assets/html-docs/article.css">
@@ -109,230 +173,113 @@
   <script src="../../assets/materials.js" defer></script>
 </head>
 <body>
-  <div class="controls" role="group" aria-label="Article controls">
-    <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
-    <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
-    <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
-    <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
-    <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
-  </div>
-  <div class="doc">
-    <header class="doc-header" id="opening">
-      <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 4 &middot; Chapter 4</p><h2 class="slide-title">Trust delivery evidence.<br><em>Then decide release.</em></h2><p class="slide-lead">Harden a workflow, prove it with a hostile title, run CodeQL, and keep authority separate.</p></div>
-      <p class="eyebrow">Chapter 4 &middot; 80 minutes &middot; 35 minutes guided work</p>
-      <h1>Trusted delivery with CI/CD and DevSecOps</h1>
-      <p class="subtitle">Repair one unsafe pull-request workflow in your station repository, prove the repair with a real pull request title, enable native security scanning, and decide what the evidence does and does not authorize.</p>
-      <p>Your station repository on GitHub &middot; Real checks and pull requests &middot; Synthetic pharmacy data only</p>
-    </header>
-
-    <nav class="doc-nav" aria-label="Workshop navigation"><a href="../../index.html#ch-agenda">All labs</a><a href="#main">Skip to content</a><a href="../../index.html">Workshop home</a><a href="../05-capstone/index.html">Next lab</a></nav>
-    <nav class="toc" aria-label="Contents"><p class="toc-label">Contents</p><ol><li><a href="#ch-before">Before you start</a></li><li><a href="#ch-harden">Harden the workflow</a></li><li><a href="#ch-prove">Prove and scan</a></li><li><a href="#ch-release">Connect delivery to release</a></li><li><a href="#ch-recover">Recovery and extensions</a></li></ol></nav>
-
-    <main id="main">
-      <section class="chapter" id="ch-before"><h2 class="chapter-label">Before you start</h2>
-        <article class="card card--lead" id="card-outcome" data-open>
-          <div class="slide-content"><h2 class="slide-title">Do real work on GitHub.</h2><ul class="slide-points"><li class="frag">Repair one pull-request workflow.</li><li class="frag">Prove hostile input stays data.</li><li class="frag">Read native security evidence.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">What you will produce</span><span class="card-sub">Outcome, prerequisites and evidence.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="outcome"></span>
-          <p><strong>Outcome:</strong> a reviewed pull request that adds a hardened title-check workflow, a second proof pull request whose title contains a safe shell payload, a completed CodeQL run, and a written release-boundary statement.</p>
-
-          <h4>You need</h4>
-          <dl>
-            <dt>Your station repository</dt><dd>Use <code>github-loop-engineering-NN</code>, the repository you created in Lab 2. You have write access and can create branches, pull requests and workflow files.</dd>
-            <dt>GitHub Actions</dt><dd>The repository already contains the deterministic CI workflow at <code>.github/workflows/ci.yml</code>. The workflow uses read-only permissions, timeout, concurrency and commit-pinned actions.</dd>
-            <dt>A review partner</dt><dd>Ask someone at your table to review the hardened workflow before you merge it. If you are alone, read the review checklist out loud before merging.</dd>
-          </dl>
-
-          <aside class="callout callout--warning"><p class="callout-label">Warning</p><p><strong>Real repository boundary:</strong> do not paste credentials, customer data or active tokens anywhere in the station repository. The only payload in this lab is a harmless pull-request title used to prove shell metacharacters stay text.</p></aside>
-
-          <h4>Starting state</h4>
-          <p>Your station repository is the system of record. The local files in this lab are only reference material:</p>
-          <ul>
-            <li><a href="artifacts/unsafe-fragment.yml">Unsafe fragment</a> &mdash; read only; never execute it.</li>
-            <li><a href="artifacts/title-check.starter.yml">Starter workflow</a> &mdash; the deliberately vulnerable shape.</li>
-            <li><a href="artifacts/title-check.reference.yml">Reference workflow</a> &mdash; the hardened target.</li>
-          </ul>
-          <p><strong>Checkpoint:</strong> you can name the repository, the default branch and the person who will review your first pull request.</p>
-          </div></article>
-      </section>
-
-      <section class="chapter" id="ch-harden"><h2 class="chapter-label">Harden the workflow</h2>
-        <article class="card" id="card-read-unsafe">
-          <div class="slide-content"><h2 class="slide-title">Read the flaw.<br><em>Never run it.</em></h2><ul class="slide-points"><li class="frag">Pull-request titles are untrusted.</li><li class="frag">Expressions generate a shell script.</li><li class="frag">Read-only tokens still deserve care.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Explain the injection vector</span><span class="card-sub">5 minutes &middot; Reading only.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="read-unsafe"></span>
-          <p>Open <a href="artifacts/unsafe-fragment.yml">artifacts/unsafe-fragment.yml</a> and <a href="artifacts/title-check.starter.yml">artifacts/title-check.starter.yml</a>. Read the final step:</p>
-          <div class="code"><pre><code>run: echo "${{ github.event.pull_request.title }}"</code></pre></div>
-          <aside class="callout callout--warning"><p class="callout-label">Warning</p><p><strong>Never execute the unsafe fragment.</strong> A pull request title is attacker-controlled text. GitHub interpolates the expression before the runner creates the shell script, so a crafted title can become shell syntax in the <code>run:</code> block.</p></aside>
-          <p>The example still uses <code>permissions: contents: read</code>. That reduces blast radius, but it does not make shell injection acceptable. The correct repair is to pass the title as data, quote the expansion, keep permissions read-only, and avoid unpinned actions.</p>
-          <p><strong>Checkpoint:</strong> explain why <code>$(printf SAFE_PAYLOAD)</code> in a title would execute inside the unsafe double-quoted <code>echo</code>, but should print literally after the repair.</p>
-          </div></article>
-
-        <article class="card" id="card-repair-pr">
-          <div class="slide-content"><h2 class="slide-title">Repair on a branch.</h2><ul class="slide-points"><li class="frag">Bind the title to env.</li><li class="frag">Quote the shell expansion.</li><li class="frag">Preserve read-only execution.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Open the hardening pull request</span><span class="card-sub">10 minutes &middot; First real change.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="repair"></span>
+<div class="controls" role="group" aria-label="Article controls">
+  <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
+  <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
+  <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
+  <button type="button" class="ctrl" data-action="print">PDF</button>
+  <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
+  <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
+</div>
+<div class="doc">
+  <header class="doc-header" id="opening">
+    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 4</p><h2 class="slide-title">Release evidence.<br><em>Not release theatre.</em></h2><p class="slide-lead">Bind reviewed source, tested bytes, environment authority, and rollback into one verifiable chain.</p></div>
+    <p class="eyebrow">13:20-14:10 &middot; 50 minutes</p>
+    <h1>Trusted delivery and operational readiness</h1>
+    <p class="subtitle">Package the exact reviewed revision, prove the artifact with deterministic tests and smoke checks, wait at a GitHub Environment gate, and make a READY or BLOCKED decision without pretending to deploy production.</p>
+    <p><strong>Result:</strong> one release-rehearsal run that connects the current <code>main</code> SHA, workflow run, immutable artifact digest, smoke evidence, environment approval, rollback candidate, and named owner.</p>
+    <p><strong>Prepared start:</strong> the feature PR from Lab 3 is merged, <code>.github/workflows/release-rehearsal.yml</code> exists on <code>main</code>, and Station has a <code>workshop-preview</code> environment with a required reviewer.</p>
+  </header>
+  <nav class="doc-nav" aria-label="Workshop navigation"><a href="../../index.html#ch-agenda">All labs</a><a href="#main">Skip to content</a><a href="../03-governed-pr/index.html">Previous lab</a><a href="../05-agentic-outer-loop/index.html">Next lab</a></nav>
+  <nav class="toc" aria-label="Contents"><p class="toc-label">Contents</p><ol><li><a href="#ch-identity">Choose the revision</a></li><li><a href="#ch-evidence">Build release evidence</a></li><li><a href="#ch-authority">Exercise authority</a></li><li><a href="#ch-decision">Record readiness</a></li></ol></nav>
+  <main id="main">
+    <section class="chapter" id="ch-identity"><h2 class="chapter-label">Name exactly what can move</h2>
+      <article class="card card--lead" id="card-identity" data-open>
+        <div class="slide-content"><h2 class="slide-title">Reviewed head, merge SHA,<br><em>and artifact are different.</em></h2><ul class="slide-points"><li class="frag">Review judges a PR head.</li><li class="frag">Merge creates a main revision.</li><li class="frag">Packaging creates identifiable bytes.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Select the release candidate</span><span class="card-sub">8 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
           <ol>
-            <li>Open your station repository on GitHub.</li>
-            <li>Create a branch named <code>lab-04-harden-title-check</code>.</li>
-            <li>Create <code>.github/workflows/title-check.yml</code> on that branch.</li>
-            <li>Start from <a href="artifacts/title-check.starter.yml">the starter workflow</a>, then apply the repair below.</li>
+            <li>Open the merged feature PR. Record the reviewed head SHA and the resulting merge commit SHA.</li>
+            <li>Open the repository's <strong>Code</strong> page and confirm the merge commit is the current tip of <code>main</code>.</li>
+            <li>Copy the full 40-character <code>main</code> SHA. This is the only candidate the prepared workflow accepts.</li>
           </ol>
-          <div class="code"><pre><code>name: Pull request title check
-
-on:
-  pull_request:
-
-permissions:
-  contents: read
-
-jobs:
-  title:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Inspect title
-        env:
-          PR_TITLE: ${{ github.event.pull_request.title }}
-        run: printf '%s\n' "$PR_TITLE"</code></pre></div>
-          <p>This workflow needs no checkout action. If you add any action in your own experiment, pin it to a full commit SHA. Compare the existing <code>.github/workflows/ci.yml</code> to see that pattern in the station repository.</p>
-          <p>Commit the file, open a pull request into the default branch, and title it <code>Lab 4 harden title check</code>. Wait for the existing CI workflow to pass.</p>
-          <h4>Review checklist</h4>
-          <ul>
-            <li><code>permissions</code> remains <code>contents: read</code>.</li>
-            <li>The title is assigned to <code>PR_TITLE</code> in <code>env</code>.</li>
-            <li>The shell reads <code>"$PR_TITLE"</code>, not the GitHub expression.</li>
-            <li>No action uses a version tag such as <code>@v4</code>.</li>
-          </ul>
-          <p>Ask for review. Merge only after the reviewer can explain why the title is now data rather than shell source.</p>
-          </div></article>
-      </section>
-
-      <section class="chapter" id="ch-prove"><h2 class="chapter-label">Prove and scan</h2>
-        <article class="card" id="card-payload-proof">
-          <div class="slide-content"><h2 class="slide-title">Make the payload visible.</h2><ul class="slide-points"><li class="frag">Open a second pull request.</li><li class="frag">Put metacharacters in the title.</li><li class="frag">Read the workflow log.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Prove the title is treated as data</span><span class="card-sub">10 minutes &middot; The centrepiece.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="payload-proof"></span>
-          <p>After the hardened workflow is merged, create another branch named <code>lab-04-title-payload-proof</code>. Make a harmless documentation change, such as creating <code>docs/lab-04-title-proof.md</code> with one sentence about the lab.</p>
-          <p>Open a pull request with this exact title:</p>
-          <div class="code"><pre><code>Lab 4 proof $(printf SAFE_PAYLOAD)</code></pre></div>
-          <p>Open the <strong>Pull request title check</strong> run and expand <strong>Inspect title</strong>. The log should print the exact title, including the literal characters <code>$(printf SAFE_PAYLOAD)</code>. It must not print only <code>SAFE_PAYLOAD</code> as the result of command substitution.</p>
-          <aside class="callout callout--rule"><p class="callout-label">Rule</p><p>Do not make the payload destructive. You only need shell metacharacters that would be meaningful to an unsafe shell script. The proof is that the hardened workflow preserves them as text.</p></aside>
-          <p><strong>Checkpoint:</strong> leave the proof pull request open until your table partner has seen the log. Then close it without merging, or merge it only if your facilitator wants the note retained.</p>
-          </div></article>
-
-        <article class="card" id="card-codeql">
-          <div class="slide-content"><h2 class="slide-title">Add native code scanning.</h2><ul class="slide-points"><li class="frag">Commit CodeQL as reviewed code.</li><li class="frag">Run it on main.</li><li class="frag">Read the Security tab alert.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 4 &mdash; Enable and run CodeQL</span><span class="card-sub">10 minutes &middot; Native security evidence.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="codeql"></span>
-          <p>Create a branch named <code>lab-04-enable-codeql</code>. Add <code>.github/workflows/codeql.yml</code> with this workflow, modeled on the prepared security demonstration:</p>
-          <div class="code"><pre><code>name: CodeQL
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: codeql-${{ github.ref }}
-  cancel-in-progress: true
-
-jobs:
-  analyze:
-    name: CodeQL
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    permissions:
-      contents: read
-      actions: read
-      security-events: write
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-      - uses: github/codeql-action/init@cdf488f595d80d6e07e03d4674febd5ab45fa938
-        with:
-          languages: javascript-typescript
-          build-mode: none
-          queries: security-extended
-      - uses: github/codeql-action/analyze@cdf488f595d80d6e07e03d4674febd5ab45fa938
-        with:
-          category: javascript-security</code></pre></div>
+          <p>The workflow rejects an abbreviated SHA, a stale main revision, or a PR head that was never integrated. That prevents a green review from becoming an ambiguous release claim.</p>
+          <p><strong>Checkpoint:</strong> you can state which revision was reviewed, which revision was merged, and which revision will be packaged.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-evidence"><h2 class="chapter-label">Build deterministic evidence from that revision</h2>
+      <article class="card" id="card-dispatch">
+        <div class="slide-content"><h2 class="slide-title">The workflow accepts<br><em>one exact candidate.</em></h2><ul class="slide-points"><li class="frag">Tests run at the candidate SHA.</li><li class="frag">Smoke checks exercise the service.</li><li class="frag">Packaging produces a digest.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Run the release rehearsal</span><span class="card-sub">10 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
           <ol>
-            <li>Open a pull request, confirm CI is green, request review, and merge.</li>
-            <li>Open <strong>Actions</strong>, choose <strong>CodeQL</strong>, then run it on the default branch.</li>
-            <li>Open <strong>Security</strong>, then <strong>Code scanning</strong>. Open the alert created by the scan.</li>
+            <li>Open <strong>Actions</strong>, select <strong>Trusted release rehearsal</strong>, then choose <strong>Run workflow</strong>.</li>
+            <li>Keep the workflow branch on <code>main</code>. Paste the full candidate SHA into <strong>Full main-branch commit SHA to package and promote</strong>.</li>
+            <li>Start the run and open <strong>Build revision-bound evidence</strong>.</li>
+            <li>Confirm the job validates candidate identity, checks out that exact SHA, requires it to equal current <code>origin/main</code>, runs <code>npm test</code>, and completes the three synthetic smoke checks.</li>
           </ol>
-          <p>In a seeded station, expect a JavaScript finding such as caller-controlled path access in the synthetic export path. Read the rule, file, line and data flow. If your repository produces no alert or CodeQL is unavailable, open the <a href="../../../platform/demos/security-remediation/evidence/baseline-codeql.json">recorded CodeQL observation</a> instead. It identifies the rule, file and source workflow run; it is historical evidence from a separate synthetic repository, not your station's scan or an active gate.</p>
-          <p><strong>Checkpoint:</strong> write one sentence naming the CodeQL rule and one sentence stating what a clean scan would not prove.</p>
-          </div></article>
-      </section>
-
-      <section class="chapter" id="ch-release"><h2 class="chapter-label">Connect delivery to release</h2>
-        <article class="card" id="card-secret-protection">
-          <div class="slide-content"><h2 class="slide-title">Secret Protection stops earlier.</h2><ul class="slide-points"><li class="frag">Do not push token-like strings.</li><li class="frag">Observe the native rejection.</li><li class="frag">Rotate real exposed credentials.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Observation &mdash; Read the push-protection boundary</span><span class="card-sub">Organisation settings may limit live access.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="secret-protection"></span>
-          <p>Open the <a href="../../../platform/demos/secret-protection/evidence/push-protection.json">recorded native response and clean control evidence</a>. The archived REST <em>Create a blob</em> attempt returned 422 with <code>secret-scanning-push-protection</code>, while a separate clean blob was accepted and the branch SHA stayed unchanged. This is historical evidence from a separate synthetic repository, not enforcement on your station.</p>
-          <aside class="callout callout--warning"><p class="callout-label">Warning</p><p><strong>Do not test this by committing a credential-like string.</strong> Repository push protection, custom patterns and delegated bypass depend on organization configuration. A shared workshop repository is not the place to discover whether a realistic secret creates an alert.</p></aside>
-          <p>If your facilitator demonstrates the live control, they use an official inactive learning sample and an isolated repository. Treat the response as a GitHub-native rejection before history, not as proof that every possible secret will be detected.</p>
-          <p><strong>Checkpoint:</strong> contrast CodeQL with Secret Protection. CodeQL inspects committed application code; push protection rejects supported secret patterns before a commit or ref update.</p>
-          </div></article>
-
-        <article class="card" id="card-release-boundary">
-          <div class="slide-content"><h2 class="slide-title">Checks inform.<br><em>People authorize.</em></h2><ul class="slide-points"><li class="frag">Head is the reviewed proposal.</li><li class="frag">Merge is main-branch code.</li><li class="frag">Release packages exact bytes.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Decision &mdash; State the release boundary</span><span class="card-sub">Do this before leaving the lab.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="release-boundary"></span>
-          <p>Compare the <a href="../../../platform/demos/security-remediation/evidence/release.json">recorded release evidence</a> with your own station's pull request. The archived approval, artifact and health check are historical, not proof that your change was deployed. Then write a three-line release statement for your station repository:</p>
+          <p><strong>Expected result:</strong> the package job is green and the promotion job waits for the <code>workshop-preview</code> environment reviewer.</p>
+          <aside class="callout callout--warning"><p class="callout-label">Deterministic boundary</p><p>This workflow does not ask a model whether the release is good. It proves fixed conditions against fixed evidence and stops on failure.</p></aside>
+        </div>
+      </article>
+      <article class="card" id="card-artifact">
+        <div class="slide-content"><h2 class="slide-title">A file name is not<br><em>artifact identity.</em></h2><ul class="slide-points"><li class="frag">Digest identifies packaged bytes.</li><li class="frag">Manifest records producing context.</li><li class="frag">Smoke evidence names observed behavior.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Inspect the candidate evidence</span><span class="card-sub">10 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>While promotion waits, open the package job summary and its uploaded <code>release-candidate-&lt;SHA&gt;</code> artifact.</li>
+            <li>Confirm it contains <code>pharmacy-reservation.tgz</code>, <code>pharmacy-reservation.tgz.sha256</code>, and <code>release.json</code>.</li>
+            <li>Read <code>release.json</code>. Match <code>candidateSha</code>, <code>runId</code>, repository, workflow, and the three smoke checks to the current run.</li>
+            <li>Read the digest file. The SHA-256 value identifies the packaged bytes, not merely the source revision or artifact display name.</li>
+          </ol>
+          <p><strong>Checkpoint:</strong> you can move the artifact and its evidence together without losing the revision or producing workflow.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-authority"><h2 class="chapter-label">Keep evidence separate from authority</h2>
+      <article class="card" id="card-approval">
+        <div class="slide-content"><h2 class="slide-title">Green evidence informs.<br><em>The environment authorizes.</em></h2><ul class="slide-points"><li class="frag">A reviewer reads exact evidence.</li><li class="frag">Approval resumes one environment job.</li><li class="frag">No production write occurs.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 4 &mdash; Review and approve the preview boundary</span><span class="card-sub">10 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Ask the configured reviewer to open the waiting deployment. The person who dispatched the run must not silently approve their own evidence.</li>
+            <li>The reviewer verifies the candidate SHA, required job, artifact digest, smoke checks, and absence of unresolved release blockers.</li>
+            <li>The reviewer approves <code>workshop-preview</code>. Open <strong>Promote approved workshop candidate</strong> and confirm it downloads the named artifact, verifies SHA-256, and checks <code>release.json</code>.</li>
+            <li>Read the job summary. It must explicitly say that no external production deployment was performed.</li>
+          </ol>
+          <p>The GitHub Environment creates a real deployment and approval record. In this workshop, "promotion" means verification at the preview boundary; it does not mean cloud resources or production changed.</p>
+          <aside class="callout callout--warning"><p class="callout-label">Sandbox path</p><p>If required reviewers are unavailable, inspect the facilitator's source-bound recorded run, then execute the workflow only to observe packaging. Label environment approval unavailable; an immediate job is not equivalent to an enforced gate.</p></aside>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-decision"><h2 class="chapter-label">Make operational readiness explicit</h2>
+      <article class="card" id="card-decision">
+        <div class="slide-content"><h2 class="slide-title">Ready means traceable,<br><em>owned, and reversible.</em></h2><ul class="slide-points"><li class="frag">Record evidence, not impressions.</li><li class="frag">Name rollback bytes and owner.</li><li class="frag">Missing authority means BLOCKED.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 5 &mdash; Record the release decision</span><span class="card-sub">12 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>Add a comment to the merged feature PR using this structure:</p>
+          <div class="code"><pre><code>Release rehearsal: READY | BLOCKED
+Candidate SHA:
+Workflow run:
+Artifact SHA-256:
+Smoke evidence:
+Environment decision and approver:
+Rollback artifact or prior known-good SHA:
+Operational owner:
+Unresolved blockers:</code></pre></div>
+          <p>Use <code>READY</code> only when every field is concrete and the environment decision is recorded. Use <code>BLOCKED</code> when the merge did not complete, the candidate is stale, evidence failed, approval is unavailable, rollback is unknown, or ownership is missing.</p>
           <dl>
-            <dt>Reviewed head revision</dt><dd>The commit reviewed in the pull request. Green checks here prove only that proposal's evidence.</dd>
-            <dt>Merge revision</dt><dd>The commit on the default branch after merge. A release should package this exact revision, not a convenient checkout.</dd>
-            <dt>Released bytes</dt><dd>The artifact or deployment manifest that names the packaged revision and the workflow run that produced it.</dd>
+            <dt>Failure before packaging</dt><dd>Fix through a new PR. Never edit the generated evidence to make it green.</dd>
+            <dt>Rejected environment</dt><dd>Record the reviewer's reason and keep the candidate blocked.</dd>
+            <dt>Cloud deployment</dt><dd>Out of scope. A real implementation would add OIDC, a named target, health evidence, and rollback automation without weakening this boundary.</dd>
           </dl>
-          <p>A green CI check, a CodeQL result, a Secret Protection rejection, or an agent recommendation never grants release authority. They inform the decision. A named person or governed environment approves release. In a configured deployment, the release job can use OpenID Connect (OIDC) for short-lived credentials scoped to the approved environment instead of a long-lived secret; this lab does not deploy or configure that boundary in your station.</p>
-          <p><strong>Checkpoint:</strong> state who may approve a pharmacy release in your team model, and which deterministic checks must be green before that person can approve.</p>
-          </div></article>
-      </section>
-
-      <section class="chapter" id="ch-recover"><h2 class="chapter-label">Recovery and extensions</h2>
-        <article class="card" id="card-recover">
-          <div class="slide-content"><h2 class="slide-title">Recover without weakening controls.</h2><ul class="slide-points"><li class="frag">Use the reference workflow.</li><li class="frag">Check whether the workflow merged.</li><li class="frag">Label recorded evidence honestly.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Troubleshooting, reset and cleanup</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="recover"></span>
-          <h4 id="blockers">Common blockers</h4>
-          <table aria-label="Lab 4 common blockers">
-            <thead><tr><th scope="col">Symptom</th><th scope="col">Likely cause</th><th scope="col">Fix</th></tr></thead>
-            <tbody>
-              <tr><td>The title workflow is red.</td><td>The GitHub expression is read inside <code>run</code>, <code>env</code> is missing, or <code>"$PR_TITLE"</code> lost its quotes.</td><td>Compare your file with <a href="artifacts/title-check.reference.yml">the reference workflow</a> and push the fix to the same branch.</td></tr>
-              <tr><td>The proof pull request does not run the title check.</td><td>The hardening pull request has not merged yet.</td><td>Merge the hardening pull request first. Pull-request workflows are evaluated from the default branch for this proof path.</td></tr>
-              <tr><td>CodeQL cannot upload results.</td><td>The job lacks <code>security-events: write</code>, or the repository or license does not allow code scanning.</td><td>Add the job-level permission. If code scanning is unavailable, use the recorded evidence and label it as recorded.</td></tr>
-              <tr><td>The Security tab shows no alert.</td><td>Extraction did not complete, or the scan found nothing on this revision.</td><td>Open the CodeQL run logs and verify extraction. A zero-alert scan is still evidence; use the recorded finding for the security discussion.</td></tr>
-            </tbody>
-          </table>
-          <h4 id="reset">Reset and cleanup</h4>
-          <dl>
-            <dt>You need to reset</dt><dd>Close the proof pull request, delete lab branches, and leave the merged hardening and CodeQL workflow only if your facilitator wants the station to retain them.</dd>
-          </dl>
-          </div></article>
-
-        <article class="card" id="card-extensions">
-          <div class="slide-content"><h2 class="slide-title">Extend after the proof.</h2><ul class="slide-points"><li class="frag">Add branch protection intentionally.</li><li class="frag">Require the right checks.</li><li class="frag">Design artifact provenance.</li></ul></div>
-          <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Optional extensions</span><span class="card-sub">Only after the core path is complete.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-          <div class="card-body"><span id="extensions"></span>
-          <dl>
-            <dt>Require the hardened checks</dt><dd>Add branch protection or a ruleset that requires deterministic CI and CodeQL before merge. State whether your station profile allows you to enforce it yourself or only observe the setting.</dd>
-            <dt>Break the workflow safely</dt><dd>On a temporary branch, change <code>"$PR_TITLE"</code> back to the expression-bearing <code>run</code> line. Do not merge it. Confirm review would reject it.</dd>
-            <dt>Design provenance</dt><dd>Sketch an artifact manifest that records source commit, workflow SHA, run ID, test result and approving environment. Mark which fields are integrity evidence and which would require signed attestation.</dd>
-          </dl>
-          </div></article>
-      </section>
-    </main>
-
-    <section class="takeaway" id="closing"><p>Trusted delivery is an evidence chain: untrusted input stays data, native scanners report what they observed, and release remains a human or governed-environment decision.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Evidence informs.<br><em>People authorize.</em></h2></div></section>
-    <footer class="doc-footer">Lab 4 of 5 &middot; Next: <a href="../05-capstone/index.html">Run the complete governed loop</a> &middot; Synthetic pharmacy data only.</footer>
-  </div>
+        </div>
+      </article>
+    </section>
+  </main>
+  <section class="takeaway" id="closing"><p>You connected a reviewed merge revision to tested, smoke-checked bytes, verified their digest at a governed environment boundary, and recorded a reversible operational decision without claiming a production deployment.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Trace the bytes.<br><em>Name the authority.</em></h2></div></section>
+  <footer class="doc-footer">Lab 4 of 5 &middot; Synthetic pharmacy data only.</footer>
+</div>
 </body>
 </html>

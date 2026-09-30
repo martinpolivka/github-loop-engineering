@@ -1,11 +1,11 @@
 {
-  "capturedAt": "2026-09-29T14:54:29.943Z",
+  "capturedAt": "2026-09-30T10:22:41.499Z",
   "browser": "151.0.7922.34",
   "sourceHashFormat": "sha256-utf8-lf",
   "captures": [
     {
       "file": "workshop-agenda-light.png",
-      "source": "docs/index.html#ch-agenda",
+      "source": "docs/index.html#agenda",
       "theme": "light",
       "accent": "blue",
       "description": "Local workshop agenda; not GitHub UI.",
@@ -17,35 +17,31 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
+          "sha256": "6d153cf9961888eefba4d9b70b54dd75f7174e0715ed6e6bea95d7f1cd027bac"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
-        },
-        {
-          "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
@@ -63,41 +59,37 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
+          "sha256": "6d153cf9961888eefba4d9b70b54dd75f7174e0715ed6e6bea95d7f1cd027bac"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
-        },
-        {
-          "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
     {
       "file": "workshop-slides-light.png",
-      "source": "docs/index.html#ch-agenda",
+      "source": "docs/index.html#ch-demo",
       "theme": "light",
       "accent": "blue",
       "description": "Full-day workshop presenter view in a local browser; not GitHub UI.",
@@ -109,35 +101,31 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
+          "sha256": "6d153cf9961888eefba4d9b70b54dd75f7174e0715ed6e6bea95d7f1cd027bac"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
-        },
-        {
-          "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
@@ -155,44 +143,40 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
+          "sha256": "6d153cf9961888eefba4d9b70b54dd75f7174e0715ed6e6bea95d7f1cd027bac"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
-        },
-        {
-          "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
     {
-      "file": "security-evidence-light.png",
-      "source": "docs/labs/04-trusted-delivery/index.html#codeql",
+      "file": "release-candidate-light.png",
+      "source": "docs/labs/04-trusted-delivery/index.html#ch-evidence",
       "theme": "light",
       "accent": "blue",
-      "description": "Local lab view of recorded CodeQL evidence; not GitHub UI.",
+      "description": "Local lab view of release candidate evidence; not GitHub UI.",
       "viewport": {
         "width": 1440,
         "height": 1000
@@ -201,44 +185,44 @@
       "inputs": [
         {
           "path": "docs/labs/04-trusted-delivery/index.html",
-          "sha256": "b7c6dfafbb8b9be4df38d6c5b3e3e89c46f7d35d97f6ca13a732d61e5c201d2d"
+          "sha256": "66f0429822c020c67dcee71c3dc4bbd58d0fab64b277f6ab5babed21baea6c63"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "1c4e314ea2f14d7ed0117bb3397cb8a77819ffb95b2c1cf384013fef87489421"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
     {
-      "file": "release-boundary-light.png",
-      "source": "docs/labs/04-trusted-delivery/index.html#release-boundary",
+      "file": "environment-gate-light.png",
+      "source": "docs/labs/04-trusted-delivery/index.html#ch-authority",
       "theme": "light",
       "accent": "blue",
-      "description": "Local lab view of the human release boundary; not GitHub UI.",
+      "description": "Local lab view of the environment authority boundary; not GitHub UI.",
       "viewport": {
         "width": 1440,
         "height": 1000
@@ -247,44 +231,44 @@
       "inputs": [
         {
           "path": "docs/labs/04-trusted-delivery/index.html",
-          "sha256": "b7c6dfafbb8b9be4df38d6c5b3e3e89c46f7d35d97f6ca13a732d61e5c201d2d"
+          "sha256": "66f0429822c020c67dcee71c3dc4bbd58d0fab64b277f6ab5babed21baea6c63"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "1c4e314ea2f14d7ed0117bb3397cb8a77819ffb95b2c1cf384013fef87489421"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
     {
-      "file": "secret-protection-light.png",
-      "source": "docs/labs/04-trusted-delivery/index.html#secret-protection",
+      "file": "release-decision-light.png",
+      "source": "docs/labs/04-trusted-delivery/index.html#ch-decision",
       "theme": "light",
       "accent": "blue",
-      "description": "Local lab view of recorded push-protection evidence; not GitHub UI.",
+      "description": "Local lab view of the release readiness decision; not GitHub UI.",
       "viewport": {
         "width": 1440,
         "height": 1000
@@ -293,41 +277,41 @@
       "inputs": [
         {
           "path": "docs/labs/04-trusted-delivery/index.html",
-          "sha256": "b7c6dfafbb8b9be4df38d6c5b3e3e89c46f7d35d97f6ca13a732d61e5c201d2d"
+          "sha256": "66f0429822c020c67dcee71c3dc4bbd58d0fab64b277f6ab5babed21baea6c63"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "1c4e314ea2f14d7ed0117bb3397cb8a77819ffb95b2c1cf384013fef87489421"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
     {
       "file": "workshop-agenda-dark.png",
-      "source": "docs/index.html#ch-agenda",
+      "source": "docs/index.html#agenda",
       "theme": "dark",
       "accent": "blue",
       "description": "Local workshop agenda; not GitHub UI.",
@@ -339,35 +323,31 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
+          "sha256": "6d153cf9961888eefba4d9b70b54dd75f7174e0715ed6e6bea95d7f1cd027bac"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
-        },
-        {
-          "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
@@ -385,41 +365,37 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
+          "sha256": "6d153cf9961888eefba4d9b70b54dd75f7174e0715ed6e6bea95d7f1cd027bac"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
-        },
-        {
-          "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
     {
       "file": "workshop-slides-dark.png",
-      "source": "docs/index.html#ch-agenda",
+      "source": "docs/index.html#ch-demo",
       "theme": "dark",
       "accent": "blue",
       "description": "Full-day workshop presenter view in a local browser; not GitHub UI.",
@@ -431,35 +407,31 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
+          "sha256": "6d153cf9961888eefba4d9b70b54dd75f7174e0715ed6e6bea95d7f1cd027bac"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
-        },
-        {
-          "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
@@ -477,44 +449,40 @@
       "inputs": [
         {
           "path": "docs/index.html",
-          "sha256": "e728ffb43537417c060d488dd798d3e53c69d117e5a63a4d784a1ceb7ce0e896"
+          "sha256": "6d153cf9961888eefba4d9b70b54dd75f7174e0715ed6e6bea95d7f1cd027bac"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
-        },
-        {
-          "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
     {
-      "file": "security-evidence-dark.png",
-      "source": "docs/labs/04-trusted-delivery/index.html#codeql",
+      "file": "release-candidate-dark.png",
+      "source": "docs/labs/04-trusted-delivery/index.html#ch-evidence",
       "theme": "dark",
       "accent": "blue",
-      "description": "Local lab view of recorded CodeQL evidence; not GitHub UI.",
+      "description": "Local lab view of release candidate evidence; not GitHub UI.",
       "viewport": {
         "width": 1440,
         "height": 1000
@@ -523,44 +491,44 @@
       "inputs": [
         {
           "path": "docs/labs/04-trusted-delivery/index.html",
-          "sha256": "b7c6dfafbb8b9be4df38d6c5b3e3e89c46f7d35d97f6ca13a732d61e5c201d2d"
+          "sha256": "66f0429822c020c67dcee71c3dc4bbd58d0fab64b277f6ab5babed21baea6c63"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "1c4e314ea2f14d7ed0117bb3397cb8a77819ffb95b2c1cf384013fef87489421"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
     {
-      "file": "release-boundary-dark.png",
-      "source": "docs/labs/04-trusted-delivery/index.html#release-boundary",
+      "file": "environment-gate-dark.png",
+      "source": "docs/labs/04-trusted-delivery/index.html#ch-authority",
       "theme": "dark",
       "accent": "blue",
-      "description": "Local lab view of the human release boundary; not GitHub UI.",
+      "description": "Local lab view of the environment authority boundary; not GitHub UI.",
       "viewport": {
         "width": 1440,
         "height": 1000
@@ -569,44 +537,44 @@
       "inputs": [
         {
           "path": "docs/labs/04-trusted-delivery/index.html",
-          "sha256": "b7c6dfafbb8b9be4df38d6c5b3e3e89c46f7d35d97f6ca13a732d61e5c201d2d"
+          "sha256": "66f0429822c020c67dcee71c3dc4bbd58d0fab64b277f6ab5babed21baea6c63"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "1c4e314ea2f14d7ed0117bb3397cb8a77819ffb95b2c1cf384013fef87489421"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
     {
-      "file": "secret-protection-dark.png",
-      "source": "docs/labs/04-trusted-delivery/index.html#secret-protection",
+      "file": "release-decision-dark.png",
+      "source": "docs/labs/04-trusted-delivery/index.html#ch-decision",
       "theme": "dark",
       "accent": "blue",
-      "description": "Local lab view of recorded push-protection evidence; not GitHub UI.",
+      "description": "Local lab view of the release readiness decision; not GitHub UI.",
       "viewport": {
         "width": 1440,
         "height": 1000
@@ -615,35 +583,35 @@
       "inputs": [
         {
           "path": "docs/labs/04-trusted-delivery/index.html",
-          "sha256": "b7c6dfafbb8b9be4df38d6c5b3e3e89c46f7d35d97f6ca13a732d61e5c201d2d"
+          "sha256": "66f0429822c020c67dcee71c3dc4bbd58d0fab64b277f6ab5babed21baea6c63"
         },
         {
           "path": "docs/assets/html-docs/article.css",
-          "sha256": "64aea9a006a7343126663180688856e4652724db6f485a86ef3388d2b0acde22"
+          "sha256": "43a9c56db47a46fcafdc33e45c1dc548234c0a75456bf885f09ea5bd1e6223f0"
         },
         {
           "path": "docs/assets/html-docs/slides.css",
-          "sha256": "493251a280ae8d4b2763396f194725ec23dd4b8f79648db98a62f02ecd4d612a"
+          "sha256": "c9ad4ec4979cfc2bc3d1acb004c39a06b3c8ce572456f600f153d9309242ef86"
         },
         {
           "path": "docs/assets/html-docs/article.js",
-          "sha256": "0bdfd3e55d996f0af87c6e324855038f5c170125378c31fcff9f440e39cae96f"
+          "sha256": "1c4e314ea2f14d7ed0117bb3397cb8a77819ffb95b2c1cf384013fef87489421"
         },
         {
           "path": "docs/assets/html-docs/slides.js",
-          "sha256": "a95e83fdd4e7741a3ac6c228f429955c91ade567e97dbde61d3c7f48c62c233d"
+          "sha256": "fff4196838835ccad060ea7f6c8429d4efe9a7e5b1a6662a78ad6ac4301a8436"
         },
         {
           "path": "docs/assets/materials.js",
-          "sha256": "47f438bbd8554fdb449854e264ca982ce29857068e004163238373b622c3bb7f"
+          "sha256": "c8767518e37f30ee3ddadba71d042018688f899ba7fc52d3878a1515f96be04b"
         },
         {
           "path": "docs/assets/html-docs/tokens.css",
-          "sha256": "d2022012d7b514dc086ed0249101e546f6c4afae15d1311f9d04939908d7a1e1"
+          "sha256": "346a239a627dc09886256d1c4b76592836c9e809cc11407e6ecd89d554acdcf2"
         },
         {
           "path": "docs/assets/html-docs/appearance.js",
-          "sha256": "5affdf321e6e758e320b175826a24a7738bdf119396729689ccad9d9a3bcd098"
+          "sha256": "cfee7b0ac77997cc5760918b8cd67f468ef726cb2d2e9aa1b127b8539ce7c3eb"
         }
       ]
     },
@@ -717,7 +685,7 @@
     },
     {
       "file": "pharmacy-suggestion-light.png",
-      "source": "docs/labs/02-intent-to-pr/artifacts/inventory.reference.mjs",
+      "source": "docs/labs/02-inner-loop/artifacts/inventory.reference.mjs",
       "theme": "light",
       "accent": "blue",
       "description": "Actual local HTTP 409 response; synthetic data, not GitHub or a cloud deployment.",
@@ -728,7 +696,7 @@
       "kind": "browser-capture",
       "inputs": [
         {
-          "path": "docs/labs/02-intent-to-pr/artifacts/inventory.reference.mjs",
+          "path": "docs/labs/02-inner-loop/artifacts/inventory.reference.mjs",
           "sha256": "cba22c766a41561220aa6a68197677bcdd0a753c92aa3a9187ce6cfd5a216526"
         },
         {
@@ -751,7 +719,7 @@
     },
     {
       "file": "pharmacy-suggestion-dark.png",
-      "source": "docs/labs/02-intent-to-pr/artifacts/inventory.reference.mjs",
+      "source": "docs/labs/02-inner-loop/artifacts/inventory.reference.mjs",
       "theme": "dark",
       "accent": "blue",
       "description": "Actual local HTTP 409 response; synthetic data, not GitHub or a cloud deployment.",
@@ -762,7 +730,7 @@
       "kind": "browser-capture",
       "inputs": [
         {
-          "path": "docs/labs/02-intent-to-pr/artifacts/inventory.reference.mjs",
+          "path": "docs/labs/02-inner-loop/artifacts/inventory.reference.mjs",
           "sha256": "cba22c766a41561220aa6a68197677bcdd0a753c92aa3a9187ce6cfd5a216526"
         },
         {

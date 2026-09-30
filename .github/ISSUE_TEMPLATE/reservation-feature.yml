@@ -1,11 +1,21 @@
-name: Reservation capability
-description: Propose a testable change to the synthetic pharmacy reservation service.
+name: Reservation feature request
+description: Propose a new, testable capability for the synthetic reservation service.
 title: "[Reservation] "
 body:
   - type: markdown
     attributes:
       value: |
-        Describe the business outcome. Do not include real patient, medicine, or pharmacy data.
+        Use synthetic evidence only. Cite its repository path so a reviewer can verify it.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Which ticket, log, discussion, and decision support this request?
+      placeholder: |
+        - context/intake/customer-ticket.md — ...
+        - context/intake/reservation-api.log — ...
+    validations:
+      required: true
   - type: textarea
     id: outcome
     attributes:
@@ -34,6 +44,13 @@ body:
         - Use synthetic data only.
         - Preserve existing API behavior.
         - Add deterministic tests.
+    validations:
+      required: true
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Out of scope
+      description: Which adjacent requests must this change not include?
     validations:
       required: true
   - type: dropdown

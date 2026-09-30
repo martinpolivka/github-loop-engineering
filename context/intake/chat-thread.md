@@ -1,55 +1,36 @@
-# Chat export: #store-operations (synthetic)
+# Teams chat export: reservation-support (synthetic)
 
-Exported from a team chat for workshop use. Roles are synthetic labels.
+**Support lead — 08:19**
+I linked `SUP-4102` with `REQ-S12-4102`. The API returned its documented `409`;
+this does not look like an outage or regression.
 
----
+**Service engineer — 08:25**
+Confirmed. The inventory already records SKU, display name, category, and
+available quantity. The response currently exposes only `error` and `available`.
 
-**Pharmacist, Store S-12** - Mon 08:14
-Third time this week: a customer came for the Synthetic Inhaler, the reservation
-kiosk said "insufficient stock", and they left. The Synthetic Alternative
-Inhaler was on the shelf behind me. Nothing on screen told either of us.
+**Pharmacist — 08:31**
+Please do not automatically reserve another item. Show one relevant option and
+leave the decision with me.
 
-**Operations coordinator** - Mon 08:21
-The reservation API answers 409 with `error` and `available: 0`. That is all the
-kiosk gets, so that is all it shows.
+**QA — 08:38**
+We need an explicit rule for category, sufficient quantity, multiple matches,
+and whether showing an option mutates stock. Otherwise the test will encode a
+guess.
 
-**Support lead** - Mon 08:30
-I have several tickets that read the same way. Digest goes out today. Also the
-label printer at S-04 is jamming again - sorry, wrong thread.
+**Operations coordinator — 08:44**
+Could we add low-stock alerts at the same time?
 
-**Pharmacist, Store S-07** - Mon 08:42
-Could the system just reserve the other inhaler automatically? It would save a
-step at the counter.
+**Support lead — 08:46**
+Already planned in `backlog.md`; keep it out of this case.
 
-**Pharmacist, Store S-12** - Mon 08:47
-Please no. I still have to judge whether it suits that person. Show me what is
-available and let me decide. Nothing should be held until I say so.
+**QA — 08:51**
+`REQ-S07-4113` is separate from `SUP-4102`. The API returned `available: 4`,
+but the kiosk ignored that existing field. That violates the visible-result
+contract and should be reported as a UI bug, not folded into the suggestion
+feature.
 
-**Pharmacist, Store S-07** - Mon 08:51
-Then show everything that is in stock, all categories. Customers can ask.
+**Pharmacist — 08:55**
+Show the available quantity, but do not reserve fewer items automatically. I
+need to discuss the next action with the customer.
 
-**Pharmacist, Store S-12** - Mon 08:55
-A painkiller is not an answer to an inhaler question. A long list at the counter
-slows me down. One sensible option is plenty.
-
-**Operations coordinator** - Mon 09:03
-Whatever we add, the kiosk parses the 409 body today. Do not rename or remove
-the fields it already reads.
-
-**Operations coordinator** - Mon 09:05
-While we are here: can we get alerts when stock gets low?
-
-**Support lead** - Mon 09:07
-I think low-stock alerts are already on the backlog. Check before we ask again.
-
-**Pharmacist, Store S-07** - Mon 09:12
-And the stock dashboard is far too bright on the night shift.
-
-**Support lead** - Mon 09:20
-One ticket is slightly different: someone wanted five of the Synthetic
-Antibiotic, only four were left, and the kiosk rejected it. Not sure it is the
-same problem.
-
-**Operations coordinator** - Mon 09:24
-Let us pick one thing we can ship and prove this week. The product owner will
-confirm scope.
+All participants and messages are synthetic.

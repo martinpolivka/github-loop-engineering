@@ -1,0 +1,145 @@
+name: Trusted release rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full main-branch commit SHA to package and promote
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-rehearsal-${{ inputs.candidate_sha }}
+  cancel-in-progress: false
+
+jobs:
+  package:
+    name: Build revision-bound evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+    steps:
+      - name: Validate candidate identity
+        shell: bash
+        run: |
+          [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]
+
+      - name: Check out candidate
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          persist-credentials: false
+
+      - name: Require current main revision
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          [[ "$(git rev-parse HEAD)" == "$CANDIDATE_SHA" ]]
+          main_sha="$(
+            curl --fail-with-body --silent --show-error \
+              --header "Authorization: Bearer $GITHUB_TOKEN" \
+              --header "Accept: application/vnd.github+json" \
+              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/commits/main" |
+              node --input-type=module -e "
+                const chunks = [];
+                for await (const chunk of process.stdin) chunks.push(chunk);
+                process.stdout.write(JSON.parse(Buffer.concat(chunks)).sha);
+              "
+          )"
+          [[ "$main_sha" == "$CANDIDATE_SHA" ]]
+
+      - name: Configure Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Run deterministic tests
+        run: npm test
+
+      - name: Run packaged-service smoke checks
+        shell: bash
+        run: |
+          node src/server.mjs >server.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          for attempt in {1..20}; do
+            curl --fail --silent http://127.0.0.1:3000/health >health.json && break
+            sleep 0.25
+          done
+          node -e "const h=require('./health.json'); if(h.status!=='ready'||h.service!=='pharmacy-reservation') process.exit(1)"
+          curl --fail --silent http://127.0.0.1:3000/stock >stock-before.json
+          curl --fail --silent \
+            -H 'content-type: application/json' \
+            -d '{"sku":"MED-001","quantity":1}' \
+            http://127.0.0.1:3000/reservations >reservation.json
+          node -e "const r=require('./reservation.json'); if(r.sku!=='MED-001'||r.remaining!==11) process.exit(1)"
+
+      - name: Package exact candidate
+        shell: bash
+        run: |
+          mkdir release
+          tar -czf release/pharmacy-reservation.tgz src public package.json AGENTS.md
+          (
+            cd release
+            sha256sum pharmacy-reservation.tgz >pharmacy-reservation.tgz.sha256
+          )
+          node --input-type=module -e "
+            import { writeFileSync } from 'node:fs';
+            writeFileSync('release/release.json', JSON.stringify({
+              candidateSha: process.env.CANDIDATE_SHA,
+              runId: process.env.GITHUB_RUN_ID,
+              runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+              repository: process.env.GITHUB_REPOSITORY,
+              workflow: process.env.GITHUB_WORKFLOW,
+              smokeChecks: ['health', 'stock-read', 'synthetic-reservation']
+            }, null, 2) + '\n');
+          "
+
+      - name: Upload release candidate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-candidate-${{ inputs.candidate_sha }}
+          path: release/
+          if-no-files-found: error
+          retention-days: 7
+
+  promote:
+    name: Promote approved workshop candidate
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: workshop-preview
+    env:
+      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+    steps:
+      - name: Download exact candidate
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-candidate-${{ inputs.candidate_sha }}
+          path: release
+
+      - name: Verify digest and revision
+        shell: bash
+        run: |
+          cd release
+          sha256sum --check pharmacy-reservation.tgz.sha256
+          node -e "const r=require('./release.json'); if(r.candidateSha!==process.env.CANDIDATE_SHA) process.exit(1)"
+
+      - name: Record promotion evidence
+        shell: bash
+        run: |
+          digest="$(cut -d ' ' -f 1 release/pharmacy-reservation.tgz.sha256)"
+          {
+            echo "## Workshop preview promotion"
+            echo ""
+            echo "- Candidate SHA: \`$CANDIDATE_SHA\`"
+            echo "- Artifact SHA-256: \`$digest\`"
+            echo "- Environment: \`workshop-preview\`"
+            echo "- External production deployment: not performed"
+          } >>"$GITHUB_STEP_SUMMARY"

@@ -9,4 +9,4 @@ Use the issue as the implementation contract.
 - Add or update `node:test` coverage for every behavior change.
 - Run `npm test` before proposing a pull request.
 - Keep the diff limited to the stated acceptance criteria.
-- Do not modify workflow permissions, `CODEOWNERS`, agent profiles, or this file unless the issue explicitly requires it and a platform owner reviews the change.
+- Do not modify workflow permissions, `CODEOWNERS`, project skills, or this file unless the issue explicitly requires it and a platform owner reviews the change.

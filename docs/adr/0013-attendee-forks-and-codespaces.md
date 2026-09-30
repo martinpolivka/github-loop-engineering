@@ -1,6 +1,6 @@
 # 0013: Attendee forks and Codespaces for Lab 2
 
-- Status: Accepted
+- Status: Superseded by [ADR 0015](0015-progressive-inner-and-outer-loops.md)
 - Date: 2026-09-29
 
 ## Context
@@ -17,7 +17,7 @@ step that added clicks without adding learning.
 - Each attendee owns an isolated repository for their pull requests.
 - The facilitator keeps one read-only source repository, with no copy to publish.
 - The same flow works in the sandbox profile and a dedicated organization.
-- Delegation to Copilot happens where the evidence is: on the pull request.
+- Delegation to Copilot starts from the evidence-backed Issue.
 
 ## Options considered
 
@@ -31,7 +31,7 @@ step that added clicks without adding learning.
 ## Decision
 
 Use option 3 with this repository as the source. The station lives at the
-repository root: `src/`, `test/`, `public/`, `context/intake/`, `.github/agents/`,
+repository root: `src/`, `test/`, `public/`, `context/intake/`, `.agents/skills/`,
 `.devcontainer/` and the service workflows. Workshop materials stay in `docs/`,
 `platform/`, `tests/` and `templates/`. The organization copy of this repository is
 the fork source, and attendees fork it as `github-loop-engineering-NN`. Every
@@ -53,12 +53,11 @@ the fork caveats explicitly:
   `gh repo set-default "$GITHUB_REPOSITORY"` and browser flows select the fork as
   the base repository.
 - Forks do not copy issues, so the planned backlog lives in
-  `context/intake/backlog.md`, which the coaching agent can read.
+  `context/intake/backlog.md`, which the intake agent can read.
 
-Lab 2 delegates implementation by commenting `@copilot` on the attendee's draft
-pull request, which already carries the failing acceptance test. Where Copilot
-cloud agent is unavailable, the attendee implements in the Codespace with
-Copilot Chat and labels the fallback in the pull request.
+At the time of this decision, Lab 2 delegated implementation by assigning the
+approved Issue to Copilot. ADR 0015 later moved the fork to Lab 1 and made the
+interactive inner loop the required implementation path.
 
 ## Consequences
 
@@ -78,7 +77,8 @@ Copilot Chat and labels the fallback in the pull request.
 - Facilitator provisioning and issue seeding remain available for stations
   that need them, such as the instructor station; `workshop.mjs render` copies
   only the station paths from the repository root.
-- Lab 1 still describes a prepared station and must be revisited.
+- The then-current Lab 1 still described a prepared station and required a
+  later curriculum redesign.
 
 ## Validation
 
@@ -89,8 +89,8 @@ Copilot Chat and labels the fallback in the pull request.
 
 ## Assumptions
 
-- Copilot cloud agent responds to `@copilot` mentions on pull requests in
-  repositories where it is enabled (validated against GitHub documentation on
+- Copilot cloud agent creates a pull request when assigned an Issue in a
+  repository where it is enabled (validated against GitHub documentation on
   2026-09-29).
 - Workflow runs triggered by Copilot commits may need **Approve and run
   workflows**.
@@ -101,4 +101,4 @@ Copilot Chat and labels the fallback in the pull request.
 - Codespaces or Copilot cloud agent is unavailable on attendee forks.
 - Attendees need facilitator-enforced protection from the first lab.
 
-Related: [ADR 0011](0011-coached-intake-from-synthetic-context.md).
+Related: [ADR 0014](0014-evidence-to-approved-issue.md).

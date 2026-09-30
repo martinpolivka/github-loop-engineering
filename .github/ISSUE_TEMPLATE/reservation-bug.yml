@@ -1,0 +1,39 @@
+name: Reservation bug report
+description: Report behavior that violates the current synthetic service contract.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form only when current behavior contradicts the documented contract. Use synthetic evidence only.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Cite the synthetic ticket and matching log or test.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: Give deterministic steps and the observed result.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Cite the existing contract that the behavior violates.
+    validations:
+      required: true
+  - type: dropdown
+    id: risk
+    attributes:
+      label: Change risk
+      options:
+        - Low - isolated behavior
+        - Medium - API or workflow behavior
+        - High - identity, security, deployment, or data boundary
+    validations:
+      required: true

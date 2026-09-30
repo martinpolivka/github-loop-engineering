@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en" data-default-accent="blue">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Lab 3: turn the verified branch into a governed pull request with deterministic checks, independent reviews, and a human decision.">
+  <title>Lab 3 &middot; Governed pull request | GitHub workshop</title>
+  <meta name="doc-id" content="workshop-lab-03-governed-pr">
+  <script data-doc-bootstrap>
+/* Inline in the head before styles with sync-head.js. No deferred bootstrap. */
+(() => {
+  "use strict";
+  const root = document.documentElement;
+  const params = new URLSearchParams(location.search);
+  const id = document.querySelector('meta[name="doc-id"]')?.content ||
+    location.pathname.replace(/\.standalone(?=\.html$)/i, "");
+  const prefix = "html-docs:" + id + ":";
+  const choices = { theme: ["light", "dark"], accent: ["blue", "red", "green", "yellow"] };
+  const read = (name) => {
+    try { return localStorage.getItem(prefix + name); }
+    catch { return null; /* Storage may be unavailable for local files. */ }
+  };
+  const write = (name, value) => {
+    try { localStorage.setItem(prefix + name, value); }
+    catch { /* The current view still works without persistence. */ }
+  };
+  function refresh() {
+    for (const name of Object.keys(choices)) {
+      const current = root.getAttribute("data-" + name);
+      const next = choices[name][(choices[name].indexOf(current) + 1) % choices[name].length];
+      document.querySelectorAll('[data-action="toggle-' + name + '"]').forEach(button => {
+        button.textContent = name === "theme" ? (next === "dark" ? "Dark" : "Light") :
+          "Accent: " + current[0].toUpperCase() + current.slice(1);
+        button.setAttribute("aria-label", name === "theme" ? "Switch to " + next + " theme" :
+          "Accent: " + current + ". Switch to " + next);
+      });
+    }
+  }
+  for (const [name, values] of Object.entries(choices)) {
+    const fallback = name === "theme" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : values[0];
+    const value = [params.get(name), read(name), root.getAttribute("data-default-" + name), fallback]
+      .map(candidate => name === "accent" && candidate === "orange" ? "red" : candidate)
+      .find(candidate => values.includes(candidate));
+    root.setAttribute("data-" + name, value);
+  }
+  root.classList.add("js");
+  if (["slides", "sheet"].includes(params.get("view"))) root.setAttribute("data-view", params.get("view"));
+
+  // Print what is on screen. data-print selects the matching print stylesheet.
+  const printTarget = () => {
+    if (document.querySelector(".deck-stage")) return "slides";
+    const view = root.getAttribute("data-view");
+    if (view === "slides" || (view === "sheet" && document.querySelector(".sheet"))) return view;
+    return document.querySelector(".doc") || !document.querySelector(".sheet") ? "read" : "sheet";
+  };
+  let printing = null;
+  addEventListener("beforeprint", () => {
+    if (root.hasAttribute("data-print")) return; // Set by an automated export.
+    const target = printTarget();
+    printing = document.title;
+    root.setAttribute("data-print", target);
+    // The browser proposes the title as the PDF file name.
+    if (target !== "read" && document.querySelector(".doc")) {
+      document.title += target === "slides" ? " - Slides" : " - Sheet";
+    }
+  });
+  addEventListener("afterprint", () => {
+    if (printing === null) return;
+    root.removeAttribute("data-print");
+    document.title = printing;
+    printing = null;
+  });
+
+  // Keep the display awake while presenting, like presentation software does.
+  let lock = null;
+  let awake = false;
+  async function holdScreen() {
+    if (!awake || lock || document.visibilityState !== "visible" || !navigator.wakeLock) return;
+    try {
+      const sentinel = await navigator.wakeLock.request("screen");
+      if (!awake || lock) { sentinel.release(); return; }
+      lock = sentinel;
+      root.setAttribute("data-awake", "");
+      sentinel.addEventListener("release", () => {
+        if (lock !== sentinel) return;
+        lock = null;
+        root.removeAttribute("data-awake");
+      });
+    } catch { /* Denied by battery saver or an embedding policy; retried on input. */ }
+  }
+  function keepAwake(on) {
+    awake = !!on;
+    if (awake) holdScreen();
+    else if (lock) lock.release();
+  }
+  // The browser drops the lock when the tab is hidden; some require a gesture.
+  document.addEventListener("visibilitychange", holdScreen);
+  document.addEventListener("pointerdown", holdScreen);
+  document.addEventListener("keydown", holdScreen);
+
+  window.HtmlDocs = { read, write, refresh, keepAwake };
+  document.addEventListener("DOMContentLoaded", refresh);
+  document.addEventListener("click", event => {
+    if (event.target.closest('[data-action="print"]')) window.print();
+  });
+  document.addEventListener("click", event => {
+    const button = event.target.closest('[data-action="toggle-theme"], [data-action="toggle-accent"]');
+    if (!button) return;
+    const name = button.getAttribute("data-action").slice(7);
+    const values = choices[name];
+    const next = values[(values.indexOf(root.getAttribute("data-" + name)) + 1) % values.length];
+    root.setAttribute("data-" + name, next);
+    write(name, next);
+    // Replace a URL override too, so reloading preserves a deliberate change.
+    const url = new URL(location.href);
+    if (url.searchParams.has(name)) {
+      url.searchParams.set(name, next);
+      history.replaceState(null, "", url.href);
+    }
+    refresh();
+  });
+})();
+</script>
+  <style data-doc-tokens>
+/* Canonical tokens. Inline with sync-head.js; one accent family at a time. */
+:root {
+  color-scheme: light;
+  --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f2; --surface-3: #e8e8e8;
+  --border: #dedede; --border-strong: #b8b8b8;
+  --text: #161616; --text-muted: #565656; --text-faint: #686868;
+  --accent-light: #006da0; --accent-dark: #00a4ef;
+  --accent: var(--accent-light);
+  --accent-strong: var(--accent);
+  --accent-quiet: var(--accent);
+  --accent-soft: color-mix(in srgb, var(--accent) 9%, var(--bg));
+  --accent-border: color-mix(in srgb, var(--accent) 36%, var(--bg));
+  --warn: var(--accent); --warn-soft: var(--accent-soft); --warn-border: var(--accent-border);
+  --code-bg: var(--surface-2); --code-border: var(--border);
+  --focus: var(--accent);
+  --shadow-1: 0 1px 2px rgba(0,0,0,.04);
+  --shadow-2: 0 2px 4px rgba(0,0,0,.04), 0 12px 28px rgba(0,0,0,.06);
+  --radius: 10px; --radius-sm: 6px; --canvas: 1160px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Mono", "Cascadia Code", ui-monospace, Consolas, "SF Mono", "Liberation Mono", Menlo, monospace;
+}
+/* Screen only: every PDF and printout uses the light palette. */
+@media screen {
+  [data-theme="dark"], :root:not([data-theme])[data-default-theme="dark"] {
+    color-scheme: dark;
+    --bg: #101010; --surface: #191919; --surface-2: #232323; --surface-3: #2c2c2c;
+    --border: #363636; --border-strong: #595959;
+    --text: #f2f2f2; --text-muted: #b5b5b5; --text-faint: #a0a0a0;
+    --accent: var(--accent-dark);
+    --shadow-1: 0 1px 2px rgba(0,0,0,.3);
+    --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.4);
+  }
+}
+[data-accent="red"], :root:not([data-accent])[data-default-accent="red"],
+[data-accent="orange"], :root:not([data-accent])[data-default-accent="orange"] {
+  --accent-light: #bc3a16; --accent-dark: #f25022;
+}
+[data-accent="green"], :root:not([data-accent])[data-default-accent="green"] {
+  --accent-light: #4c7100; --accent-dark: #7fba00;
+}
+[data-accent="yellow"], :root:not([data-accent])[data-default-accent="yellow"] {
+  --accent-light: #805b00; --accent-dark: #ffb900;
+}
+</style>
+  <link rel="stylesheet" href="../../assets/html-docs/article.css">
+  <link rel="stylesheet" href="../../assets/html-docs/slides.css">
+  <script src="../../assets/html-docs/article.js" defer></script>
+  <script src="../../assets/html-docs/slides.js" defer></script>
+  <script src="../../assets/materials.js" defer></script>
+</head>
+<body>
+<div class="controls" role="group" aria-label="Article controls">
+  <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
+  <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
+  <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
+  <button type="button" class="ctrl" data-action="print">PDF</button>
+  <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
+  <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
+</div>
+<div class="doc">
+  <header class="doc-header" id="opening">
+    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 3</p><h2 class="slide-title">Move trust<br><em>outside the agent.</em></h2><p class="slide-lead">Turn local evidence into a reviewable, revision-bound pull request.</p></div>
+    <p class="eyebrow">11:45-12:35 &middot; 50 minutes</p>
+    <h1>Governed pull request</h1>
+    <p class="subtitle">Compare the local-agent and cloud-agent pull requests from Lab 2, then challenge the feature PR with deterministic CI, GitHub Code Quality, native Copilot code review, and two contextual Agentic Workflow reviews. Keep the final merge decision human.</p>
+    <p><strong>Result:</strong> two attributable agent handoffs, one deeply reviewed feature PR with fresh revision-bound evidence, and an explicit human merge decision.</p>
+  </header>
+  <nav class="doc-nav" aria-label="Workshop navigation"><a href="../../index.html#ch-agenda">All labs</a><a href="#main">Skip to content</a><a href="../02-inner-loop/index.html">Previous lab</a><a href="../04-trusted-delivery/index.html">Next lab</a></nav>
+  <nav class="toc" aria-label="Contents"><p class="toc-label">Contents</p><ol><li><a href="#ch-pr">Compare the PRs</a></li><li><a href="#ch-review">Collect independent evidence</a></li><li><a href="#ch-governance">Decide and govern</a></li><li><a href="#ch-recover">Recovery</a></li></ol></nav>
+  <main id="main">
+    <section class="chapter" id="ch-pr"><h2 class="chapter-label">Publish a reviewable change</h2>
+      <article class="card card--lead" id="card-pr" data-open>
+        <div class="slide-content"><h2 class="slide-title">A pull request is<br><em>the shared evidence boundary.</em></h2><ul class="slide-points"><li class="frag">Intent links to the diff.</li><li class="frag">Checks bind to a revision.</li><li class="frag">Authority stays explicit.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Compare the two agent handoffs</span><span class="card-sub">8 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Open the feature PR created through the local agent. Verify its Issue link, <code>specs/stock-substitution.goal-card.md</code>, C01-C03 evidence, changed files, and head SHA.</li>
+            <li>Open the bug Issue and its Copilot cloud-agent session. If its PR is ready, verify that it links the bug, contains <code>specs/partial-stock-visibility.goal-card.md</code>, and stays inside that card's boundary.</li>
+            <li>Select the feature PR as the primary review path. Keep the bug PR open as a comparison; do not merge either proposal yet.</li>
+          </ol>
+          <p><strong>Expected result:</strong> both agents expose their work through the same durable PR boundary even though one loop was synchronous and the other was delegated.</p>
+        </div>
+      </article>
+      <article class="card" id="card-checks">
+        <div class="slide-content"><h2 class="slide-title">A green check answers<br><em>one specific question.</em></h2><ul class="slide-points"><li class="frag">Tests execute known invariants.</li><li class="frag">Reviews interpret the change.</li><li class="frag">Neither grants merge authority.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Read the checks as claims</span><span class="card-sub">7 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Open the feature PR <strong>Checks</strong> tab. The PR starts deterministic CI plus the prepared <strong>Goal review</strong> and <strong>Documentation review</strong> Agentic Workflows. Centrally enabled Code Quality starts its own quality analysis. Wait for deterministic CI first.</li>
+            <li>Open the job and identify the command, commit SHA, and failing assertion or successful evidence. Do not treat the green icon as evidence for documentation, goal alignment, or deployability.</li>
+            <li>Open <strong>Security</strong>, then <strong>Code quality</strong>, or follow the Code Quality check from the PR. Bind every finding or zero-finding observation to the analyzed SHA.</li>
+          </ol>
+          <p><strong>Checkpoint:</strong> CI proves known executable invariants; Code Quality reports supported maintainability and reliability findings. Neither proves the suite is sufficient or the change meets its Goal Card.</p>
+          <aside class="callout callout--info"><p class="callout-label">Prepared capability</p><p>The facilitator enables Code Quality for all current and future Station repositories before the workshop. You inspect results; you do not configure the product in this lab.</p></aside>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-review"><h2 class="chapter-label">Challenge the same revision</h2>
+      <article class="card" id="card-reviews">
+        <div class="slide-content"><h2 class="slide-title">Separate reviewers expose<br><em>different failure modes.</em></h2><ul class="slide-points"><li class="frag">Native review challenges code.</li><li class="frag">Goal review protects intent.</li><li class="frag">Documentation review protects users.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Collect native and contextual reviews</span><span class="card-sub">15 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Under <strong>Reviewers</strong>, request <strong>Copilot</strong> unless repository policy already requests it automatically. Copilot code review can leave inline findings but cannot approve or merge the PR.</li>
+            <li>Open <strong>Conversation</strong> and inspect the two prepared Agentic Workflow comments. Each workflow has read-only repository access, one bounded comment safe output, its own credit and time cap, and no approval or merge authority.</li>
+            <li>Bind every finding to the current head SHA. A push creates a new revision and makes prior review evidence stale.</li>
+          </ol>
+          <dl>
+            <dt>Copilot code review</dt><dd>Uses GitHub's native review surface to challenge correctness, maintainability, and potential defects in the diff.</dd>
+            <dt>GitHub Code Quality</dt><dd>Runs deterministic CodeQL quality queries and reports supported maintainability and reliability findings separately from Copilot review.</dd>
+            <dt><code>goal-review</code></dt><dd>Maps C01-C03 to revision-bound evidence and reports PASS, FAIL, or BLOCKED without editing.</dd>
+            <dt><code>documentation-review</code></dt><dd>Decides whether the behavior change requires user-facing documentation and cites the affected surface.</dd>
+          </dl>
+          <p><strong>Expected result:</strong> deterministic tests and Code Quality plus three reasoning reviews produce distinct evidence on the same revision. They may disagree because each answers a different question.</p>
+          <aside class="callout callout--rule"><p class="callout-label">Trust boundary</p><p>PR text, review comments, Issue content, and changed code are untrusted inputs. A reviewer may recommend; only deterministic workflows and authorized humans change protected state.</p></aside>
+        </div>
+      </article>
+      <article class="card" id="card-repair">
+        <div class="slide-content"><h2 class="slide-title">Repair the finding.<br><em>Invalidate old evidence.</em></h2><ul class="slide-points"><li class="frag">Choose one concrete finding.</li><li class="frag">Push a bounded correction.</li><li class="frag">Re-run checks on the new SHA.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 4 &mdash; Resolve one finding or record none</span><span class="card-sub">10 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Choose one actionable finding from Code Quality, Copilot code review, Goal review, or Documentation review. If every source reports no material finding, record that result and do not manufacture a repair.</li>
+            <li>Use Copilot in the Codespace to propose the smallest repair. Inspect it, run the affected test and <code>npm test</code>, then commit and push.</li>
+            <li>Return to the PR. Confirm deterministic CI and both Agentic Workflows ran against the new SHA, then request a fresh Copilot review. Compare the affected review with the previous finding.</li>
+          </ol>
+          <p><strong>Expected result:</strong> when a finding exists, the thread states what changed and why it resolves the finding, and the new revision has fresh deterministic and review evidence. Otherwise the PR records that no repair was justified.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-governance"><h2 class="chapter-label">Make the authority decision</h2>
+      <article class="card" id="card-decision">
+        <div class="slide-content"><h2 class="slide-title">Automation informs.<br><em>Policy constrains. Humans authorize.</em></h2><ul class="slide-points"><li class="frag">Repository rules protect integration.</li><li class="frag">Organization policy scales defaults.</li><li class="frag">Enterprise controls bound adoption.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 5 &mdash; Review the governance stack</span><span class="card-sub">5 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <dl>
+            <dt>Repository</dt><dd>Rulesets, required checks, required reviews, CODEOWNERS, Actions permissions, environments, and secrets protect a codebase.</dd>
+            <dt>Organization</dt><dd>Repository creation, policy defaults, runners, apps, security products, and teams scale across codebases.</dd>
+            <dt>Enterprise</dt><dd>Identity, licensing, Copilot policy, audit, network, and organization governance define the adoption boundary.</dd>
+          </dl>
+          <p>In the sandbox profile, inspect the settings and record controls that your account cannot enforce. In the Station profile, the facilitator demonstrates the centrally configured equivalent. Never represent a screenshot or simulation as an active policy.</p>
+          <p><strong>Human decision:</strong> merge the feature PR only if every required check is green and material review findings are resolved. Merge the bug PR only if it independently meets the same bar; a completed cloud-agent session is not sufficient.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-recover"><h2 class="chapter-label">Recovery</h2>
+      <article class="card" id="card-recover">
+        <div class="slide-content"><h2 class="slide-title">Preserve the boundary<br><em>when capability is missing.</em></h2><ul class="slide-points"><li class="frag">Use source-bound evidence.</li><li class="frag">Label unavailable controls.</li><li class="frag">Keep the decision human.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">If a platform feature is unavailable</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <dl>
+            <dt>Actions do not run</dt><dd>Run <code>npm test</code> locally, save the output in the PR, and label it local fallback evidence. It is not a required status check.</dd>
+            <dt>Copilot code review is unavailable</dt><dd>Ask a peer to review the exact diff or use the facilitator's source-bound example. Label the fallback honestly; do not replace a native review with a custom workflow and claim equivalence.</dd>
+            <dt>Code Quality is unavailable</dt><dd>Use the facilitator's source-bound example and continue. Label it as fallback evidence rather than a live result from your PR.</dd>
+            <dt>An Agentic Workflow is unavailable</dt><dd>Invoke <code>/goal-review</code> or <code>/documentation-review</code> in an approved Copilot session and label the result as a manual reasoning review rather than an automatic PR workflow.</dd>
+            <dt>The cloud-agent PR is still running</dt><dd>Complete the full review path on the feature PR and inspect the bug PR when it arrives. Do not delay or mislabel the primary evidence.</dd>
+            <dt>Rulesets require enterprise capability</dt><dd>Inspect the prepared source-bound capture and have the facilitator demonstrate the live Station rule. Do not claim the sandbox fork is protected.</dd>
+          </dl>
+        </div>
+      </article>
+    </section>
+  </main>
+  <section class="takeaway" id="closing"><p>You compared local and cloud agent handoffs, challenged one revision with deterministic and reasoning evidence, repaired only justified findings, and kept merge authority with a person.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Evidence is plural.<br><em>Authority is explicit.</em></h2></div></section>
+  <footer class="doc-footer">Lab 3 of 5 &middot; Two PRs, one governed review bar &middot; Synthetic pharmacy data only.</footer>
+</div>
+</body>
+</html>

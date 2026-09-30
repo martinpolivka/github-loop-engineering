@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 import { root } from "./validation.mjs";
-import * as lab from "../docs/labs/02-intent-to-pr/artifacts/inventory.reference.mjs";
+import * as lab from "../docs/labs/02-inner-loop/artifacts/inventory.reference.mjs";
 import * as delivery from "../platform/demos/trusted-delivery/fixture/repository/src/reservations.mjs";
 
 test("delivery continues the same pharmacy behavior as the completed lab", () => {

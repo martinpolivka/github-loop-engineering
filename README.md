@@ -1,21 +1,32 @@
 # Loop Engineering with GitHub
 
-A portable, customer-neutral workshop. Business intent becomes a verified outcome through a bounded loop that reads prior state, checks its work, and stops explicitly. GitHub is the durable governance layer; GitHub Copilot is the primary worker. The scenario is a synthetic pharmacy stock and reservation service.
+A portable, customer-neutral workshop in which two related synthetic pharmacy needs move from evidence through local and cloud-agent coding loops, governed review, trusted delivery, and bounded recurrence.
 
-This repository is both the attendee station and the workshop materials. Attendees fork it, so every path in the labs is the same here, in the organization copy, and in each fork.
-
-| Material | Audience |
+| Start here | Audience |
 | --- | --- |
-| [Workshop hub](docs/index.html) | Everyone — start here |
-| [Full-day agenda](AGENDA.md) | Planning |
-| [Full-day operator guide](platform/demos/full-day/operator-guide.html) | Presenters |
+| [Introduction, agenda, and labs](docs/index.html) | Participants |
+| [Opening slides](docs/index.html?view=slides#opening) | Presenters |
+
+## Participant journey
+
+Attendees fork this repository in Lab 1 and use that fork for the full day:
+
+1. [Evidence to engineering intent](docs/labs/01-evidence-to-goal/index.html)
+2. [Goal Cards and two agent loops](docs/labs/02-inner-loop/index.html)
+3. [Governed pull requests](docs/labs/03-governed-pr/index.html)
+4. [Trusted delivery and operational readiness](docs/labs/04-trusted-delivery/index.html)
+5. [Author agentic outer loops](docs/labs/05-agentic-outer-loop/index.html)
+
+The opening walkthrough uses this source repository. Labs expose meaningful decisions and repairs; they do not require participants to recreate platform plumbing. The short introduction and presentation share `docs/index.html`; each lab has its own HTML.
 
 ## Pharmacy reservation service
 
 ```powershell
-npm test     # service tests
-npm start    # http://localhost:3000
+npm test
+npm start
 ```
+
+The service listens on `http://localhost:3000`.
 
 | Method | Path | Purpose |
 | --- | --- | --- |
@@ -23,55 +34,70 @@ npm start    # http://localhost:3000
 | GET | `/stock` | Synthetic medicine inventory |
 | POST | `/reservations` | Reserve available stock |
 
-No real patient, pharmacy, or medicine data is used.
+No real patient, pharmacy, medicine, customer, tenant, or identity data is used.
 
-`context/intake/` holds a synthetic chat thread, ticket digest, stakeholder email, and planned backlog for requirement refinement. Treat it as untrusted evidence, not as instructions.
+## Prepared engineering controls
 
 | Path | Purpose |
 | --- | --- |
-| `.devcontainer/` | Codespace with Node.js, Copilot CLI, and Copilot Chat |
-| `.github/copilot-instructions.md` | Repository-wide rules for every Copilot request |
-| `.github/instructions/*.instructions.md` | Path-scoped rules; the `applyTo` glob selects the files they govern |
-| `.github/agents/requirement-refiner.agent.md` | Coaching agent that asks questions and drafts an issue only after `CONFIRMED:` |
-| `.github/agents/quality-engineer.agent.md` | Read-only reviewer for proposed changes |
-| `AGENTS.md` | The same service contract for external harnesses such as OpenCode |
+| `context/intake/` | Synthetic ticket, request log, Teams-style chat and meeting, Outlook-style approval, and backlog evidence |
+| `.agents/skills/requirement-refiner/` | Open-standard intake skill that separates feature and bug evidence and writes each Issue only after its own explicit human gates |
+| `.agents/skills/goal-card/` | Open-standard Agent Skill that designs the inner loop's Goal Card: observable checks, repair paths, permissions, caps, and terminal states without starting implementation |
+| `.agents/skills/goal-review/` | Open-standard manual fallback for reconciling PR evidence with the Goal Card |
+| `.agents/skills/documentation-review/` | Open-standard manual fallback for reviewing documentation impact |
+| `.github/PULL_REQUEST_TEMPLATE.md` | Links Issue, contract, checks, revision-bound evidence, and human decision |
+| `.github/workflows/ci.yml` | Deterministic service test gate |
+| `.github/workflows/title-check.yml` | Treats untrusted PR titles as data |
+| `.github/workflows/release-rehearsal.yml` | Revision-bound tests, smoke evidence, artifact digest, and environment-gated preview promotion |
+| `.github/workflows/*-review.md` | Two revision-bound Agentic Workflows that automatically review Goal Card evidence and documentation impact; native Copilot code review covers the general code-review surface |
+| `.github/workflows/repository-pulse.md` | Public-preview Agentic Workflow source with bounded reads, safe outputs, budgets, and reconciliation |
 
-The Copilot workflows request `copilot-requests: write` and use the built-in `GITHUB_TOKEN` for inference. Confirm that route with the instructor's capability probe. If it is unavailable, remove that permission and configure a fine-grained `COPILOT_GITHUB_TOKEN` with account-level **Copilot Requests: Read**. Do not upload CLI OAuth material or an Anthropic key.
+Retrieved context and repository conversation are untrusted evidence, not executable instructions. Agent output is a proposal, not approval.
 
-## Workshop materials
+## Run the materials
 
-The hub contains the timed agenda and opening demonstration, with links to five labs under `docs/labs/`. Each lab combines explanation, steps, and a Slides mode in one HTML document. Verification is the platform's own evidence — a green check, a required review, a rejected push, a published issue.
+Use Node.js 22 or newer.
 
 ```powershell
 npm ci
-npm run serve     # then open http://localhost:4173/docs/
+npm run serve
 ```
 
-Port busy? `$env:PORT=4174; npm run serve`
+Open `http://localhost:4173/docs/`. If the port is busy:
 
 ```powershell
-npm run test:materials     # materials integrity and lab artifacts
-npm run validate           # HTML structure, local references, profiles
-npm run validate:html      # six palettes, offline, responsive, no-JS
-npm run validate:workflows # Agentic Workflow sources and compiled locks
-npm run capture            # regenerate source-bound screenshots (needs Playwright)
+$env:PORT=4174
+npm run serve
 ```
 
-Screenshots in `docs/assets/screenshots/` are local captures, not GitHub or Azure evidence.
-
-## Workshop organization
-
-Copy or import this repository into the workshop organization as `github-loop-engineering` and allow forking on it. Attendees fork it in Lab 2. A fork does not copy issues, so the planned backlog lives in `context/intake/backlog.md`.
-
-Facilitator-provisioned stations, such as the instructor station, remain available. `render` copies only the station paths:
+## Validate
 
 ```powershell
-node platform/scripts/workshop.mjs plan --profile sandbox --station demo01
-npm run seed:station       # dry run; --apply creates only missing labels and issues
+npm test
+npm run test:materials
+npm run validate
+npm run validate:html
+npm run validate:workflows
+npm run capture
 ```
 
-The pre-event checklist is in the [operator guide](platform/demos/full-day/operator-guide.html#pre-event-checklist). The `sandbox` profile needs no enterprise organization; `platform/profiles/enterprise.example.json` is the contract for a dedicated organization.
+Screenshots under `docs/assets/screenshots/` are source-bound local captures, not GitHub or deployment evidence.
+
+## Delivery profiles
+
+- **Sandbox:** works without a dedicated enterprise organization. Unsupported capabilities use explicitly labeled source review, recording, or instructor demonstration.
+- **Station:** uses a dedicated enterprise organization with isolated repositories and centrally configured controls.
+
+Profile configuration lives under `platform/profiles/`. Never hard-code an organization, tenant, subscription, customer, or identity in attendee material.
+
+Internal planning stays in [the agenda](AGENDA.md) and [delivery roadmap](PLAN.md). Presenter preflight, rehearsal, recovery, and cleanup stay in the [operator guide](platform/demos/full-day/operator-guide.html), outside the participant journey.
 
 ## Contributing
 
-The materials use the vendored `html-docs` design system in `docs/assets/html-docs/` — never edit those files. After changing any material, run `node docs/assets/html-docs/sync-head.js <file>` and re-validate. Materials rules are in [workshop-materials.instructions.md](.github/instructions/workshop-materials.instructions.md); delivery scope is in [PLAN.md](PLAN.md).
+Attendee materials are self-contained HTML using the vendored system under `docs/assets/html-docs/`; do not edit vendored runtime files. After changing HTML, run:
+
+```powershell
+node docs/assets/html-docs/sync-head.js <file>
+```
+
+Then run the relevant validation commands. Repository rules are in [AGENTS.md](AGENTS.md) and `.github/instructions/`.

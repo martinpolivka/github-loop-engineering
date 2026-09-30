@@ -1,19 +1,19 @@
 {
   "kind": "recorded-governed-release",
   "capturedAt": "2026-09-06T06:02:19.958Z",
-  "repository": "tkubica12/pharmacy-agentic-loop-demo",
+  "repository": "workshop-owner/pharmacy-agentic-loop-demo",
   "liveClaimAllowed": false,
   "freshCollectionResultAtCapture": "COMPLETE",
   "pullRequest": {
     "number": 2,
-    "url": "https://github.com/tkubica12/pharmacy-agentic-loop-demo/pull/2",
+    "url": "https://github.com/workshop-owner/pharmacy-agentic-loop-demo/pull/2",
     "head": "2d84da4ce6cb30f846032e3d497c36b477eaf6c2",
     "merge": "dc4b2708ec2e55bb5652c2c56c8bbf640646043c",
     "approvalReviewId": 5122408217
   },
   "workflow": {
     "id": 33986708338,
-    "url": "https://github.com/tkubica12/pharmacy-agentic-loop-demo/actions/runs/33986708338",
+    "url": "https://github.com/workshop-owner/pharmacy-agentic-loop-demo/actions/runs/33986708338",
     "sourceCommit": "1ea98c29d0cfcd0032a04a3a3aa40442b3267678",
     "event": "workflow_dispatch",
     "conclusion": "success",
@@ -23,9 +23,9 @@
     "id": 9975374372,
     "name": "release-33986708338",
     "file": "release-artifact.zip",
-    "bytes": 3392,
-    "sha256": "9b5eb024b1ca8c8bc2d583c09b683870041265b9125f71228a15b185aad4374a",
-    "packageSha256": "9ad898728fc23963cfc39921444e6fe2633567f73bd270b51ace21f5f1051e3f",
+    "bytes": 3338,
+    "sha256": "368d2a822159093b7ec19ff132aa9da9fbf0aca3ae0c4a465fd877364f33c409",
+    "packageSha256": "5b21f3b56a80b88b3aa2b830c0e9a7a25861d60a7a7a5617f2a17e82e8314e28",
     "githubExpiresAt": "2026-09-12T19:18:37Z",
     "sourceBlobsMatchedReviewedCommit": true,
     "checksumIsCryptographicAttestation": false
@@ -33,33 +33,51 @@
   "manifest": {
     "commit": "dc4b2708ec2e55bb5652c2c56c8bbf640646043c",
     "runId": "33986708338",
-    "sourceRepo": "tkubica12/pharmacy-agentic-loop-demo",
+    "sourceRepo": "workshop-owner/pharmacy-agentic-loop-demo",
     "prNumber": 2,
     "prHead": "2d84da4ce6cb30f846032e3d497c36b477eaf6c2",
     "workflowSha": "1ea98c29d0cfcd0032a04a3a3aa40442b3267678"
   },
   "sourceBlobs": [
-    { "path": "package.json", "sha": "ed4ff860e1d8ae32ca69c0a20d11e8d46d31a1ff" },
-    { "path": "package-lock.json", "sha": "8b8edda689bf08825d167baef65ff45698751bf9" },
-    { "path": "src/server.mjs", "sha": "84bcb86583a907e593a3b9c01c37695c98b243bb" },
-    { "path": "src/inventory.mjs", "sha": "eb8a3070665aebc7c8475e3f776abe8ca83812e4" },
-    { "path": "data/stock.json", "sha": "386e79d15449d4bc6531398a5fd8f950667e9caa" }
+    {
+      "path": "package.json",
+      "sha": "ed4ff860e1d8ae32ca69c0a20d11e8d46d31a1ff"
+    },
+    {
+      "path": "package-lock.json",
+      "sha": "8b8edda689bf08825d167baef65ff45698751bf9"
+    },
+    {
+      "path": "src/server.mjs",
+      "sha": "84bcb86583a907e593a3b9c01c37695c98b243bb"
+    },
+    {
+      "path": "src/inventory.mjs",
+      "sha": "eb8a3070665aebc7c8475e3f776abe8ca83812e4"
+    },
+    {
+      "path": "data/stock.json",
+      "sha": "386e79d15449d4bc6531398a5fd8f950667e9caa"
+    }
   ],
   "environment": {
     "name": "test",
     "id": 21318496540,
-    "requiredReviewer": "tkubica12",
+    "requiredReviewer": "workshop-owner",
     "approval": "approved",
-    "approvedBy": "tkubica12",
-    "approvalApiUrl": "https://api.github.com/repos/tkubica12/pharmacy-agentic-loop-demo/actions/runs/33986708338/approvals",
+    "approvedBy": "workshop-owner",
+    "approvalApiUrl": "https://api.github.com/repos/workshop-owner/pharmacy-agentic-loop-demo/actions/runs/33986708338/approvals",
     "canAdminsBypass": false,
     "preventSelfReview": false,
-    "deploymentBranch": { "name": "main", "type": "branch" },
+    "deploymentBranch": {
+      "name": "main",
+      "type": "branch"
+    },
     "independentSeparationOfDutiesClaimed": false,
     "branchProtectionReviewEnforced": false
   },
   "runtime": {
-    "url": "https://pharmacy-reviewed-20260905-tk12.azurewebsites.net/health",
+    "url": "https://synthetic-pharmacy.example.invalid/health",
     "httpStatus": 200,
     "body": {
       "service": "synthetic-pharmacy",
@@ -70,7 +88,7 @@
   },
   "maintenance": {
     "issue": 3,
-    "url": "https://github.com/tkubica12/pharmacy-agentic-loop-demo/issues/3",
+    "url": "https://github.com/workshop-owner/pharmacy-agentic-loop-demo/issues/3",
     "reviewedCommit": "dc4b2708ec2e55bb5652c2c56c8bbf640646043c",
     "modelOutputIsApproval": false
   },

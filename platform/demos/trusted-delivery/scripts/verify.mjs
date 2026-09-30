@@ -15,9 +15,9 @@ import {
 } from "./lib.mjs";
 
 const options = parseArgs();
-const config = loadConfig(options);
 const expectation = options.expect ?? "local";
 if (!["local", "red", "green", "rejected", "deployed"].includes(expectation)) throw new Error("Unknown verification expectation.");
+const config = loadConfig(options, { requireRepository: expectation !== "local" });
 const failures = [];
 
 try {

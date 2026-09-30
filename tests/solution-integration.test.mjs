@@ -15,11 +15,11 @@ test("lab artifacts preserve the complete station service", () => {
   try {
     copyStation(station);
     cpSync(
-      join(root, "docs", "labs", "02-intent-to-pr", "artifacts", "inventory.reference.mjs"),
+      join(root, "docs", "labs", "02-inner-loop", "artifacts", "inventory.reference.mjs"),
       join(station, "src", "inventory.mjs")
     );
     cpSync(
-      join(root, "docs", "labs", "02-intent-to-pr", "artifacts", "suggestion.test.mjs"),
+      join(root, "docs", "labs", "02-inner-loop", "artifacts", "suggestion.test.mjs"),
       join(station, "test", "suggestion.test.mjs")
     );
     const { NODE_TEST_CONTEXT: _testContext, ...cleanEnvironment } = process.env;

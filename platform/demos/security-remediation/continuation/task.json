@@ -3,7 +3,7 @@
   "taskId": "export-malformed-name-regression",
   "kind": "live-continuation-of-retained-recommendation",
   "producerReceipt": "../evidence/maintenance.json",
-  "historicalIssue": "https://github.com/tkubica12/pharmacy-agentic-loop-demo/issues/3",
+  "historicalIssue": "https://github.com/workshop-owner/pharmacy-agentic-loop-demo/issues/3",
   "historicalReviewedCommit": "dc4b2708ec2e55bb5652c2c56c8bbf640646043c",
   "objective": "Add one regression for GET /exports/% that asserts status 400 and the exact JSON error without production changes.",
   "allowedFiles": [

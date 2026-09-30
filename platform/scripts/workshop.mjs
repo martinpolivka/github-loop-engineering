@@ -38,7 +38,12 @@ function loadProfile(id) {
   if (!existsSync(path)) {
     throw new Error(`Profile '${id}' does not exist at ${relative(root, path)}.`);
   }
-  const profile = JSON.parse(readFileSync(path, "utf8"));
+  const storedProfile = JSON.parse(readFileSync(path, "utf8"));
+  const profile = {
+    ...storedProfile,
+    owner: option("owner", process.env.WORKSHOP_GITHUB_OWNER ?? storedProfile.owner),
+    githubHost: option("host", process.env.GH_HOST ?? storedProfile.githubHost)
+  };
   if (!profile.owner || profile.owner.startsWith("REPLACE_")) {
     throw new Error(`Profile '${id}' must define a real GitHub owner before use.`);
   }
@@ -104,7 +109,7 @@ function render(profile, station, destination = outputPath(profile, station)) {
   copyStation(destination);
   const codeowner = profile.teams?.platform ? `@${profile.owner}/${profile.teams.platform}` : `@${profile.owner}`;
   writeFileSync(join(destination, ".github", "CODEOWNERS"), `# Workshop governance boundaries\n${
-    ["/.github/", "/src/", "/context/", "/AGENTS.md", "/CLAUDE.md"].map((path) => `${path} ${codeowner}`).join("\n")}\n`);
+    ["/.agents/", "/.github/", "/src/", "/context/", "/AGENTS.md", "/CLAUDE.md"].map((path) => `${path} ${codeowner}`).join("\n")}\n`);
   writeFileSync(join(destination, "package.json"), `${JSON.stringify({
     name: `pharmacy-reservation-${station}`,
     version: "1.0.0",
@@ -165,16 +170,16 @@ function verifyTree(directory) {
 
 function help() {
   console.log(`Workshop platform commands:
-  preflight --profile sandbox [--repository OWNER/REPO] [--live]
-  plan      --profile sandbox --station demo01
-  render    --profile sandbox --station demo01
-  provision --profile sandbox --station demo01 [--apply]
-  seed      --profile sandbox --station demo01 [--repository OWNER/REPO] [--offline] [--apply]
-  verify    --profile sandbox [--station demo01]
-  cleanup   --profile sandbox --station demo01 [--apply]
+  preflight --profile sandbox [--owner OWNER] [--host HOST] [--repository OWNER/REPO] [--live]
+  plan      --profile sandbox --station demo01 [--owner OWNER] [--host HOST]
+  render    --profile sandbox --station demo01 [--owner OWNER] [--host HOST]
+  provision --profile sandbox --station demo01 [--owner OWNER] [--host HOST] [--apply]
+  seed      --profile sandbox --station demo01 [--owner OWNER] [--host HOST] [--repository OWNER/REPO] [--offline] [--apply]
+  verify    --profile sandbox [--station demo01] [--owner OWNER] [--host HOST]
+  cleanup   --profile sandbox --station demo01 [--owner OWNER] [--host HOST] [--apply]
 
 Remote provision, seed, and cleanup are plan-only unless --apply is explicit.
-Lab 2 attendees fork this repository itself; no publishing step is needed.
+Lab 1 attendees fork this repository itself; no publishing step is needed.
 Seed creates only missing synthetic backlog issues; it never edits or deletes issues.`);
 }
 
@@ -293,7 +298,8 @@ try {
         : "SKIP gh-aw extension (use the compiled workshop fallback)");
     console.log(copilotVersion ? `PASS Copilot CLI ${copilotVersion.split("\n")[0]}` : "SKIP Copilot CLI (use an enabled Copilot surface or the local reference solution)");
     console.log(openCodeVersion ? `PASS OpenCode ${openCodeVersion.split("\n")[0]}` : "SKIP OpenCode (optional alternative-harness demonstration)");
-    console.log("CHECK CLI availability does not prove inference access. Prefer the built-in workflow token after a capability probe; use a scoped COPILOT_GITHUB_TOKEN fallback only with copilot-requests: write removed. Never export the gh CLI OAuth credential.");
+    console.log("PASS Agentic Workflow sources use the live-verified Copilot model gpt-5.3-codex");
+    console.log("CHECK CLI availability does not prove inference access. For organization-billed Agentic Workflows, enable Copilot CLI and 'Allow use of Copilot CLI billed to the organization' at the enforcing enterprise or organization level, then prove access with a bounded smoke run. Prefer the built-in workflow token; use a scoped COPILOT_GITHUB_TOKEN fallback only with copilot-requests: write removed. Never export the gh CLI OAuth credential.");
     console.log(`PASS profile ${profile.id} -> ${profile.owner}`);
     if (hasFlag("live")) {
       const repository = option("repository", `${profile.owner}/${profile.authoringRepository}`);
@@ -301,17 +307,46 @@ try {
         throw new Error(`Repository '${repository}' must use OWNER/REPO syntax.`);
       }
       const repositoryState = run("gh", ["repo", "view", repository, "--json", "nameWithOwner,isPrivate,viewerPermission"], false);
+      const repositoryOwner = repository.split("/")[0];
+      const copilotBilling = run("gh", ["api", `orgs/${repositoryOwner}/copilot/billing`], false);
       const actionsEnabled = run("gh", ["api", `repos/${repository}/actions/permissions`, "--jq", ".enabled"], false);
       const environmentCount = run("gh", ["api", `repos/${repository}/environments`, "--jq", ".total_count"], false);
       const securityState = run("gh", ["api", `repos/${repository}`, "--jq", ".security_and_analysis // {}"], false);
+      const codeQualitySetup = run("gh", [
+        "api",
+        `repos/${repository}/code-quality/setup`,
+        "-H",
+        "X-GitHub-Api-Version: 2026-03-10"
+      ], false);
       console.log(repositoryState ? `PASS repository access ${repositoryState}` : `UNKNOWN repository access ${repository}`);
+      if (copilotBilling === null) {
+        console.log(`UNKNOWN Copilot organization entitlement for ${repositoryOwner}`);
+      } else {
+        const billing = JSON.parse(copilotBilling);
+        const totalSeats = Number(billing.seat_breakdown?.total ?? 0);
+        console.log(totalSeats > 0
+          ? `PASS Copilot organization entitlement (${totalSeats} assigned seat${totalSeats === 1 ? "" : "s"})`
+          : "CHECK Copilot organization entitlement has zero assigned seats");
+      }
       console.log(actionsEnabled === "true" ? "PASS GitHub Actions enabled" : "UNKNOWN GitHub Actions capability");
       console.log(environmentCount !== null ? `PASS environments API visible (${environmentCount})` : "UNKNOWN environments capability");
       console.log(securityState && securityState !== "{}" ? `PASS security capability metadata ${securityState}` : "UNKNOWN security products (check license and repository settings)");
+      if (codeQualitySetup === null) {
+        console.log("UNKNOWN Code Quality setup (check enterprise policy, organization access, license, and repository administration)");
+      } else {
+        const setup = JSON.parse(codeQualitySetup);
+        const state = String(setup.state ?? setup.status ?? "visible");
+        console.log(/configured|enabled/i.test(state)
+          ? `PASS Code Quality ${state}`
+          : `CHECK Code Quality API visible but repository state is ${state}`);
+      }
       if (option("repository", null)) {
         const missingArtifacts = [];
         for (const artifact of [
           ".github/workflows/repository-pulse.md",
+          ".github/workflows/documentation-review.md",
+          ".github/workflows/goal-review.md",
+          ".github/workflows/release-rehearsal.yml",
           ".github/workflows/showcase-signal.md",
           "data/reservation-telemetry.json",
           "package.json"

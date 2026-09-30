@@ -25,6 +25,15 @@ test("enterprise example keeps organization-specific values configurable", () =>
   assert.equal(profile.allowRemoteProvision, false);
   assert.equal(profile.allowRemoteSeed, true, "Enterprise stations are provisioned by owners but still need the synthetic backlog");
   assert.equal(profile.stationMode, "per-team");
+  assert.equal(profile.capabilities.codeQuality, "organization-all-repositories");
+});
+
+test("live preflight checks organization Copilot entitlement without claiming inference", () => {
+  const source = readFileSync(join(root, "platform", "scripts", "workshop.mjs"), "utf8");
+  assert.match(source, /orgs\/\$\{repositoryOwner\}\/copilot\/billing/);
+  assert.match(source, /Copilot organization entitlement has zero assigned seats/);
+  assert.match(source, /does not prove inference access/);
+  assert.match(source, /gpt-5\.3-codex/);
 });
 
 test("sandbox remote provision requires explicit apply", () => {
@@ -39,12 +48,30 @@ test("sandbox remote provision requires explicit apply", () => {
   assert.match(output, /PLAN ONLY/);
 });
 
+test("profile owner and host can be supplied at runtime", () => {
+  const output = execFileSync(process.execPath, [
+    join(root, "platform", "scripts", "workshop.mjs"),
+    "plan",
+    "--profile",
+    "sandbox",
+    "--station",
+    "test01",
+    "--owner",
+    "runtime-owner",
+    "--host",
+    "github.example"
+  ], { cwd: root, encoding: "utf8" });
+  const plan = JSON.parse(output);
+  assert.equal(plan.target, "github.example/runtime-owner/workshop-lab-test01");
+});
+
 test("attendees fork this repository itself, so the station sits at its root", () => {
   for (const profileName of ["sandbox", "enterprise.example"]) {
     const profile = JSON.parse(readFileSync(join(root, "platform", "profiles", `${profileName}.json`), "utf8"));
     assert.equal(profile.sourceRepository, undefined, "No separate source repository is published");
   }
-  for (const path of [".devcontainer/devcontainer.json", "context/intake/backlog.md", ".github/agents/requirement-refiner.agent.md",
+  for (const path of [".devcontainer/devcontainer.json", "context/intake/backlog.md", ".agents/skills/requirement-refiner/SKILL.md",
+    ".agents/skills/goal-card/SKILL.md", ".github/PULL_REQUEST_TEMPLATE.md",
     "src/server.mjs", "test/inventory.test.mjs"]) {
     assert.ok(existsSync(join(root, ...path.split("/"))), `${path} is at the repository root`);
   }
@@ -62,15 +89,15 @@ test("repository opens in a Codespace with Copilot and runs the tests", () => {
   assert.deepEqual(devcontainer.forwardPorts, [3000]);
 });
 
-test("attendee forks carry the planned backlog as a file the coach reads", () => {
+test("attendee forks carry the planned backlog as a file the intake skill reads", () => {
   const template = root;
   const backlogFile = readFileSync(join(template, "context", "intake", "backlog.md"), "utf8");
   for (const item of loadBacklog(join(root, "platform", "templates", "station-backlog.json")).issues) {
     assert.ok(backlogFile.includes(item.title.replace(/^\[Backlog\]\s*/, "")), `backlog.md names ${item.id}`);
   }
   assert.doesNotMatch(backlogFile, /substitut|alternative|suggest/i);
-  const agent = readFileSync(join(template, ".github", "agents", "requirement-refiner.agent.md"), "utf8");
-  assert.match(agent, /context\/intake\/backlog\.md/);
+  const skill = readFileSync(join(template, ".agents", "skills", "requirement-refiner", "SKILL.md"), "utf8");
+  assert.match(skill, /context\/intake\/backlog\.md/);
 });
 
 test("profile traversal is rejected and concrete enterprise config is ignored", () => {
@@ -98,9 +125,27 @@ test("repository carries reproducible Agentic Workflow inputs", () => {
   assert.equal(actionsLock.entries["github/gh-aw-actions/setup@v0.86.2"].sha, "6aab9e5b5c91c615506061f09bedd81a23babe3c");
   assert.doesNotThrow(() => readFileSync(join(template, ".github", "workflows", "showcase-signal.md")));
   assert.doesNotThrow(() => readFileSync(join(template, ".github", "workflows", "showcase-signal.lock.yml")));
-  for (const name of ["repository-pulse", "showcase-signal"]) {
+  for (const name of ["documentation-review", "goal-review", "repository-pulse", "showcase-signal"]) {
+    const source = readFileSync(join(template, ".github", "workflows", `${name}.md`), "utf8");
+    assert.match(source, /^model: gpt-5\.3-codex$/m,
+      `${name} must use the model verified in the target host's live Copilot catalog`);
     assert.equal(assertCompilerStamp(readFileSync(join(template, ".github", "workflows", `${name}.lock.yml`), "utf8"), name),
       expectedCompilerVersion);
+  }
+  for (const name of ["documentation-review", "goal-review", "repository-pulse"]) {
+    assert.match(readFileSync(join(template, ".github", "workflows", `${name}.md`), "utf8"), /^checkout: false$/m,
+      `${name} must inspect a fork through GitHub tools without checking out code`);
+  }
+  for (const name of [
+    "issue-triage.starter",
+    "issue-triage.reference",
+    "deployment-readiness.starter",
+    "deployment-readiness.reference"
+  ]) {
+    const source = readFileSync(join(template, "docs", "labs", "05-agentic-outer-loop", "artifacts", `${name}.md`), "utf8");
+    assert.match(source, /^checkout: false$/m, `${name} must remain executable in an attendee fork`);
+    assert.match(source, /^model: gpt-5\.3-codex$/m,
+      `${name} must use the model verified in the target host's live Copilot catalog`);
   }
 });
 
@@ -122,14 +167,14 @@ test("an unavailable optional compiler preserves the verified compiled fallback"
 test("primary harnesses use Copilot without an Anthropic dependency", () => {
   const template = root;
   for (const directory of [template]) {
-    for (const name of ["repository-pulse", "showcase-signal"]) {
+    for (const name of ["documentation-review", "goal-review", "repository-pulse", "showcase-signal"]) {
       const source = readFileSync(join(directory, ".github", "workflows", `${name}.md`), "utf8");
       assert.match(source, /^engine: copilot$/m);
       assert.doesNotMatch(source, /ANTHROPIC_API_KEY/);
       assert.match(source, /copilot-requests:\s*write/);
     }
   }
-  const lab = readFileSync(join(root, "docs", "labs", "02-intent-to-pr", "index.html"), "utf8");
+  const lab = readFileSync(join(root, "docs", "labs", "02-inner-loop", "index.html"), "utf8");
   assert.match(lab, /Copilot/);
   assert.match(readFileSync(join(template, "AGENTS.md"), "utf8"), /Copilot.*OpenCode/);
   assert.match(readFileSync(join(template, ".github", "CODEOWNERS"), "utf8"), /\/AGENTS\.md/);
@@ -170,7 +215,7 @@ test("backlog seed plan is idempotent and never duplicates existing work", () =>
   assert.deepEqual(missingLabels(backlog, ["backlog"]).map((label) => label.name), ["workshop-seed"]);
   assert.deepEqual(missingLabels(backlog, ["Backlog", "Workshop-Seed"]), [], "GitHub label names are case-insensitive");
   assert.doesNotMatch(JSON.stringify(backlog), /substitut|alternative|suggest/i,
-    "The seeded backlog must not pre-plan the Lab 2 requirement");
+    "The seeded backlog must not pre-plan the workshop feature");
 });
 
 test("backlog seed is dry-run by default and refuses unsafe apply targets", () => {
@@ -182,24 +227,29 @@ test("backlog seed is dry-run by default and refuses unsafe apply targets", () =
   assert.match(output, /UNVERIFIED \[Backlog\] Alert when stock falls below a threshold/);
   assert.match(output, /DRY RUN/);
   assert.throws(() => invoke(["--offline", "--apply"]), /cannot apply offline/);
-  assert.throws(() => invoke(["--repository", "tkubica12/github-loop-engineering", "--apply"]),
-    /applies only to tkubica12\/workshop-lab-test01/);
-  assert.throws(() => invoke(["--repository", "tkubica12/workshop-lab-other", "--apply"]),
-    /applies only to tkubica12\/workshop-lab-test01/, "A different station repository is refused");
+  assert.throws(() => invoke(["--repository", "workshop-owner/github-loop-engineering", "--apply"]),
+    /applies only to workshop-owner\/workshop-lab-test01/);
+  assert.throws(() => invoke(["--repository", "workshop-owner/workshop-lab-other", "--apply"]),
+    /applies only to workshop-owner\/workshop-lab-test01/, "A different station repository is refused");
 });
 
-test("station intake context, coaching agent, and path-scoped instructions stay consistent", () => {
+test("station evidence, intake skill, and path-scoped instructions stay consistent", () => {
   const template = root;
   const read = (...parts) => readFileSync(join(template, ...parts), "utf8");
-  const agent = read(".github", "agents", "requirement-refiner.agent.md");
-  const frontmatter = agent.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? "";
+  const refiner = read(".agents", "skills", "requirement-refiner", "SKILL.md");
+  const frontmatter = refiner.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? "";
   assert.match(frontmatter, /^name: requirement-refiner$/m);
   assert.match(frontmatter, /^description: .+/m);
-  assert.match(frontmatter, /^tools: \["read", "search"\]$/m);
-  assert.match(frontmatter, /^disable-model-invocation: true$/m);
-  assert.match(agent, /CONFIRMED:/);
-  assert.doesNotMatch(agent, /MED-00\d|same[- ]category|lowest SKU|ordered by SKU|substitut/i,
-    "The coach must not contain the Lab 2 answer");
+  assert.match(refiner, /CONFIRMED:/);
+  assert.match(refiner, /APPROVED FEATURE: Create one issue in TARGET-OWNER\/github-loop-engineering-NN/);
+  assert.match(refiner, /APPROVED BUG: Create one issue in TARGET-OWNER\/github-loop-engineering-NN/);
+  assert.match(refiner, /Approval for one draft never approves the other/i);
+  assert.match(refiner, /Do not read workshop answers or reference implementations under `docs\/`/);
+  assert.match(refiner, /exact `nameWithOwner`/);
+  assert.match(refiner, /workshop organization in the Station profile/);
+  assert.match(refiner, /attendee's account in Sandbox/);
+  assert.match(refiner, /gh issue create --repo <verified-nameWithOwner>/);
+  assert.match(refiner, /\.github\/ISSUE_TEMPLATE\/\*\.yml/);
 
   for (const [file, glob] of [
     ["inventory.instructions.md", "src/**/*.mjs"],
@@ -210,25 +260,76 @@ test("station intake context, coaching agent, and path-scoped instructions stay 
   }
   assert.match(read(".github", "CODEOWNERS"), /^\/context\/ /m);
 
-  const context = ["chat-thread.md", "ticket-digest.md", "stakeholder-email.md"].map((name) => read("context", "intake", name)).join("\n");
-  assert.doesNotMatch(context, /Suggest an available substitute|suggestion/i, "Context must not quote the confirmed contract");
+  const evidenceFiles = [
+    "customer-ticket.md",
+    "partial-stock-ticket.md",
+    "reservation-api.log",
+    "chat-thread.md",
+    "meeting-notes.md",
+    "stakeholder-email.md",
+    "backlog.md"
+  ];
+  const context = evidenceFiles.map((name) => read("context", "intake", name)).join("\n");
+  assert.match(context, /SUP-4102/);
+  assert.match(context, /SUP-4113/);
+  assert.match(read("context", "intake", "customer-ticket.md"), /REQ-S12-4102/);
+  assert.match(read("context", "intake", "reservation-api.log"), /request_id=REQ-S12-4102/);
+  assert.match(read("context", "intake", "meeting-notes.md"), /Treat `SUP-4102` as a feature request/);
+  assert.match(read("context", "intake", "meeting-notes.md"), /first by SKU/);
+  assert.match(read("context", "intake", "meeting-notes.md"), /`suggestion` field/);
+  assert.match(read("context", "intake", "meeting-notes.md"), /Omit `suggestion` when no item/);
+  assert.match(read("context", "intake", "meeting-notes.md"), /Confirmed bug contract for SUP-4113/);
+  assert.match(read("context", "intake", "partial-stock-ticket.md"), /REQ-S07-4113/);
+  assert.match(read("context", "intake", "README.md"), /WorkIQ MCP/);
+  assert.equal(existsSync(join(template, "context", "intake", "ticket-digest.md")), false);
   const backlog = loadBacklog(join(root, "platform", "templates", "station-backlog.json"));
   const ids = new Set(backlog.issues.map((issue) => issue.id));
-  const digest = read("context", "intake", "ticket-digest.md");
-  for (const [pattern, id] of [
-    [/low-stock alert[^|]*\| Duplicate of backlog/i, "low-stock-alert"],
-    [/Unconfirmed reservations[^|]*\| Duplicate of backlog/i, "reservation-expiry"],
-    [/too bright[^|]*\| Duplicate of backlog/i, "dashboard-dark-mode"],
-    [/spreadsheet[^|]*\| Duplicate of backlog/i, "audit-csv-export"]
-  ]) {
-    assert.match(digest, pattern);
-    assert.ok(ids.has(id), `Backlog noise '${id}' must be seeded`);
+  for (const id of ["low-stock-alert", "reservation-expiry", "dashboard-dark-mode", "audit-csv-export"]) {
+    assert.ok(ids.has(id), `Backlog item '${id}' must be seeded`);
   }
   assert.equal(existsSync(join(template, "feature-request.md")), false);
+  assert.equal(existsSync(join(template, ".github", "ISSUE_TEMPLATE", "reservation-feature.yml")), true);
+  assert.equal(existsSync(join(template, ".github", "ISSUE_TEMPLATE", "reservation-bug.yml")), true);
+  for (const file of [
+    ".agents/skills/goal-card/SKILL.md",
+    ".agents/skills/goal-card/assets/goal-card-template.md",
+    ".agents/skills/goal-review/SKILL.md",
+    ".agents/skills/documentation-review/SKILL.md",
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    ".github/workflows/title-check.yml",
+    ".github/workflows/release-rehearsal.yml"
+  ]) {
+    assert.equal(existsSync(join(template, file)), true, `${file} is prepared before the fork`);
+  }
+  assert.equal(existsSync(join(template, ".github", "workflows", "codeql.yml")), false,
+    "attendee forks must not run a Code Security workflow; CodeQL remains in the facilitator security demo");
+  assert.equal(existsSync(join(template, ".github", "skills", "goal-card")), false,
+    "The open-standard skill must not be duplicated under the GitHub-specific path");
+  assert.equal(existsSync(join(template, ".github", "agents")), false,
+    "Workflow logic and manual fallbacks use open-standard skills, not proprietary agent wrappers");
+  const skill = read(".agents", "skills", "goal-card", "SKILL.md");
+  assert.match(skill, /does not start the task/i);
+  assert.match(skill, /STOP-CAPS/);
+  assert.match(skill, /assess-act-check-adjust/i);
+  assert.equal(existsSync(join(template, ".agents", "skills", "quality-review")), false,
+    "Native Copilot code review replaces the duplicate custom general quality reviewer");
+  assert.equal(existsSync(join(template, ".github", "workflows", "quality-review.md")), false,
+    "Native Copilot code review replaces the duplicate general PR workflow");
+  for (const name of ["documentation-review", "goal-review"]) {
+    const workflow = read(".github", "workflows", `${name}.md`);
+    assert.match(workflow, /pull_request:/);
+    assert.match(workflow, /types: \[opened, synchronize, reopened\]/);
+    assert.match(workflow, /pull-requests: read/);
+    assert.doesNotMatch(workflow, /pull-requests: write/);
+    assert.match(workflow, /add-comment:/);
+    assert.match(workflow, /head SHA/i);
+  }
+  assert.match(read(".github", "workflows", "title-check.yml"), /PR_TITLE/);
+  assert.doesNotMatch(read(".github", "workflows", "title-check.yml"), /run:.*github\.event\.pull_request\.title/);
   for (const file of ["AGENTS.md", "CLAUDE.md", join(".github", "copilot-instructions.md"),
     ...readdirSync(join(template, ".github", "instructions")).map((name) => join(".github", "instructions", name))]) {
     if (existsSync(join(template, file))) {
-      assert.doesNotMatch(read(file), /substitut|same[- ]category|lowest SKU/i, `${file} must not settle the Lab 2 refinement`);
+      assert.doesNotMatch(read(file), /substitut|same[- ]category|lowest SKU/i, `${file} must not settle the feature before intake`);
     }
   }
 });
