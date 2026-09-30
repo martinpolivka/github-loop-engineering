@@ -35,7 +35,7 @@ max-ai-credits: 75
 
 # Find one actionable reservation signal
 
-Inspect the synthetic pharmacy reservation service, `data/reservation-telemetry.json`, its tests, open issues, and recently merged pull requests.
+Inspect the synthetic retail reservation service, `data/reservation-telemetry.json`, its tests, open issues, and recently merged pull requests.
 
 Create at most one issue when the repository contains clear evidence of a user-facing reservation gap. The issue must include:
 

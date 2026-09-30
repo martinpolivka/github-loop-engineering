@@ -16,10 +16,25 @@ function sendJson(response, status, body) {
   response.end(JSON.stringify(body));
 }
 
-export function buildServer() {
+export function buildServer({ allowedOrigin = "" } = {}) {
+  if (allowedOrigin && !/^https?:\/\/[a-zA-Z0-9.-]+(?::[0-9]+)?$/.test(allowedOrigin)) {
+    throw new Error("CORS origin must be one explicit HTTP(S) origin without a path or wildcard.");
+  }
   const inventory = createInventory();
 
   return createServer(async (request, response) => {
+    if (allowedOrigin && request.headers.origin === allowedOrigin) {
+      response.setHeader("access-control-allow-origin", allowedOrigin);
+      response.setHeader("vary", "Origin");
+      if (request.method === "OPTIONS" && ["/health", "/stock", "/reservations"].includes(request.url)) {
+        response.writeHead(204, {
+          "access-control-allow-methods": "GET, POST, OPTIONS",
+          "access-control-allow-headers": "content-type",
+          "access-control-max-age": "600"
+        }).end();
+        return;
+      }
+    }
     const staticAsset = request.method === "GET" ? staticRoutes.get(request.url) : undefined;
     if (staticAsset) {
       try {
@@ -35,7 +50,7 @@ export function buildServer() {
     if (request.method === "GET" && request.url === "/health") {
       sendJson(response, 200, {
         status: "ready",
-        service: "pharmacy-reservation"
+        service: "retail-reservation"
       });
       return;
     }
@@ -74,8 +89,9 @@ export function buildServer() {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const port = Number(process.env.PORT ?? 3000);
-  const server = buildServer();
-  server.listen(port, "127.0.0.1", () => {
-    console.log(`Pharmacy reservation service listening on http://127.0.0.1:${server.address().port}`);
+  const server = buildServer({ allowedOrigin: process.env.ALLOWED_ORIGIN ?? "" });
+  const host = process.env.HOST ?? "127.0.0.1";
+  server.listen(port, host, () => {
+    console.log(`Retail reservation service listening on http://${host}:${server.address().port}`);
   });
 }

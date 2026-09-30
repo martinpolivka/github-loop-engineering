@@ -8,7 +8,7 @@ this does not look like an outage or regression.
 Confirmed. The inventory already records SKU, display name, category, and
 available quantity. The response currently exposes only `error` and `available`.
 
-**Pharmacist — 08:31**
+**Store associate — 08:31**
 Please do not automatically reserve another item. Show one relevant option and
 leave the decision with me.
 
@@ -25,11 +25,11 @@ Already planned in `backlog.md`; keep it out of this case.
 
 **QA — 08:51**
 `REQ-S07-4113` is separate from `SUP-4102`. The API returned `available: 4`,
-but the kiosk ignored that existing field. That violates the visible-result
+but the storefront ignored that existing field. That violates the visible-result
 contract and should be reported as a UI bug, not folded into the suggestion
 feature.
 
-**Pharmacist — 08:55**
+**Store associate — 08:55**
 Show the available quantity, but do not reserve fewer items automatically. I
 need to discuss the next action with the customer.
 

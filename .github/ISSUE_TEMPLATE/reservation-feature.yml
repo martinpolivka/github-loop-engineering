@@ -21,7 +21,7 @@ body:
     attributes:
       label: Outcome
       description: What should become possible?
-      placeholder: A pharmacist can...
+      placeholder: A store associate can...
     validations:
       required: true
   - type: textarea

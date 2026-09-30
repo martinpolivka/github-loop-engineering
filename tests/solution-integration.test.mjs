@@ -4,7 +4,7 @@ import { spawnSync } from "node:child_process";
 import { join } from "node:path";
 import test from "node:test";
 import { root } from "./validation.mjs";
-import { copyStation } from "../platform/scripts/station.mjs";
+import { copyService } from "./service-fixture.mjs";
 
 test("lab artifacts preserve the complete station service", () => {
   mkdirSync(join(root, ".workshop"), { recursive: true });
@@ -13,10 +13,10 @@ test("lab artifacts preserve the complete station service", () => {
   writeFileSync(ownership, "tests/solution-integration.test.mjs");
   const station = join(ownedRoot, "station");
   try {
-    copyStation(station);
+    copyService(station);
     cpSync(
-      join(root, "docs", "labs", "02-inner-loop", "artifacts", "inventory.reference.mjs"),
-      join(station, "src", "inventory.mjs")
+      join(root, "docs", "labs", "02-inner-loop", "artifacts", "reservations.reference.mjs"),
+      join(station, "src", "reservations.mjs")
     );
     cpSync(
       join(root, "docs", "labs", "02-inner-loop", "artifacts", "suggestion.test.mjs"),
@@ -25,7 +25,10 @@ test("lab artifacts preserve the complete station service", () => {
     const { NODE_TEST_CONTEXT: _testContext, ...cleanEnvironment } = process.env;
     const result = spawnSync(process.execPath, [
       "--test",
+      "--test-skip-pattern=^both learner tasks remain unsolved in the retail baseline$",
       join(station, "test", "inventory.test.mjs"),
+      join(station, "test", "catalog.test.mjs"),
+      join(station, "test", "cors.test.mjs"),
       join(station, "test", "public.test.mjs"),
       join(station, "test", "server.test.mjs"),
       join(station, "test", "suggestion.test.mjs")

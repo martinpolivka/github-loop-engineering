@@ -4,7 +4,7 @@
 
 **Format:** Full-day technical workshop
 **Audience:** Engineering leaders, architects, developers, platform engineers, DevOps, and application security teams
-**Scenario:** A synthetic pharmacy stock and reservation service
+**Scenario:** A synthetic retail stock and reservation service
 **Learning rhythm:** See it, work with it, connect it
 
 ## Outcome
@@ -18,7 +18,7 @@ synthetic evidence
   -> local and cloud-agent implementation loops
   -> two governed pull requests
   -> deterministic and reasoning evidence
-  -> trusted delivery decision
+  -> signed test/prod OCI promotion and trusted delivery decision
   -> bounded Agentic Workflow next decision
 ```
 
@@ -34,7 +34,7 @@ GitHub is the durable coordination and governance layer. GitHub Copilot is the p
 | 10:45-11:45 | **Lab 2: Goal Cards and two agent loops** | Publish an approved Goal Card on each Issue, run the feature through a visible local assess-act-check-adjust loop, assign the smaller bug to Copilot cloud agent, and receive two pull requests. |
 | 11:45-12:35 | **Lab 3: Governed pull requests** | Compare the two PR handoffs, combine deterministic CI and Code Quality with native and contextual reviews, respond to evidenced findings, and make human merge decisions. |
 | 12:35-13:20 | **Lunch** | Prepared recovery branches and pull requests remain available. |
-| 13:20-14:10 | **Lab 4: Trusted delivery and operational readiness** | Package the exact merged revision, inspect tests, smoke evidence and artifact digest, exercise a GitHub Environment approval, and record a reversible READY or BLOCKED decision. |
+| 13:20-14:10 | **Lab 4: Trusted delivery and operational readiness** | Agent-deploy reviewed test/prod resources in the allocated group, wire distinct federations, build/sign in test, approve same-digest prod promotion, and record readiness. ACA is optional. |
 | 14:10-14:20 | **Break** | Reset for the final outer loop. |
 | 14:20-15:00 | **Lab 5: Author agentic outer loops** | Author bounded Issue triage and deployment-readiness workflows, compile and review generated authority, then inspect a recurring repository-pulse reconciliation. |
 | 15:00-15:30 | **Adoption, discussion, and Azure DevOps migration** | Select pilots, map identity and controls, plan bounded migration waves, and identify governance owners. Extended deliveries add one hour for migration depth. |
@@ -48,11 +48,15 @@ GitHub is the durable coordination and governance layer. GitHub Copilot is the p
 - two pull requests with independent handoff evidence;
 - deterministic CI and Code Quality evidence;
 - native Copilot code review plus independent documentation and Goal Card reviews;
-- one revision-bound release artifact and environment decision;
+- one OCI digest with test/prod ACR references, distinct verified Key Vault signatures, and an environment decision;
 - one reviewed Agentic Workflow source-and-lock proposal or an honestly labeled source-only fallback;
 - two attendee-authored Agentic Workflow sources and one reviewed recurring pattern.
 
-Complex platform plumbing is prepared before the workshop. Participants finish meaningful slices rather than spend the day installing tools or recreating governance.
+Tools, group allocation, access, approved base-image digest, IaC and release
+workflow templates are prepared before the workshop. In Lab 4 participants
+agent-deploy that template and confirm the test/prod identity mapping. Both
+identities are Owner on the one group as a workshop shortcut, not production
+least privilege. Required image signing takes priority over optional ACA or SRE.
 
 ## Concepts introduced in order
 

@@ -89,7 +89,7 @@ test("fresh process reads reservation, accepted receipt and replay without reset
   const inputFile = join(directory, "input.json");
   const invoke = async (input, command = "step") => {
     await writeFile(inputFile, JSON.stringify(input));
-    return JSON.parse(execFileSync(process.execPath, ["platform/scripts/loop.mjs", command, directory, inputFile], { encoding: "utf8" }));
+    return JSON.parse(execFileSync(process.execPath, ["scripts/loop.mjs", command, directory, inputFile], { encoding: "utf8" }));
   };
   const first = await invoke(base);
   const interrupted = await invoke(base);
@@ -258,7 +258,7 @@ test("legacy active reservations preserve hashes on read and retain only the ori
 test("fresh-process interruption, configuration override and corrupt acceptance cannot bypass authority", async (t) => {
   const directory = await owned(t);
   const inputFile = join(directory, "input.json");
-  const command = ["platform/scripts/loop.mjs", "step", directory, inputFile];
+  const command = ["scripts/loop.mjs", "step", directory, inputFile];
   const invoke = async (input) => {
     await writeFile(inputFile, JSON.stringify(input));
     return JSON.parse(execFileSync(process.execPath, command, { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }));
@@ -307,7 +307,7 @@ test("invalid new intake persists no malformed state and owner changes cannot au
 
 test("synthetic telemetry distinguishes above, below, missing, malformed, mismatch and addressed", () => {
   const sample = { synthetic: true, identity, window: "2026-07-20/2026-07-26", reservationRequests: 240,
-    zeroStockResponses: 36, zeroStockRate: 0.15, reviewThreshold: 0.1, topZeroStockSku: "MED-003" };
+    zeroStockResponses: 36, zeroStockRate: 0.15, reviewThreshold: 0.1, topZeroStockSku: "SKU-003" };
   const options = { identity, expectedWindow: sample.window };
   assert.equal(validateTelemetry(sample, options).reason, "above-threshold");
   assert.equal(validateTelemetry({ ...sample, reviewThreshold: 0.2 }, options).reason, "below-or-at-threshold");

@@ -58,7 +58,7 @@ function decodeScreenshot(png, viewport, label) {
   }
 }
 
-test("published screenshots identify actual browser captures and matching pharmacy source", () => {
+test("published screenshots identify actual browser captures and matching retail source", () => {
   const directory = join(root, "docs", "assets", "screenshots");
   const manifest = JSON.parse(readFileSync(join(directory, "manifest.json"), "utf8"));
   assert.ok(Number.isFinite(Date.parse(manifest.capturedAt)));
@@ -84,7 +84,7 @@ test("published screenshots identify actual browser captures and matching pharma
       assert.equal(input.sha256, createHash("sha256").update(readFileSync(join(root, input.path), "utf8").replaceAll("\r\n", "\n")).digest("hex"),
         `${capture.file}: ${input.path} changed; rerun npm run capture`);
     }
-    if (capture.file.startsWith("pharmacy-")) {
+    if (capture.file.startsWith("retail-")) {
       assert.match(capture.description, /local HTTP 409/);
       for (const file of ["index.html", "app.js", "app.css"]) {
         assert.ok(capture.inputs.some((input) => input.path === `public/${file}`));
@@ -93,7 +93,7 @@ test("published screenshots identify actual browser captures and matching pharma
       assert.ok(capture.inputs.some((input) => input.path === "docs/assets/html-docs/appearance.js"));
       assert.ok(capture.inputs.some((input) => input.path === "docs/assets/html-docs/tokens.css"));
       assert.ok(capture.inputs.some((input) => input.path === "docs/assets/materials.js"));
-      if (/evidence|security-|secret-protection|release-|environment-gate/.test(capture.file)) {
+      if (/release-|environment-gate/.test(capture.file)) {
         assert.match(capture.description, /not (?:a screenshot of )?(?:the )?GitHub|no .*GitHub UI/i,
           "A local guide capture must not be represented as a GitHub screenshot");
       }
@@ -102,7 +102,7 @@ test("published screenshots identify actual browser captures and matching pharma
   assert.deepEqual([...images].sort(), readdirSync(directory).filter((file) => file.endsWith(".png")).sort(),
     "Every published PNG must be present in the capture manifest");
   for (const state of ["baseline", "suggestion"]) {
-    for (const theme of ["light", "dark"]) assert.ok(images.has(`pharmacy-${state}-${theme}.png`));
+    for (const theme of ["light", "dark"]) assert.ok(images.has(`retail-${state}-${theme}.png`));
   }
   for (const theme of ["light", "dark"]) assert.ok(images.has(`workshop-agenda-${theme}.png`));
   for (const theme of ["light", "dark"]) assert.ok(images.has(`environment-gate-${theme}.png`));

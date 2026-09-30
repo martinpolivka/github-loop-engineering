@@ -1,0 +1,62 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "appName": { "type": "string" },
+    "environmentName": { "type": "string" },
+    "runtimeIdentityId": { "type": "string" },
+    "imageReference": { "type": "string" },
+    "registry": { "type": "string" },
+    "stationId": { "type": "string" },
+    "phase": { "type": "string", "allowedValues": ["test", "prod"] },
+    "allowedOrigin": { "type": "string", "defaultValue": "" }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.App/containerApps",
+      "apiVersion": "2024-03-01",
+      "name": "[parameters('appName')]",
+      "location": "[resourceGroup().location]",
+      "tags": { "WorkshopStation": "[parameters('stationId')]", "Environment": "[parameters('phase')]" },
+      "identity": {
+        "type": "UserAssigned",
+        "userAssignedIdentities": { "[parameters('runtimeIdentityId')]": {} }
+      },
+      "properties": {
+        "managedEnvironmentId": "[resourceId('Microsoft.App/managedEnvironments', parameters('environmentName'))]",
+        "workloadProfileName": "Consumption",
+        "configuration": {
+          "activeRevisionsMode": "Single",
+          "ingress": { "external": true, "targetPort": 3000, "transport": "http", "allowInsecure": false },
+          "registries": [{
+            "server": "[parameters('registry')]", "identity": "[parameters('runtimeIdentityId')]"
+          }]
+        },
+        "template": {
+          "containers": [{
+            "name": "retail",
+            "image": "[parameters('imageReference')]",
+            "env": [
+              { "name": "HOST", "value": "0.0.0.0" },
+              { "name": "PORT", "value": "3000" },
+              { "name": "ALLOWED_ORIGIN", "value": "[parameters('allowedOrigin')]" }
+            ],
+            "resources": { "cpu": 0.25, "memory": "0.5Gi" },
+            "probes": [{
+              "type": "Readiness",
+              "httpGet": { "path": "/health", "port": 3000 },
+              "initialDelaySeconds": 3, "periodSeconds": 10
+            }]
+          }],
+          "scale": { "minReplicas": 0, "maxReplicas": 1 }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "url": {
+      "type": "string",
+      "value": "[concat('https://', reference(resourceId('Microsoft.App/containerApps', parameters('appName')), '2024-03-01').configuration.ingress.fqdn)]"
+    }
+  }
+}

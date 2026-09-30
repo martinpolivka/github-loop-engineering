@@ -1,6 +1,6 @@
 ---
 name: documentation-review
-description: Review whether a pharmacy service change makes existing user or operator documentation inaccurate, without editing files.
+description: Review whether a retail service change makes existing user or operator documentation inaccurate, without editing files.
 ---
 
 # Documentation review

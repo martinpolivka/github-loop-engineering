@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-09-25
+- Historical-demo retention superseded by [ADR 0017](0017-current-workshop-only-platform.md).
 
 ## Context
 

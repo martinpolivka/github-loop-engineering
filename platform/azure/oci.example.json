@@ -1,0 +1,20 @@
+{
+  "host": "github.com",
+  "oidcIssuer": "https://token.actions.githubusercontent.com",
+  "subscriptionId": "REPLACE_FROM_TRUSTED_LAB_ALLOCATION",
+  "resourceGroup": "REPLACE_FROM_TRUSTED_LAB_ALLOCATION",
+  "ownershipTag": {
+    "name": "REPLACE_WITH_ALLOCATION_TAG_NAME",
+    "value": "REPLACE_WITH_ALLOCATION_TAG_VALUE"
+  },
+  "stationId": "station01",
+  "repository": "TARGET-OWNER/github-loop-engineering-01",
+  "reviewer": "REPLACE_WITH_FACILITATOR_LOGIN",
+  "provisionerObjectId": "REPLACE_WITH_SIGNED_IN_OPERATOR_OBJECT_ID",
+  "provisionerType": "User",
+  "namePrefix": "retail",
+  "baseImage": "docker.io/library/node:24-alpine@sha256:REPLACE_WITH_APPROVED_DIGEST",
+  "allowPaidResources": false,
+  "allowWorkshopOwnerRoles": false,
+  "deployAca": false
+}

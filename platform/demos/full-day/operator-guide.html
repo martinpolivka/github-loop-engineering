@@ -272,9 +272,30 @@ npm run capture</code></pre></div>
           </ol>
           <div class="code"><pre><code>$env:GH_HOST = "YOUR-GITHUB-HOST"
 $owner = gh api user --hostname $env:GH_HOST --jq .login
-node platform/scripts/workshop.mjs preflight --profile sandbox --host $env:GH_HOST --owner $owner --repository "$owner/YOUR-REPOSITORY" --live</code></pre></div>
+node platform/scripts/preflight.mjs --profile sandbox --host $env:GH_HOST --repository "$owner/YOUR-REPOSITORY" --live</code></pre></div>
           <p>Resolve the owner from the authenticated session; do not commit the host, account, token, or repository name into a profile.</p>
           <p><strong>Stop:</strong> do not call a lab live-ready if the required participant action was replaced by an unlabeled recording, the recovery artifact does not match the current source, or a cleanup target is ambiguous.</p>
+        </div>
+      </article>
+      <article class="card" id="card-azure">
+        <div class="slide-content"><h2 class="slide-title">Prepare the tools.<br><em>Students deploy the template.</em></h2><ul class="slide-points"><li class="frag">Allocator owns one resource group per station.</li><li class="frag">Test/prod use tags and distinct federations.</li><li class="frag">Image security takes priority over ACA.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Azure readiness and the 50-minute boundary</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <p>The existing lab allocator creates <strong>one resource group per station</strong>. Do not change that allocator or create a second group for prod. Provide its exact subscription/group ID and original allocation ownership tag to the student. <code>Environment=test|prod</code> labels resources inside the same group.</p>
+          <ol>
+            <li>Prepare Azure CLI and sign-in in the actual student Codespace or laptop before Lab 4. Confirm group-scoped resource creation and role-assignment rights, registered ContainerRegistry, KeyVault and ManagedIdentity providers, quota for two Basic registries per station, and globally unique generated names. Register App only for optional ACA.</li>
+            <li>Approve a current <code>docker.io/library/node:24-alpine@sha256:...</code> base reference and provide it to students. Resolve it with <code>docker buildx imagetools inspect docker.io/library/node:24-alpine</code> on the instructor machine; the workflow deliberately refuses a mutable tag.</li>
+            <li>Set a small event budget and the group retention policy. ARM creates two Basic ACRs, two standard vaults, two managed identities, and explicit roles. No new database, storage state backend, Terraform provider install, or group creation is needed.</li>
+            <li>Explain the requested <strong>Owner-on-one-group shortcut</strong>. Both pipeline identities can change authorization for all resources in the group. Tags, separate registries and client IDs are not least-privilege isolation. Use no sensitive data or real production resources in this group.</li>
+            <li>Verify the issuer on the target host. GitHub.com uses <code>https://token.<wbr>actions.<wbr>githubusercontent.com</code>; GHE.com uses <code>https://token.<wbr>actions.<wbr>SUBDOMAIN.ghe.com</code> or its explicitly configured enterprise issuer. Never guess a GitHub.com issuer for GHE.com.</li>
+            <li>Rehearse <code>plan</code>, <code>what-if</code>, <code>deploy --apply</code>, <code>wire --apply</code>, and <code>preflight</code> with <code>platform/scripts/oci-platform.mjs</code>. Configuration lives in ignored <code>.workshop/azure-release.json</code>, populated from the trusted allocation, not from an inferred group name.</li>
+            <li>After students inspect the two subjects, wire immutable environment-bound federation. <code>workshop-test</code> selects main; <code>workshop-prod</code> selects main, requires the verified reviewer, prevents self-review, and disables administrator bypass. Compatible existing policies stay intact; incompatible policies block setup.</li>
+            <li>Record the actual successful OCI workflow: tests, container smoke, test signature, identical prod digest, prod signature, and approval record. A dry-run plan or preflight is not live release evidence. Prepare one completed instructor run and one signed baseline for recovery; preserve their original SHA and repository.</li>
+          </ol>
+          <p>Allow 15 minutes for reviewed agent-led resource deployment, 8 for identity mapping, 10 for the test image path, 9 for prod approval, and 8 for verification/decision. If registration, RBAC propagation, or deployment exceeds the cap, use the instructor station with an explicit label. Do not spend the image/security time debugging optional ACA.</p>
+          <p>For optional ACA, choose <code>deployAca=true</code> only when time and budget permit, re-review the what-if, and wire the optional outputs. The runtime has a separate AcrPull-only identity; never attach an Owner pipeline identity to a container. Use the provided template, the verified digest, one ephemeral replica, and same-origin API/frontend. Stock resets on restart. Mention Azure SRE only when available; there is no SRE lab setup.</p>
+          <p>Prepare any optional security demonstration separately on the current target host. This repository does not ship historical demo fixtures or recorded security evidence.</p>
+          <p>Product references checked 30 September 2026: <a href="https://learn.microsoft.com/azure/container-registry/container-registry-content-trust-deprecation">DCT retirement and Notary Project</a>, <a href="https://learn.microsoft.com/azure/container-registry/container-registry-tutorial-sign-build-push">Notation and Key Vault</a>, <a href="https://docs.github.com/en/enterprise-cloud@latest/actions/reference/security/oidc">immutable subjects and GHE.com issuer</a>. Old Docker Content Trust/Notary v1 is not the implementation used here.</p>
         </div>
       </article>
     </section>
@@ -289,7 +310,7 @@ node platform/scripts/workshop.mjs preflight --profile sandbox --host $env:GH_HO
             <dt>09:10-09:14 &middot; Goal Cards</dt><dd>Show both approved cards in Issue context before delegation. State that the skill designs each loop but does not start work.</dd>
             <dt>09:14-09:22 &middot; Two agent loops</dt><dd>Show the local feature loop from red to green, then the cloud-agent bug assignment and its asynchronous PR handoff.</dd>
             <dt>09:22-09:30 &middot; Governed PRs</dt><dd>Compare the two PRs. Point to deterministic CI and Code Quality, native Copilot review, Goal Review, Documentation Review, and human decisions.</dd>
-            <dt>09:30-09:36 &middot; Trusted delivery and security</dt><dd>Trace merge SHA, smoke evidence, artifact digest, environment approval, and rollback. Briefly switch to the verified public demo repository for CodeQL, push protection, secret scanning, and Autofix; label its evidence as separate.</dd>
+            <dt>09:30-09:36 &middot; Trusted delivery and security</dt><dd>Trace merge SHA, the built OCI digest, test/prod registries and signers, prod approval, and rollback. Label the same-group Owner-role shortcut. Show CodeQL, push protection, secret scanning, and Autofix only with a separately prepared, revision-bound instructor demonstration; otherwise explain the control without claiming live evidence.</dd>
             <dt>09:36-09:42 &middot; Agentic recurrence</dt><dd>Compare triage, deployment readiness, and repository pulse through triggers, permissions, safe outputs, budgets, reconciliation, and remaining authority.</dd>
             <dt>09:42-09:45 &middot; Map the day</dt><dd>Define inner loop, outer loop, and recurrence; point participants to Lab 1.</dd>
           </dl>
@@ -323,11 +344,11 @@ node platform/scripts/workshop.mjs preflight --profile sandbox --host $env:GH_HO
         </div>
       </article>
       <article class="card" id="card-lab4">
-        <div class="slide-content"><h2 class="slide-title">Lab 4 binds<br><em>revision, bytes, and authority.</em></h2><ul class="slide-points"><li class="frag">Package current main only.</li><li class="frag">Verify smoke and digest evidence.</li><li class="frag">Exercise an environment gate.</li></ul></div>
+        <div class="slide-content"><h2 class="slide-title">Lab 4 promotes<br><em>one secured image.</em></h2><ul class="slide-points"><li class="frag">Students deploy a reviewed template.</li><li class="frag">Test/prod use distinct identities and signers.</li><li class="frag">Approval promotes the same digest.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">13:20-14:10 &middot; Trusted delivery and operational readiness</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
-          <p>Ensure the feature is merged and <code>workshop-preview</code> has a required reviewer. Pair dispatchers with different reviewers. The workflow packages only current <code>main</code>, verifies the digest after approval, and explicitly performs no external production deployment.</p>
-          <p><strong>Recovery at minute 35:</strong> use the source-bound recorded release run, label environment enforcement unavailable, and complete a BLOCKED decision when authority or rollback evidence is missing.</p>
+          <p>Provide the allocator output and use <code>/azure-release</code> to review/deploy the prepared template. Students confirm the two federations and environment-variable mappings; pair prod dispatchers with different reviewers. The workflow builds once, signs and verifies in test, then copies the exact manifest to prod for its separate signature.</p>
+          <p><strong>Recovery at minute 15:</strong> move stalled infrastructure setup to the prepared instructor station. At minute 35, prioritize digest and signature verification over ACA. Missing own-station authority or rollback still produces BLOCKED; do not transfer an instructor run's pass to the attendee fork.</p>
         </div>
       </article>
       <article class="card" id="card-lab5">
@@ -356,18 +377,19 @@ node platform/scripts/workshop.mjs preflight --profile sandbox --host $env:GH_HO
         <div class="card-body">
           <ol>
             <li>Export the rehearsal record and links required for presenter evidence.</li>
-            <li>List exact disposable repository and branch names. Confirm owner, prefix, and committed workshop marker.</li>
-            <li>Run the workshop cleanup script without apply. Read every target.</li>
-            <li>Apply only to the confirmed rehearsal resources. Never use wildcard or broad organization deletion.</li>
+            <li>List the exact disposable rehearsal repository and branch names. Verify ownership and the event's recorded allocation; a participant fork is not a disposable generated station.</li>
+            <li>Review the exact proposed deletions with the repository owner. There is no repository-generating or repository-deleting workshop script.</li>
+            <li>After explicit approval, remove only the confirmed rehearsal resources through GitHub. Never use wildcard or broad organization deletion.</li>
             <li>Re-run preflight before the next delivery rather than trusting retained state.</li>
           </ol>
           <p>Do not delete participant repositories unless the event's explicit retention policy and owner approval require it.</p>
+          <p>Azure cleanup remains with the existing allocator. Retain image digests, signing verification and approvals before the allocated group is removed. The OCI helper intentionally has no group creation/deletion command; purge-protected Key Vaults remain soft-deleted for their seven-day retention period.</p>
         </div>
       </article>
     </section>
   </main>
   <section class="takeaway" id="closing"><p>The workshop is ready only when a clean-start attendee path and the exact presenter path both work, every unavailable control is labeled, and every fallback preserves the original trust boundary.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Rehearse the evidence.<br><em>Protect the boundary.</em></h2></div></section>
-  <footer class="doc-footer">Facilitator material &middot; Synthetic pharmacy data only &middot; Return to the <a href="../../../docs/index.html">workshop hub</a>.</footer>
+  <footer class="doc-footer">Facilitator material &middot; Synthetic retail data only &middot; Return to the <a href="../../../docs/index.html">workshop hub</a>.</footer>
 </div>
 </body>
 </html>

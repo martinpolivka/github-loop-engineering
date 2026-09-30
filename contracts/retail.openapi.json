@@ -1,0 +1,77 @@
+{
+  "openapi": "3.1.0",
+  "info": { "title": "Synthetic retail reservation API", "version": "1.0.0" },
+  "paths": {
+    "/health": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Service ready",
+            "content": { "application/json": { "schema": {
+              "type": "object", "required": ["status", "service"],
+              "properties": { "status": { "const": "ready" }, "service": { "const": "retail-reservation" } }
+            } } }
+          }
+        }
+      }
+    },
+    "/stock": {
+      "get": {
+        "responses": {
+          "200": {
+            "description": "Defensive synthetic stock snapshot",
+            "content": { "application/json": { "schema": {
+              "type": "object", "required": ["items"],
+              "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/StockItem" } } }
+            } } }
+          }
+        }
+      }
+    },
+    "/reservations": {
+      "post": {
+        "requestBody": {
+          "required": true,
+          "content": { "application/json": { "schema": {
+            "type": "object", "required": ["sku", "quantity"],
+            "properties": { "sku": { "type": "string" }, "quantity": { "type": "integer", "minimum": 1, "maximum": 5 } }
+          } } }
+        },
+        "responses": {
+          "201": {
+            "description": "Reservation created; stock decremented",
+            "content": { "application/json": { "schema": {
+              "type": "object", "required": ["reservationId", "sku", "quantity", "remaining"],
+              "properties": {
+                "reservationId": { "type": "string" }, "sku": { "type": "string" },
+                "quantity": { "type": "integer" }, "remaining": { "type": "integer", "minimum": 0 }
+              }
+            } } }
+          },
+          "400": { "description": "Invalid JSON or request; no mutation", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "404": { "description": "Unknown item; no mutation", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "409": {
+            "description": "Insufficient stock; available quantity remains visible in the API; no mutation",
+            "content": { "application/json": { "schema": {
+              "type": "object", "required": ["error", "available"],
+              "properties": { "error": { "const": "insufficient stock" }, "available": { "type": "integer", "minimum": 0 } }
+            } } }
+          },
+          "413": { "description": "Request exceeds size limit; no mutation", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": { "type": "object", "required": ["error"], "properties": { "error": { "type": "string" } } },
+      "StockItem": {
+        "type": "object", "required": ["sku", "name", "category", "available"],
+        "properties": {
+          "sku": { "type": "string" }, "name": { "type": "string" },
+          "category": { "type": "string" }, "available": { "type": "integer", "minimum": 0 }
+        }
+      }
+    }
+  }
+}

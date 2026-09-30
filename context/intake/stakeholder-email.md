@@ -1,6 +1,6 @@
 # Outlook email export (synthetic)
 
-**From:** Regional product owner, pharmacy services
+**From:** Regional product owner, retail services
 
 **To:** Reservation service team
 **Subject:** Decision for SUP-4102
@@ -10,12 +10,12 @@ reviewable Issues:
 
 1. A feature request for `SUP-4102`, preventing an out-of-stock request from
    becoming a dead end when a relevant option is available.
-2. A bug report for `SUP-4113`, because the kiosk hides the `available` value
+2. A bug report for `SUP-4113`, because the storefront hides the `available` value
    already returned by the service.
 
-Preserve the current `409` contract so the kiosk continues to work without a
-coordinated release. The pharmacist must remain in control: inventory
-information is not medical advice, and no option may be reserved automatically.
+Preserve the current `409` contract so the storefront continues to work without a
+coordinated release. The store associate must remain in control: inventory
+information is product discovery, and no option may be reserved automatically.
 
 Keep automatic partial fulfilment and every item already listed in `backlog.md`
 out of scope. Each Issue must cite its support case, matching request log,

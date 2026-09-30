@@ -3,7 +3,7 @@ const result = document.querySelector("#result");
 const stockStatus = document.querySelector("#stock-status");
 const themeButton = document.querySelector("#theme");
 const root = document.documentElement;
-const saved = localStorage.getItem("pharmacy-theme");
+const saved = localStorage.getItem("retail-theme");
 if (saved === "dark" || saved === "light") root.dataset.theme = saved;
 function themeLabel() {
   const dark = (root.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")) === "dark";
@@ -13,7 +13,7 @@ function themeLabel() {
 themeLabel();
 themeButton.addEventListener("click", () => {
   root.dataset.theme = themeLabel() ? "light" : "dark";
-  localStorage.setItem("pharmacy-theme", root.dataset.theme);
+  localStorage.setItem("retail-theme", root.dataset.theme);
   themeLabel();
 });
 themeButton.hidden = false;

@@ -5,6 +5,6 @@
   "zeroStockResponses": 36,
   "zeroStockRate": 0.15,
   "reviewThreshold": 0.1,
-  "topZeroStockSku": "MED-003",
-  "note": "Generated workshop telemetry. It is not customer, patient, pharmacy, or production data."
+  "topZeroStockSku": "SKU-003",
+  "note": "Generated workshop telemetry. It is not customer, patient, retail, or production data."
 }

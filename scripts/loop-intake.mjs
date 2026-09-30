@@ -16,7 +16,7 @@ export function validateTelemetry(telemetry, { identity, expectedWindow, sourceI
   if (!Number.isSafeInteger(total) || total <= 0 || !Number.isSafeInteger(count) || count < 0 || count > total ||
       !Number.isFinite(rate) || Math.abs(rate - count / total) > 1e-12 ||
       !Number.isFinite(threshold) || threshold < 0 || threshold > 1 ||
-      !/^MED-\d{3}$/.test(telemetry.topZeroStockSku ?? "")) return blocked("Invalid synthetic counts, arithmetic, threshold, or SKU");
+      !/^SKU-\d{3}$/.test(telemetry.topZeroStockSku ?? "")) return blocked("Invalid synthetic counts, arithmetic, threshold, or SKU");
   const evidenceDigest = digest({ identity, window: telemetry.window, total, count, rate, threshold, sku: telemetry.topZeroStockSku });
   if (alreadyAddressed) return { decision: "no-op", actionable: false, reason: "already-addressed", evidenceDigest };
   return { decision: rate > threshold ? "delegate" : "no-op", actionable: rate > threshold,

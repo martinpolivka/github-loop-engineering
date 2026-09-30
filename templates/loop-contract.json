@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "loopId": "pharmacy-bounded-maintenance",
+  "loopId": "retail-bounded-maintenance",
   "contractVersion": 1,
-  "objective": "Consume verified feedback for one synthetic pharmacy task and leave a reviewable outcome or an accountable next decision.",
+  "objective": "Consume verified feedback for one synthetic retail task and leave a reviewable outcome or an accountable next decision.",
   "nonGoals": [
     "Autonomous approval, merge, deployment, policy changes or credential access",
     "Production telemetry or clinical decisions",

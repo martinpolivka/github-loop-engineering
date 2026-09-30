@@ -1,6 +1,6 @@
 # 0015: Progressive inner and outer loops
 
-- Status: Accepted
+- Status: Superseded for domain and delivery by [ADR 0016](0016-retail-and-signed-test-prod-images.md); progression retained
 - Date: 2026-10-01
 - Supersedes: [ADR 0013](0013-attendee-forks-and-codespaces.md) and [ADR 0014](0014-evidence-to-approved-issue.md)
 

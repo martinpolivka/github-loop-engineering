@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Synthetic pharmacy reservation service for the GitHub engineering workshop.">
-  <title>Pharmacy reservation desk</title>
+  <meta name="description" content="Synthetic retail reservation service for the GitHub engineering workshop.">
+  <title>Retail reservation desk</title>
   <link rel="stylesheet" href="app.css">
   <script src="app.js" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to reservation</a>
-  <header><strong>Pharmacy / Reservation desk</strong><button type="button" id="theme" hidden>Theme</button></header>
+  <header><strong>Retail / Reservation desk</strong><button type="button" id="theme" hidden>Theme</button></header>
   <main id="main">
     <p class="eyebrow">A real API. Entirely synthetic data.</p>
     <h1>Keep the decision with the person.</h1>
@@ -22,10 +22,10 @@
         <form id="reservation">
           <label for="sku">Synthetic item</label>
           <select id="sku" name="sku">
-            <option value="MED-003">MED-003 / Synthetic Inhaler</option>
-            <option value="MED-004">MED-004 / Synthetic Alternative Inhaler</option>
-            <option value="MED-001">MED-001 / Synthetic Analgesic</option>
-            <option value="MED-002">MED-002 / Synthetic Antibiotic</option>
+            <option value="SKU-003">SKU-003 / Synthetic Insulated Bottle</option>
+            <option value="SKU-004">SKU-004 / Synthetic Travel Bottle</option>
+            <option value="SKU-001">SKU-001 / Synthetic Notebook</option>
+            <option value="SKU-002">SKU-002 / Synthetic Canvas Bag</option>
           </select>
           <label for="quantity">Quantity (1-5)</label>
           <input id="quantity" name="quantity" type="number" min="1" max="5" value="1" required>
@@ -33,7 +33,7 @@
         </form>
         <section id="result" aria-live="polite" aria-atomic="true">
           <h3>Waiting for your request</h3>
-          <p>Start with MED-003. There is no stock available for that item.</p>
+          <p>Start with SKU-003. There is no stock available for that item.</p>
         </section>
       </section>
       <section class="panel" aria-labelledby="stock-title">
@@ -47,7 +47,7 @@
         <details><summary>API response</summary><pre id="response">No request sent.</pre></details>
       </section>
     </div>
-    <p class="notice">Engineering exercise only. Category matching does not establish clinical equivalence. Do not use this service for care or real stock.</p>
+    <p class="notice">Engineering exercise only. All products and stock are synthetic. An alternative is never added or reserved automatically.</p>
   </main>
   <footer>Local workshop service / in-memory stock / restart the process to reset stock</footer>
 </body>

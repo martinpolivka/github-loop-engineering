@@ -6,17 +6,17 @@ Card: STOCK-SUGGESTION | Version: 1 | Readiness: Ready
 Mode: repair loop | Decision owner: product owner
 
 When a synthetic reservation cannot be fulfilled, return one deterministic
-same-category stock suggestion that a pharmacist may evaluate. Never reserve
-the suggestion or present it as medical advice.
+same-category stock suggestion that a store associate may evaluate. Never reserve
+the suggestion or add it to the customer's basket automatically.
 
-In scope: `src/inventory.mjs` and one focused test file. Not in scope: automatic
+In scope: `src/reservations.mjs` and one focused test file. Not in scope: automatic
 replacement, partial fulfilment, unrelated backlog work, workflows, or dependencies.
 
 ## OUTPUT
 
 | Result | Destination | Write rule |
 | --- | --- | --- |
-| Product change | `src/inventory.mjs` | Preserve existing response fields and successful reservations |
+| Product change | `src/reservations.mjs` | Preserve existing response fields and successful reservations |
 | Acceptance evidence | `test/suggestion.test.mjs` and pull request checks | Add tests; do not weaken existing tests |
 
 ## DONE WHEN
@@ -27,7 +27,7 @@ replacement, partial fulfilment, unrelated backlog work, workflows, or dependenc
    `sku`, `name`, and `available`.
    Verify: run `node --test test/suggestion.test.mjs`.
    Evidence: test output and pull request check for the reviewed revision.
-   If it fails: repair selection or response construction in `src/inventory.mjs`.
+   If it fails: repair selection or response construction in `src/reservations.mjs`.
    Recheck: C01, C02, C03.
 
 2. **C02 - No side effect**
@@ -48,7 +48,7 @@ replacement, partial fulfilment, unrelated backlog work, workflows, or dependenc
 ## QUALITY
 
 Keep the algorithm deterministic, dependency-free, and easy to review. Use only
-synthetic identifiers. Do not claim clinical equivalence.
+synthetic identifiers. Category matching is product discovery, not automatic checkout.
 
 ## CONTEXT
 
@@ -56,14 +56,14 @@ synthetic identifiers. Do not claim clinical equivalence.
 | --- | --- | --- |
 | Confirmed feature Issue | Required | Attendee fork; link before execution |
 | Product evidence | Required | `context/intake/meeting-notes.md` and `stakeholder-email.md` |
-| Current behavior | Required | `src/inventory.mjs` and `test/inventory.test.mjs` on the working branch |
+| Current behavior | Required | `src/reservations.mjs`, `src/inventory.mjs`, and `test/inventory.test.mjs` on the working branch |
 
 Unresolved: none.
 
 ## CONSTRAINTS
 
 Read: the confirmed Issue, listed evidence, service source, and tests.
-Write: `specs/stock-substitution.goal-card.md`, `src/inventory.mjs`, and optional
+Write: `specs/stock-substitution.goal-card.md`, `src/reservations.mjs`, and optional
 `test/suggestion.test.mjs`.
 Never: edit this Goal Card, workflows, ownership, dependencies, or expected
 results merely to obtain a pass.

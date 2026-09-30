@@ -5,7 +5,7 @@ description: Analyze a synthetic intake packet, cite the evidence, separate a bu
 
 # Requirement refiner
 
-Turn scattered evidence for the synthetic pharmacy reservation service into two
+Turn scattered evidence for the synthetic retail reservation service into two
 independently reviewable GitHub Issues without inventing facts or starting
 implementation.
 
@@ -85,6 +85,6 @@ the person to use the matching Issue form. Never claim creation without a URL.
 
 - Do not edit files, create branches or pull requests, implement code, or assign
   the Issue.
-- Do not expose real organizational data or infer medical suitability.
+- Do not expose real organizational, customer, payment, or order data.
 - Do not combine the two cases or reopen work already in `backlog.md`.
 - A human chooses the scope, approves publication, and later reviews the code.

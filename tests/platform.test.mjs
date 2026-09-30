@@ -1,69 +1,50 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 import { root } from "./validation.mjs";
 import { assertCompilerStamp, compilerProbeVersion, expectedCompilerVersion } from "../platform/scripts/workflow-version.mjs";
-import { issueBody, loadBacklog, missingLabels, planSeed } from "../platform/scripts/backlog.mjs";
 
-test("sandbox profile renders and verifies a station", () => {
-  const output = execFileSync(process.execPath, [
-    join(root, "platform", "scripts", "workshop.mjs"),
-    "verify",
-    "--profile",
-    "sandbox",
-    "--station",
-    "test01"
-  ], { cwd: root, encoding: "utf8" });
-  assert.match(output, /PASS rendered station workshop-lab-test01/);
+test("delivery profiles describe capabilities without repository provisioning or seeding", () => {
+  for (const id of ["sandbox", "enterprise"]) {
+    const file = id === "enterprise" ? "enterprise.example.json" : "sandbox.json";
+    const profile = JSON.parse(readFileSync(join(root, "platform", "profiles", file), "utf8"));
+    assert.equal(profile.id, id);
+    assert.ok(profile.capabilities.azureOci);
+    assert.ok(profile.capabilities.codeQuality);
+    for (const retired of ["owner", "repositoryPrefix", "allowRemoteProvision", "allowRemoteSeed", "teams"]) {
+      assert.equal(profile[retired], undefined);
+    }
+  }
 });
 
-test("enterprise example keeps organization-specific values configurable", () => {
-  const profile = JSON.parse(readFileSync(join(root, "platform", "profiles", "enterprise.example.json"), "utf8"));
-  assert.equal(profile.owner, "REPLACE_WITH_STUDENT_ORGANIZATION");
-  assert.equal(profile.allowRemoteProvision, false);
-  assert.equal(profile.allowRemoteSeed, true, "Enterprise stations are provisioned by owners but still need the synthetic backlog");
-  assert.equal(profile.stationMode, "per-team");
-  assert.equal(profile.capabilities.codeQuality, "organization-all-repositories");
+test("preflight rejects invalid profiles, hosts, and live targets before any external calls", () => {
+  for (const args of [
+    ["--profile", ".."], ["--profile"], ["--host", "host/other"], ["--live"],
+    ["--live", "--repository", "not-a-repository"]
+  ]) {
+    assert.throws(() => execFileSync(process.execPath,
+      [join(root, "platform", "scripts", "preflight.mjs"), ...args],
+      { cwd: root, stdio: "pipe", timeout: 5000 }), /FAIL/);
+  }
 });
 
-test("live preflight checks organization Copilot entitlement without claiming inference", () => {
-  const source = readFileSync(join(root, "platform", "scripts", "workshop.mjs"), "utf8");
+test("live preflight keeps capability checks host-bound and does not claim inference", () => {
+  const source = readFileSync(join(root, "platform", "scripts", "preflight.mjs"), "utf8");
   assert.match(source, /orgs\/\$\{repositoryOwner\}\/copilot\/billing/);
   assert.match(source, /Copilot organization entitlement has zero assigned seats/);
   assert.match(source, /does not prove inference access/);
+  assert.match(source, /"--hostname", host/);
+  assert.match(source, /code-quality\/setup/);
   assert.match(source, /gpt-5\.3-codex/);
+  assert.doesNotMatch(source, /"repo", "create"|git.*push|--apply/);
 });
 
-test("sandbox remote provision requires explicit apply", () => {
-  const output = execFileSync(process.execPath, [
-    join(root, "platform", "scripts", "workshop.mjs"),
-    "provision",
-    "--profile",
-    "sandbox",
-    "--station",
-    "test01"
-  ], { cwd: root, encoding: "utf8" });
-  assert.match(output, /PLAN ONLY/);
-});
 
-test("profile owner and host can be supplied at runtime", () => {
-  const output = execFileSync(process.execPath, [
-    join(root, "platform", "scripts", "workshop.mjs"),
-    "plan",
-    "--profile",
-    "sandbox",
-    "--station",
-    "test01",
-    "--owner",
-    "runtime-owner",
-    "--host",
-    "github.example"
-  ], { cwd: root, encoding: "utf8" });
-  const plan = JSON.parse(output);
-  assert.equal(plan.target, "github.example/runtime-owner/workshop-lab-test01");
-});
+
+
+
 
 test("attendees fork this repository itself, so the station sits at its root", () => {
   for (const profileName of ["sandbox", "enterprise.example"]) {
@@ -71,7 +52,8 @@ test("attendees fork this repository itself, so the station sits at its root", (
     assert.equal(profile.sourceRepository, undefined, "No separate source repository is published");
   }
   for (const path of [".devcontainer/devcontainer.json", "context/intake/backlog.md", ".agents/skills/requirement-refiner/SKILL.md",
-    ".agents/skills/goal-card/SKILL.md", ".github/PULL_REQUEST_TEMPLATE.md",
+    ".agents/skills/goal-card/SKILL.md", ".agents/skills/azure-release/SKILL.md", ".github/PULL_REQUEST_TEMPLATE.md",
+    "Dockerfile", "contracts/retail.openapi.json", "platform/azure/retail-environments.json",
     "src/server.mjs", "test/inventory.test.mjs"]) {
     assert.ok(existsSync(join(root, ...path.split("/"))), `${path} is at the repository root`);
   }
@@ -89,30 +71,7 @@ test("repository opens in a Codespace with Copilot and runs the tests", () => {
   assert.deepEqual(devcontainer.forwardPorts, [3000]);
 });
 
-test("attendee forks carry the planned backlog as a file the intake skill reads", () => {
-  const template = root;
-  const backlogFile = readFileSync(join(template, "context", "intake", "backlog.md"), "utf8");
-  for (const item of loadBacklog(join(root, "platform", "templates", "station-backlog.json")).issues) {
-    assert.ok(backlogFile.includes(item.title.replace(/^\[Backlog\]\s*/, "")), `backlog.md names ${item.id}`);
-  }
-  assert.doesNotMatch(backlogFile, /substitut|alternative|suggest/i);
-  const skill = readFileSync(join(template, ".agents", "skills", "requirement-refiner", "SKILL.md"), "utf8");
-  assert.match(skill, /context\/intake\/backlog\.md/);
-});
 
-test("profile traversal is rejected and concrete enterprise config is ignored", () => {
-  assert.throws(() => execFileSync(process.execPath, [
-    join(root, "platform", "scripts", "workshop.mjs"),
-    "cleanup",
-    "--profile",
-    "..",
-    "--station",
-    "test01",
-    "--apply"
-  ], { cwd: root, stdio: "pipe" }));
-  const ignore = readFileSync(join(root, ".gitignore"), "utf8");
-  assert.match(ignore, /^platform\/profiles\/enterprise\.json$/m);
-});
 
 test("repository carries reproducible Agentic Workflow inputs", () => {
   const template = root;
@@ -180,58 +139,8 @@ test("primary harnesses use Copilot without an Anthropic dependency", () => {
   assert.match(readFileSync(join(template, ".github", "CODEOWNERS"), "utf8"), /\/AGENTS\.md/);
 });
 
-test("verification preserves an existing station and cleanup rejects an unowned directory", () => {
-  const station = `safety-${process.pid}`;
-  const directory = join(root, ".workshop", `workshop-lab-${station}`);
-  assert.equal(existsSync(directory), false);
-  mkdirSync(directory, { recursive: true });
-  writeFileSync(join(directory, "keep.txt"), "Unrelated learner work");
-  const invoke = (command, extra = []) => execFileSync(process.execPath, [
-    join(root, "platform", "scripts", "workshop.mjs"), command,
-    "--profile", "sandbox", "--station", station, ...extra
-  ], { cwd: root, encoding: "utf8", stdio: "pipe" });
-  try {
-    assert.match(invoke("verify"), /PASS rendered station/);
-    assert.equal(readFileSync(join(directory, "keep.txt"), "utf8"), "Unrelated learner work");
-    assert.throws(() => invoke("render"), /Station already exists/);
-    assert.throws(() => invoke("cleanup", ["--apply"]), /ownership marker is missing/);
-    assert.equal(readFileSync(join(directory, "keep.txt"), "utf8"), "Unrelated learner work");
-  } finally {
-    rmSync(directory, { recursive: true, force: true });
-  }
-});
 
-test("backlog seed plan is idempotent and never duplicates existing work", () => {
-  const backlog = loadBacklog(join(root, "platform", "templates", "station-backlog.json"));
-  const first = planSeed(backlog, []);
-  assert.ok(first.every((item) => item.action === "create"));
-  const created = backlog.issues.map((issue, index) => ({ number: index + 1, title: issue.title, body: issueBody(issue) }));
-  assert.ok(planSeed(backlog, created).every((item) => item.action === "skip" && item.reason === "seed marker present"));
-  const renamed = [{ number: 9, title: "Renamed by a facilitator", body: issueBody(backlog.issues[0]) }];
-  assert.equal(planSeed(backlog, renamed)[0].action, "skip");
-  const manual = [{ number: 10, title: backlog.issues[1].title, body: "Created by hand" }];
-  assert.equal(planSeed(backlog, manual)[1].reason, "same title already exists");
-  assert.ok(planSeed(backlog, null).every((item) => item.action === "unverified"));
-  assert.deepEqual(missingLabels(backlog, ["backlog"]).map((label) => label.name), ["workshop-seed"]);
-  assert.deepEqual(missingLabels(backlog, ["Backlog", "Workshop-Seed"]), [], "GitHub label names are case-insensitive");
-  assert.doesNotMatch(JSON.stringify(backlog), /substitut|alternative|suggest/i,
-    "The seeded backlog must not pre-plan the workshop feature");
-});
 
-test("backlog seed is dry-run by default and refuses unsafe apply targets", () => {
-  const invoke = (extra) => execFileSync(process.execPath, [
-    join(root, "platform", "scripts", "workshop.mjs"), "seed", "--profile", "sandbox", "--station", "test01", ...extra
-  ], { cwd: root, encoding: "utf8", stdio: "pipe" });
-  const output = invoke(["--offline"]);
-  assert.match(output, /workshop-lab-test01/);
-  assert.match(output, /UNVERIFIED \[Backlog\] Alert when stock falls below a threshold/);
-  assert.match(output, /DRY RUN/);
-  assert.throws(() => invoke(["--offline", "--apply"]), /cannot apply offline/);
-  assert.throws(() => invoke(["--repository", "workshop-owner/github-loop-engineering", "--apply"]),
-    /applies only to workshop-owner\/workshop-lab-test01/);
-  assert.throws(() => invoke(["--repository", "workshop-owner/workshop-lab-other", "--apply"]),
-    /applies only to workshop-owner\/workshop-lab-test01/, "A different station repository is refused");
-});
 
 test("station evidence, intake skill, and path-scoped instructions stay consistent", () => {
   const template = root;
@@ -282,10 +191,9 @@ test("station evidence, intake skill, and path-scoped instructions stay consiste
   assert.match(read("context", "intake", "partial-stock-ticket.md"), /REQ-S07-4113/);
   assert.match(read("context", "intake", "README.md"), /WorkIQ MCP/);
   assert.equal(existsSync(join(template, "context", "intake", "ticket-digest.md")), false);
-  const backlog = loadBacklog(join(root, "platform", "templates", "station-backlog.json"));
-  const ids = new Set(backlog.issues.map((issue) => issue.id));
-  for (const id of ["low-stock-alert", "reservation-expiry", "dashboard-dark-mode", "audit-csv-export"]) {
-    assert.ok(ids.has(id), `Backlog item '${id}' must be seeded`);
+  const backlog = read("context", "intake", "backlog.md");
+  for (const title of ["Alert when stock falls below a threshold", "Expire unconfirmed reservations", "dark mode", "CSV"]) {
+    assert.ok(backlog.toLowerCase().includes(title.toLowerCase()), `Synthetic backlog retains ${title}`);
   }
   assert.equal(existsSync(join(template, "feature-request.md")), false);
   assert.equal(existsSync(join(template, ".github", "ISSUE_TEMPLATE", "reservation-feature.yml")), true);
@@ -302,7 +210,7 @@ test("station evidence, intake skill, and path-scoped instructions stay consiste
     assert.equal(existsSync(join(template, file)), true, `${file} is prepared before the fork`);
   }
   assert.equal(existsSync(join(template, ".github", "workflows", "codeql.yml")), false,
-    "attendee forks must not run a Code Security workflow; CodeQL remains in the facilitator security demo");
+    "attendee forks must not run a separate Code Security demo workflow");
   assert.equal(existsSync(join(template, ".github", "skills", "goal-card")), false,
     "The open-standard skill must not be duplicated under the GitHub-specific path");
   assert.equal(existsSync(join(template, ".github", "agents")), false,

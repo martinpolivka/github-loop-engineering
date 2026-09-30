@@ -67,8 +67,8 @@ export function sourceElement(source, id, ancestorClass) {
 }
 
 export function screenshotInputs(source) {
-  if (/inventory(?:\.reference)?\.mjs$/.test(source)) {
-    return [source, "src/server.mjs",
+  if (/reservations(?:\.reference)?\.mjs$/.test(source)) {
+    return [source, "src/catalog.mjs", "src/inventory.mjs", "src/server.mjs",
       ...["index.html", "app.js", "app.css"].map((file) => `public/${file}`)];
   }
   const path = source.split("#")[0];
@@ -140,10 +140,7 @@ export function validateRepository() {
     }
   }
 
-  const workflowDirectories = [
-    join(root, ".github", "workflows"),
-    join(root, "platform", "demos", "security-remediation", "workflows")
-  ];
+  const workflowDirectories = [join(root, ".github", "workflows")];
   for (const directory of workflowDirectories) {
     for (const workflow of walk(directory, ".yml")) {
       const content = readFileSync(workflow, "utf8");

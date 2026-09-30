@@ -2,19 +2,6 @@
   "id": "enterprise",
   "label": "Dedicated workshop organization",
   "githubHost": "github.com",
-  "owner": "REPLACE_WITH_STUDENT_ORGANIZATION",
-  "authoringRepository": "github-loop-engineering",
-  "repositoryPrefix": "workshop-station",
-  "visibility": "internal",
-  "stationMode": "per-team",
-  "allowRemoteProvision": false,
-  "allowRemoteSeed": true,
-  "allowRemoteDelete": false,
-  "teams": {
-    "platform": "workshop-platform",
-    "security": "workshop-security",
-    "instructors": "workshop-instructors"
-  },
   "capabilities": {
     "agenticWorkflows": "preview-check",
     "copilotCloudAgent": "policy-check",
@@ -24,6 +11,8 @@
     "codeQuality": "organization-all-repositories",
     "codeSecurity": "required",
     "secretProtection": "required",
-    "environments": "required"
+    "environments": "required",
+    "azureOci": "student-deployed-in-allocated-group",
+    "aca": "optional"
   }
 }

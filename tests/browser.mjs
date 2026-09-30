@@ -8,7 +8,7 @@ import { createHash } from "node:crypto";
 import { createRequire } from "node:module";
 import { chromium } from "playwright";
 import { htmlMarkup, materialFiles, root, screenshotInputs } from "./validation.mjs";
-import { copyStation } from "../platform/scripts/station.mjs";
+import { copyService } from "./service-fixture.mjs";
 const { printPlan, preparePrint, printOverflow, renderPdf, pdfPages } =
   createRequire(import.meta.url)("./../docs/assets/html-docs/validate.js");
 
@@ -71,15 +71,15 @@ async function captureImage(page, directory, file, source, theme, accent, descri
     })) };
 }
 
-async function pharmacyJourney() {
+async function retailJourney() {
   mkdirSync(join(root, ".workshop"), { recursive: true });
   const temporary = mkdtempSync(join(root, ".workshop", "workshop-browser-"));
   try {
     for (const state of ["baseline", "suggestion"]) {
       const directory = join(temporary, state);
-      copyStation(directory);
-      if (state === "suggestion") cpSync(join(root, "docs", "labs", "02-inner-loop", "artifacts", "inventory.reference.mjs"),
-        join(directory, "src", "inventory.mjs"));
+      copyService(directory);
+      if (state === "suggestion") cpSync(join(root, "docs", "labs", "02-inner-loop", "artifacts", "reservations.reference.mjs"),
+        join(directory, "src", "reservations.mjs"));
       const { buildServer } = await import(pathToFileURL(join(directory, "src", "server.mjs")).href);
       const service = buildServer();
       service.listen(0, "127.0.0.1");
@@ -89,34 +89,34 @@ async function pharmacyJourney() {
           const context = await browser.newContext({ colorScheme: theme, reducedMotion: "reduce",
             viewport: { width: 1440, height: 1100 } });
           const page = await context.newPage();
-          page.on("pageerror", (error) => failures.push(`Pharmacy ${state}: ${error.message}`));
+          page.on("pageerror", (error) => failures.push(`Retail ${state}: ${error.message}`));
           const url = `http://127.0.0.1:${service.address().port}`;
           await page.goto(url);
-          await page.locator('#stock tr[data-sku="MED-004"]').waitFor();
+          await page.locator('#stock tr[data-sku="SKU-004"]').waitFor();
           await page.getByRole("button", { name: "Request reservation", exact: true }).click();
           await page.locator('#result[data-status="409"]').waitFor();
           const result = await page.locator("#result").innerText();
-          check(result.includes(state === "baseline" ? "No suggestion" : "Suggestion: MED-004"),
-            `Pharmacy ${state}: correct unavailable-stock response`);
-          check(await page.locator('#stock tr[data-sku="MED-004"] td:last-child').innerText() === "6",
-            `Pharmacy ${state}: suggestion must not reserve stock`);
+          check(result.includes(state === "baseline" ? "No suggestion" : "Suggestion: SKU-004"),
+            `Retail ${state}: correct unavailable-stock response`);
+          check(await page.locator('#stock tr[data-sku="SKU-004"] td:last-child').innerText() === "6",
+            `Retail ${state}: suggestion must not reserve stock`);
           const source = state === "baseline"
-            ? "src/inventory.mjs"
-            : "docs/labs/02-inner-loop/artifacts/inventory.reference.mjs";
-          await screenshot(page, `pharmacy-${state}`, source, theme,
+            ? "src/reservations.mjs"
+            : "docs/labs/02-inner-loop/artifacts/reservations.reference.mjs";
+          await screenshot(page, `retail-${state}`, source, theme,
             "Actual local HTTP 409 response; synthetic data, not GitHub or a cloud deployment.");
           await page.setViewportSize({ width: 1280, height: 720 });
           await page.evaluate(() => scrollTo(0, 0));
           check(await page.locator("#result").evaluate((element) => {
             const box = element.getBoundingClientRect();
             return box.top >= 0 && box.bottom <= innerHeight;
-          }), `Pharmacy ${state}: the response must fit a 720p projector without scrolling`);
+          }), `Retail ${state}: the response must fit a 720p projector without scrolling`);
           await page.setViewportSize({ width: 390, height: 844 });
           check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
-            `Pharmacy ${state}: mobile overflow`);
+            `Retail ${state}: mobile overflow`);
           if (state === "suggestion") {
-            await page.getByRole("button", { name: "Choose MED-004", exact: true }).click();
-            check(await page.locator('#stock tr[data-sku="MED-004"] td:last-child').innerText() === "6",
+            await page.getByRole("button", { name: "Choose SKU-004", exact: true }).click();
+            check(await page.locator('#stock tr[data-sku="SKU-004"] td:last-child').innerText() === "6",
               "Choosing a suggestion must not create a reservation");
           }
           await context.close();
@@ -124,7 +124,7 @@ async function pharmacyJourney() {
         const context = await browser.newContext();
         const page = await context.newPage();
         await page.goto(`http://127.0.0.1:${service.address().port}`);
-        await page.locator("#sku").selectOption("MED-004");
+        await page.locator("#sku").selectOption("SKU-004");
         await page.getByRole("button", { name: "Request reservation", exact: true }).click();
         await page.locator('#result[data-status="201"]').waitFor();
         await page.getByRole("cell", { name: "5", exact: true }).waitFor();
@@ -132,10 +132,10 @@ async function pharmacyJourney() {
         const noScript = await browser.newContext({ javaScriptEnabled: false });
         const staticPage = await noScript.newPage();
         await staticPage.goto(`http://127.0.0.1:${service.address().port}`);
-        check(await staticPage.locator("#theme").isHidden(), "No-JS pharmacy: no dead theme control");
-        check(await staticPage.locator("#submit").isDisabled(), "No-JS pharmacy: no misleading submit control");
+        check(await staticPage.locator("#theme").isHidden(), "No-JS retail: no dead theme control");
+        check(await staticPage.locator("#submit").isDisabled(), "No-JS retail: no misleading submit control");
         check((await staticPage.locator("#stock-status").innerText()).includes("requires JavaScript"),
-          "No-JS pharmacy: explain the static stock state");
+          "No-JS retail: explain the static stock state");
         await noScript.close();
       } finally {
         const closed = new Promise((resolve, reject) => service.close((error) => error ? reject(error) : resolve()));
@@ -768,7 +768,7 @@ try {
   if (pages.some((file) => relative(root, file).replaceAll("\\", "/") === "docs/index.html")) {
     await landingPrintChecks();
   }
-  if (!pageFilter) await pharmacyJourney();
+  if (!pageFilter) await retailJourney();
   assert.deepEqual(failures, [], `Browser defects:\n${failures.join("\n")}`);
   const manifest = (records) => `${JSON.stringify({ capturedAt: new Date().toISOString(), browser: browser.version(),
     sourceHashFormat: "sha256-utf8-lf", captures: records }, null, 2)}\n`;

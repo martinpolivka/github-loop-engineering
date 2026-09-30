@@ -7,7 +7,7 @@ Mode: repair loop | Decision owner: product owner
 
 When a synthetic reservation is rejected because requested quantity exceeds
 available stock, keep the returned available quantity visible to the
-pharmacist. Never create an automatic partial reservation.
+store associate. Never create an automatic partial reservation.
 
 In scope: the reservation desk's HTTP 409 presentation and focused evidence.
 Not in scope: API changes, automatic partial fulfilment, workflows, or
@@ -24,7 +24,7 @@ dependencies.
 ## DONE WHEN
 
 1. **C01 - Available quantity stays visible**
-   Pass: requesting five `MED-002` items when four are available produces a
+   Pass: requesting five `SKU-002` items when four are available produces a
    visible HTTP 409 result that states four are available.
    Verify: run the service, submit the request in the reservation desk, and
    inspect the visible result and raw response.
@@ -34,7 +34,7 @@ dependencies.
    Recheck: C01 and C03.
 
 2. **C02 - No partial reservation**
-   Pass: the rejected request creates no reservation and leaves `MED-002` at
+   Pass: the rejected request creates no reservation and leaves `SKU-002` at
    four.
    Verify: compare `GET /stock` before and after the rejected request.
    Evidence: existing service test output and revision-bound pull request check.
@@ -51,7 +51,7 @@ dependencies.
 
 ## QUALITY
 
-Use plain, nonclinical language. Keep the quantity visible without implying
+Use plain storefront language. Keep the quantity visible without implying
 that a partial reservation occurred. Preserve keyboard and screen-reader
 behavior.
 

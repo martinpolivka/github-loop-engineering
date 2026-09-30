@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-This repository authors one customer-neutral full-day workshop around a synthetic pharmacy stock and reservation service. It is also the source repository attendees fork, so the opening demo, agent configuration, service baseline, checks, labs, recovery artifacts, and platform contracts must be complete before delivery.
+This repository authors one customer-neutral full-day workshop around a synthetic retail stock and reservation service. It is also the source repository attendees fork, so the opening demo, agent configuration, service baseline, checks, labs, recovery artifacts, and platform contracts must be complete before delivery.
 
 The central proposition is:
 
@@ -40,7 +40,7 @@ The workshop deliberately keeps the required chain small:
 3. The `goal-card` project skill turns each confirmed Issue into an approved Goal Card published before implementation.
 4. A visible local agent follows the feature Goal Card through assess-act-check-adjust and opens a PR. Copilot cloud agent receives the complete bug Goal Card at assignment time and opens a second PR.
 5. Lab 3 compares both handoffs. Deterministic CI and Code Quality run separately from native Copilot code review and PR-triggered Goal Card and documentation reviews before human merge decisions.
-6. Lab 4 packages the exact merged feature revision, runs tests and smoke checks, records an artifact digest, waits at a GitHub Environment, and produces a reversible READY or BLOCKED decision without claiming production deployment.
+6. Lab 4 uses an agent to review and deploy the prepared ARM template into the one preallocated Azure group, maps two federated identities to test/prod GitHub Environments, builds the merged retail image once, signs/verifies in test ACR, and approves same-digest promotion and a different prod signature. READY/BLOCKED includes rollback and ownership; ACA remains optional.
 7. The opening shows a bounded recurring repository pulse. In Lab 5, attendees author Issue-triage and deployment-readiness workflows, then inspect the pulse as a scheduled reconciliation pattern.
 
 Do not create parallel required PRDs, requirements documents, user-story documents, and goal files for this single feature. Larger requirement decomposition and spec-driven development are extensions after participants understand the core chain.
@@ -55,7 +55,7 @@ Do not create parallel required PRDs, requirements documents, user-story documen
 | 10:45-11:45 | 60 min | Lab 2 creates two Goal Cards, completes one local loop, starts one cloud loop, and produces two PRs. |
 | 11:45-12:35 | 50 min | Lab 3 compares and governs both PRs with deterministic and reasoning evidence. |
 | 12:35-13:20 | 45 min | Lunch. |
-| 13:20-14:10 | 50 min | Lab 4 binds the merged revision to tested bytes, environment authority, and rollback evidence. |
+| 13:20-14:10 | 50 min | Lab 4 deploys prepared test/prod resources, wires federations, and secures same-digest OCI promotion; ACA is optional. |
 | 14:10-14:20 | 10 min | Break. |
 | 14:20-15:00 | 40 min | Lab 5 authors triage and deployment-readiness workflows and inspects scheduled reconciliation. |
 | 15:00-15:30 | 30 min | Adoption discussion and Azure DevOps migration; extended deliveries add one hour. |
@@ -99,6 +99,15 @@ One implementation supports:
 
 Organization, tenant, subscription, repository prefix, team, environment, and identity values come from configuration. No attendee-facing material hard-codes them.
 
+Azure group allocation remains owned by the existing lab automation. Test/prod
+resources live in one allocated group, differentiated by Environment tags and
+distinct managed identities. Both pipeline identities are Owner on that group
+as an explicit workshop-only shortcut, not production security isolation.
+The participant deploys reviewed IaC and confirms identity mapping with
+`azure-release`; the facilitator prepares tools, quotas, rights, approved base
+digest, allocation output, reviewer, and a recovery station. Runtime identities
+for optional ACA are separate and AcrPull-only.
+
 ## 8. Reliability and recovery
 
 | Failure | Primary path | Honest fallback |
@@ -111,7 +120,9 @@ Organization, tenant, subscription, repository prefix, team, environment, and id
 | Code Quality unavailable | Native PR quality findings | Use deterministic CI and label Code Quality unavailable; do not substitute a reasoning review. |
 | Advanced security unavailable | Facilitator public-repository demo | Use only its recorded or source-bound evidence and never transfer the result to the attendee PR. |
 | Enterprise enforcement unavailable | Station ruleset | Inspect configuration or instructor demo and record the sandbox gap. |
-| Deployment unavailable | Governed environment | Analyze release evidence and design the boundary without claiming deployment. |
+| Azure bootstrap exceeds cap | Agent-led prepared ARM deployment | Use a facilitator station and retain its original repository/SHA; missing own-station capability remains BLOCKED. |
+| Signing or prod approval unavailable | Digest-based test/prod OCI workflow | Record BLOCKED, never use audit/skip, client secrets, ACR admin, or broader scope. |
+| ACA unavailable | Optional verified-digest runtime | Omit ACA; signed/verified OCI promotion is the required result. |
 
 Recovery never weakens the control being taught and never prints a synthetic pass result.
 

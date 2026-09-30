@@ -1,8 +1,8 @@
 # Loop Engineering with GitHub
 
-This repository is the workshop station and its materials in one. Attendees fork it and work on the pharmacy reservation service at the root. The workshop materials live in `docs/`, `platform/`, `tests/`, and `templates/`; when you change them, follow `.github/instructions/workshop-materials.instructions.md`.
+This repository is the workshop station and its materials in one. Attendees fork it and work on the retail reservation service at the root. The workshop materials live in `docs/`, `platform/`, `tests/`, and `templates/`; when you change them, follow `.github/instructions/workshop-materials.instructions.md`.
 
-## Pharmacy reservation service
+## Retail reservation service
 
 Use the issue and acceptance criteria as the implementation contract.
 

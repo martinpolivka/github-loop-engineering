@@ -186,7 +186,7 @@
     <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 5</p><h2 class="slide-title">Automate recurring<br><em>reasoning, not authority.</em></h2><p class="slide-lead">Author event-driven triage and release advice, then inspect a scheduled reconciliation loop.</p></div>
     <p class="eyebrow">14:20-15:00 &middot; 40 minutes</p>
     <h1>Agentic outer loop</h1>
-    <p class="subtitle">Create an Issue-triage Agentic Workflow, finish a deployment-readiness workflow over the deterministic evidence from Lab 4, and compare both with the prepared repository-pulse recurrence.</p>
+    <p class="subtitle">Create an Issue-triage Agentic Workflow, finish a deployment-readiness workflow over Lab 4's signed ACR image evidence, and compare both with the prepared repository-pulse recurrence.</p>
     <p><strong>Result:</strong> two attendee-authored workflow sources in one draft PR, at least one compiled lock when preview tooling is available, and a review of a third scheduled pattern.</p>
   </header>
   <nav class="doc-nav" aria-label="Workshop navigation"><a href="../../index.html#ch-agenda">All labs</a><a href="#main">Skip to content</a><a href="../04-trusted-delivery/index.html">Previous lab</a><a href="../../index.html">Workshop home</a></nav>
@@ -230,8 +230,8 @@
           <ol>
             <li>Copy <a href="artifacts/deployment-readiness.starter.md">the prepared scaffold</a> to <code>.github/workflows/deployment-readiness.md</code>.</li>
             <li>Complete its three instruction fields: required evidence, conditions that force <code>BLOCKED</code>, and the human decision that remains.</li>
-            <li>Require the run ID, candidate SHA, artifact digest, deterministic and smoke results, unresolved findings, and merged PR to agree.</li>
-            <li>Keep the workflow read-only with <code>noop</code> as its only safe output. It must not approve an environment, execute artifacts, access secrets, or deploy.</li>
+            <li>Require the run ID and attempt, candidate SHA, test/prod ACR repositories with the same OCI digest, both strict Notation verifications and pinned signers, prod approval, identity mapping, rollback digest, deterministic and smoke results, unresolved findings, and merged PR to agree. Explicitly label the lab's same-group Owner-role shortcut rather than calling it production isolation.</li>
+            <li>Keep the workflow read-only with <code>noop</code> as its only safe output. It reads GitHub evidence only; it must not query Azure, sign an image, approve an environment, execute artifacts, access secrets, or deploy.</li>
           </ol>
           <p><strong>Expected result:</strong> reasoning can summarize operational evidence, but only the deterministic workflow and GitHub Environment can establish or exercise their controls.</p>
           <p>If you run out of time, compare your source with <a href="artifacts/deployment-readiness.reference.md">the reference contract</a>.</p>
@@ -272,7 +272,7 @@
     </section>
   </main>
   <section class="takeaway" id="closing"><p>You authored bounded reasoning for intake and release evidence, then traced how a scheduled loop reconciles its own prior output. Each workflow keeps trigger, evidence, effect, stop, and human authority reviewable.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Automate the loop.<br><em>Keep authority human.</em></h2></div></section>
-  <footer class="doc-footer">Lab 5 of 5 &middot; Continue with adoption discussion and Azure DevOps migration &middot; Synthetic pharmacy data only.</footer>
+  <footer class="doc-footer">Lab 5 of 5 &middot; Continue with adoption discussion and Azure DevOps migration &middot; Synthetic retail data only.</footer>
 </div>
 </body>
 </html>

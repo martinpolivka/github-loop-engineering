@@ -2,6 +2,7 @@
 
 - Status: Superseded by [ADR 0015](0015-progressive-inner-and-outer-loops.md)
 - Date: 2026-09-29
+- Generated-station tooling retired by [ADR 0017](0017-current-workshop-only-platform.md); attendee forks remain the creation path.
 
 ## Context
 

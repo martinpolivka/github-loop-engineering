@@ -152,9 +152,16 @@ test("labs present one progressive loop without promising unavailable controls",
   assert.match(lab3, /two agent handoffs/i);
   assert.doesNotMatch(lab3, /quality-review/);
   assert.match(lab4, /release-rehearsal\.yml/);
-  assert.match(lab4, /workshop-preview/);
+  assert.match(lab4, /workshop-test/);
+  assert.match(lab4, /workshop-prod/);
+  assert.match(lab4, /\/azure-release/);
+  assert.match(lab4, /one allocated resource group/i);
+  assert.match(lab4, /not Azure authorization isolation/i);
+  assert.match(lab4, /same manifest digest|digest is exactly the test digest/i);
+  assert.match(lab4, /Azure SRE/);
+  assert.doesNotMatch(lab4, /workshop-signing|workshop-preview|retail-reservation\.tgz/);
   assert.match(lab4, /SHA-256/);
-  assert.match(lab4, /no external production deployment was performed/i);
+  assert.match(lab4, /no external production deployment is performed|not proof of a production deployment/i);
   assert.match(lab5, /issue-triage\.reference\.md/);
   assert.match(lab5, /deployment-readiness\.starter\.md/);
   assert.match(lab5, /repository-pulse\.md/);
@@ -176,7 +183,7 @@ test("authoritative documents describe evidence, inner loop, outer loop, and rec
   assert.match(sources, /red acceptance test|red test/i);
   assert.match(sources, /two pull requests|two PRs/i);
   assert.match(sources, /cloud[- ]agent/i);
-  assert.match(sources, /artifact digest/i);
+  assert.match(sources, /OCI digest|manifest digest/i);
   assert.match(sources, /Agentic Workflow next decision/i);
   assert.doesNotMatch(sources, /assign(?:ing)? (?:that |the approved )?Issue to Copilot creates the implementation pull request/i);
 });
@@ -227,7 +234,7 @@ test("every material uses canonical first-paint tokens, identity and presentatio
   const canonical = (name) => readFileSync(join(root, "docs", "assets", "html-docs", name), "utf8")
     .replaceAll("\r\n", "\n").trim();
   const files = materialFiles();
-  assert.equal(files.length, 10, "The workshop hub, five labs and four operator runbooks must be covered");
+  assert.equal(files.length, 7, "The workshop hub, five labs and current operator runbook must be covered");
   let decks = 0;
   for (const file of files) {
     const source = readFileSync(file, "utf8").replaceAll("\r\n", "\n");

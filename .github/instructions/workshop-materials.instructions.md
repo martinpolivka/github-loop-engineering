@@ -6,7 +6,7 @@ applyTo: "docs/**,platform/**,tests/**,templates/**,AGENDA.md,PLAN.md"
 
 ## Purpose
 
-This repository authors one full-day technical workshop, **Loop Engineering with GitHub**, defined in `AGENDA.md`. Its progressive scenario is a synthetic pharmacy stock and reservation service.
+This repository authors one full-day technical workshop, **Loop Engineering with GitHub**, defined in `AGENDA.md`. Its progressive scenario is a synthetic retail stock and reservation service.
 
 The workshop presents GitHub as an orchestration layer for people, coding agents, deterministic automation, security, and delivery governance. Optimize for attendee learning, live-delivery reliability, and credible enterprise adoption — not feature count.
 
@@ -39,15 +39,13 @@ Prefer current first-party GitHub documentation. Record the validation date for 
 
 ## Repository layout
 
-The repository root is the attendee station: the pharmacy service in `src/`, `test/`, `public/`, `data/`, `scripts/`, and `context/`, with `.devcontainer/`, `AGENTS.md`, and `CLAUDE.md`. Attendees fork the whole repository. The workshop materials live beside it:
-
-The repository root is the attendee station: the pharmacy service in `src/`, `test/`, `public/`, `data/`, `scripts/`, and `context/`, with `.devcontainer/`, `AGENTS.md`, and `CLAUDE.md`. Attendees fork the whole repository. The workshop materials live beside it:
+The repository root is the attendee station: the retail service in `src/`, `test/`, `public/`, `data/`, `scripts/`, and `context/`, with `.devcontainer/`, `AGENTS.md`, and `CLAUDE.md`. Attendees fork the whole repository. The workshop materials live beside it:
 
 ```text
 docs/                    index.html (agenda, opening demo, Slides), labs/, assets/, adr/
 docs/labs/               one directory per lab: index.html plus artifacts/
-platform/demos/          demo source, fixtures, automation, operator notes
-platform/                profiles/, scripts/, templates/ (backlog seed)
+platform/demos/full-day/ current operator guide only
+platform/                azure/ templates, capability profiles/, preflight and OCI scripts/
 templates/               reusable authoring templates
 tests/                   materials integrity checks (the station's own tests are in test/)
 ```
@@ -102,7 +100,7 @@ Record significant decisions about content architecture, station isolation, work
 
 ```powershell
 npm run test:materials    # materials integrity, lab artifacts, and station tests
-npm run validate          # HTML structure, local references, profiles
+npm run validate          # HTML structure and local references
 npm run validate:html     # six palettes, offline, responsive, no-JS
 npm run validate:workflows
 npm run capture           # regenerate source-bound screenshots

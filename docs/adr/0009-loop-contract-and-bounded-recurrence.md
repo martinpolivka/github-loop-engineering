@@ -2,6 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-09-15
+- Historical security-demo continuation and its verifier were retired by [ADR 0017](0017-current-workshop-only-platform.md). The reusable loop contract and state controller remain supported.
 
 ## Context
 

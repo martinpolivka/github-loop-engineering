@@ -18,8 +18,9 @@ test("serves health and synthetic stock", async () => {
     const health = await fetch(`${baseUrl}/health`).then((response) => response.json());
     const stock = await fetch(`${baseUrl}/stock`).then((response) => response.json());
     assert.equal(health.status, "ready");
+    assert.equal(health.service, "retail-reservation");
     assert.equal(stock.items.length, 4);
-    assert.equal(stock.items.find((item) => item.sku === "MED-003").available, 0);
+    assert.equal(stock.items.find((item) => item.sku === "SKU-003").available, 0);
   });
 });
 
@@ -44,7 +45,7 @@ test("returns an explicit conflict for unavailable stock", async () => {
     const response = await fetch(`${baseUrl}/reservations`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sku: "MED-003", quantity: 1 })
+      body: JSON.stringify({ sku: "SKU-003", quantity: 1 })
     });
     assert.equal(response.status, 409);
     const body = await response.json();
@@ -59,20 +60,20 @@ test("creates a reservation and exposes the decremented stock", async () => {
     const response = await fetch(`${baseUrl}/reservations`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sku: "MED-001", quantity: 2 })
+      body: JSON.stringify({ sku: "SKU-001", quantity: 2 })
     });
     assert.equal(response.status, 201);
     assert.equal((await response.json()).remaining, 10);
     const stock = await fetch(`${baseUrl}/stock`).then((result) => result.json());
-    assert.equal(stock.items.find((item) => item.sku === "MED-001").available, 10);
+    assert.equal(stock.items.find((item) => item.sku === "SKU-001").available, 10);
   });
 });
 
 test("preserves validation and not-found HTTP contracts", async () => {
   await withServer(async (baseUrl) => {
     for (const [payload, expectedStatus, expectedError] of [
-      [{ sku: "MED-001", quantity: 0 }, 400, "quantity must be an integer from 1 to 5"],
-      [{ sku: "MED-999", quantity: 1 }, 404, "medicine not found"]
+      [{ sku: "SKU-001", quantity: 0 }, 400, "quantity must be an integer from 1 to 5"],
+      [{ sku: "SKU-999", quantity: 1 }, 404, "item not found"]
     ]) {
       const response = await fetch(`${baseUrl}/reservations`, {
         method: "POST",

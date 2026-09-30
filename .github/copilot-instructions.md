@@ -1,8 +1,8 @@
-# Pharmacy service instructions
+# Retail service instructions
 
 - Use Node.js 22 or newer and built-in modules only.
 - Keep the service dependency-free and deterministic.
-- Use synthetic medicine identifiers and never introduce patient data.
+- Use synthetic product identifiers and never introduce patient data.
 - Preserve the JSON API contract and explicit HTTP status codes.
 - Add or update `node:test` coverage for every behavior change.
 - Run `npm test` before presenting a change.

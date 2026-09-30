@@ -1,0 +1,211 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "namePrefix": { "type": "string", "minLength": 3, "maxLength": 6 },
+    "stationId": { "type": "string" },
+    "provisionerObjectId": { "type": "string" },
+    "provisionerType": { "type": "string", "allowedValues": ["User", "ServicePrincipal"] },
+    "roleIds": { "type": "object" },
+    "resourceStem": { "type": "string", "minLength": 11, "maxLength": 14 },
+    "assignmentNames": { "type": "object" },
+    "deployAca": { "type": "bool", "defaultValue": false }
+  },
+  "variables": {
+    "environments": ["test", "prod"],
+    "stem": "[parameters('resourceStem')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.ContainerRegistry/registries",
+      "apiVersion": "2023-07-01",
+      "copy": { "name": "registries", "count": 2 },
+      "name": "[concat(variables('stem'), variables('environments')[copyIndex()])]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "WorkshopStation": "[parameters('stationId')]",
+        "Environment": "[variables('environments')[copyIndex()]]"
+      },
+      "sku": { "name": "Basic" },
+      "properties": { "adminUserEnabled": false }
+    },
+    {
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "copy": { "name": "pipelineIdentities", "count": 2 },
+      "name": "[concat(variables('stem'), '-', variables('environments')[copyIndex()])]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "WorkshopStation": "[parameters('stationId')]",
+        "Environment": "[variables('environments')[copyIndex()]]",
+        "Purpose": "pipeline",
+        "SecurityModel": "workshop-rg-owner-not-production"
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2023-07-01",
+      "copy": { "name": "vaults", "count": 2 },
+      "name": "[concat(variables('stem'), '-', variables('environments')[copyIndex()])]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "WorkshopStation": "[parameters('stationId')]",
+        "Environment": "[variables('environments')[copyIndex()]]"
+      },
+      "properties": {
+        "tenantId": "[subscription().tenantId]",
+        "sku": { "family": "A", "name": "standard" },
+        "enableRbacAuthorization": true,
+        "enableSoftDelete": true,
+        "softDeleteRetentionInDays": 7,
+        "enablePurgeProtection": true,
+        "accessPolicies": []
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "copy": { "name": "workshopOwnerRoles", "count": 2 },
+      "name": "[parameters('assignmentNames')[concat(variables('environments')[copyIndex()], '_owner')]]",
+      "dependsOn": ["pipelineIdentities"],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleIds').owner)]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', concat(variables('stem'), '-', variables('environments')[copyIndex()])), '2023-01-31').principalId]",
+        "principalType": "ServicePrincipal",
+        "description": "Workshop-only RG Owner. Test/prod identities are distinct, but this is not authorization isolation."
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "copy": { "name": "registryPushRoles", "count": 2 },
+      "name": "[parameters('assignmentNames')[concat(variables('environments')[copyIndex()], '_push')]]",
+      "scope": "[resourceId('Microsoft.ContainerRegistry/registries', concat(variables('stem'), variables('environments')[copyIndex()]))]",
+      "dependsOn": ["registries", "pipelineIdentities"],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleIds').acrPush)]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', concat(variables('stem'), '-', variables('environments')[copyIndex()])), '2023-01-31').principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "name": "[parameters('assignmentNames').prod_readTest]",
+      "scope": "[resourceId('Microsoft.ContainerRegistry/registries', concat(variables('stem'), 'test'))]",
+      "dependsOn": ["registries", "pipelineIdentities"],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleIds').acrPull)]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', concat(variables('stem'), '-prod')), '2023-01-31').principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "copy": { "name": "signingRoles", "count": 2 },
+      "name": "[parameters('assignmentNames')[concat(variables('environments')[copyIndex()], '_crypto')]]",
+      "scope": "[resourceId('Microsoft.KeyVault/vaults', concat(variables('stem'), '-', variables('environments')[copyIndex()]))]",
+      "dependsOn": ["vaults", "pipelineIdentities"],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleIds').cryptoUser)]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', concat(variables('stem'), '-', variables('environments')[copyIndex()])), '2023-01-31').principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "copy": { "name": "certificateReadRoles", "count": 2 },
+      "name": "[parameters('assignmentNames')[concat(variables('environments')[copyIndex()], '_readCertificate')]]",
+      "scope": "[resourceId('Microsoft.KeyVault/vaults', concat(variables('stem'), '-', variables('environments')[copyIndex()]))]",
+      "dependsOn": ["vaults", "pipelineIdentities"],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleIds').certificateUser)]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', concat(variables('stem'), '-', variables('environments')[copyIndex()])), '2023-01-31').principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "copy": { "name": "provisionerCertificateRoles", "count": 2 },
+      "name": "[parameters('assignmentNames')[concat(variables('environments')[copyIndex()], '_createCertificate')]]",
+      "scope": "[resourceId('Microsoft.KeyVault/vaults', concat(variables('stem'), '-', variables('environments')[copyIndex()]))]",
+      "dependsOn": ["vaults"],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleIds').certificateOfficer)]",
+        "principalId": "[parameters('provisionerObjectId')]",
+        "principalType": "[parameters('provisionerType')]"
+      }
+    },
+    {
+      "condition": "[parameters('deployAca')]",
+      "type": "Microsoft.App/managedEnvironments",
+      "apiVersion": "2024-03-01",
+      "copy": { "name": "containerEnvironments", "count": 2 },
+      "name": "[concat(variables('stem'), '-', variables('environments')[copyIndex()])]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "WorkshopStation": "[parameters('stationId')]",
+        "Environment": "[variables('environments')[copyIndex()]]"
+      },
+      "properties": {
+        "workloadProfiles": [{ "name": "Consumption", "workloadProfileType": "Consumption" }]
+      }
+    },
+    {
+      "condition": "[parameters('deployAca')]",
+      "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+      "apiVersion": "2023-01-31",
+      "copy": { "name": "runtimeIdentities", "count": 2 },
+      "name": "[concat(variables('stem'), '-', variables('environments')[copyIndex()], '-runtime')]",
+      "location": "[resourceGroup().location]",
+      "tags": {
+        "WorkshopStation": "[parameters('stationId')]",
+        "Environment": "[variables('environments')[copyIndex()]]",
+        "Purpose": "runtime"
+      }
+    },
+    {
+      "condition": "[parameters('deployAca')]",
+      "type": "Microsoft.Authorization/roleAssignments",
+      "apiVersion": "2022-04-01",
+      "copy": { "name": "runtimePullRoles", "count": 2 },
+      "name": "[parameters('assignmentNames')[concat(variables('environments')[copyIndex()], '_runtimePull')]]",
+      "scope": "[resourceId('Microsoft.ContainerRegistry/registries', concat(variables('stem'), variables('environments')[copyIndex()]))]",
+      "dependsOn": ["registries", "runtimeIdentities"],
+      "properties": {
+        "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', parameters('roleIds').acrPull)]",
+        "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', concat(variables('stem'), '-', variables('environments')[copyIndex()], '-runtime')), '2023-01-31').principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    }
+  ],
+  "outputs": {
+    "test": {
+      "type": "object",
+      "value": {
+        "registryName": "[concat(variables('stem'), 'test')]",
+        "loginServer": "[reference(resourceId('Microsoft.ContainerRegistry/registries', concat(variables('stem'), 'test')), '2023-07-01').loginServer]",
+        "vaultName": "[concat(variables('stem'), '-test')]",
+        "identityName": "[concat(variables('stem'), '-test')]",
+        "acaEnvironmentName": "[concat(variables('stem'), '-test')]",
+        "appName": "[concat(variables('stem'), '-test')]",
+        "runtimeIdentityId": "[if(parameters('deployAca'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', concat(variables('stem'), '-test-runtime')), '')]"
+      }
+    },
+    "prod": {
+      "type": "object",
+      "value": {
+        "registryName": "[concat(variables('stem'), 'prod')]",
+        "loginServer": "[reference(resourceId('Microsoft.ContainerRegistry/registries', concat(variables('stem'), 'prod')), '2023-07-01').loginServer]",
+        "vaultName": "[concat(variables('stem'), '-prod')]",
+        "identityName": "[concat(variables('stem'), '-prod')]",
+        "acaEnvironmentName": "[concat(variables('stem'), '-prod')]",
+        "appName": "[concat(variables('stem'), '-prod')]",
+        "runtimeIdentityId": "[if(parameters('deployAca'), resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', concat(variables('stem'), '-prod-runtime')), '')]"
+      }
+    }
+  }
+}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Lab 4: package an exact reviewed revision, verify smoke evidence and artifact identity, and exercise an environment approval boundary.">
+  <meta name="description" content="Lab 4: agent-deploy tagged Azure test/prod resources, map federated identities, and secure same-digest OCI image promotion with Notation and Key Vault.">
   <title>Lab 4 &middot; Trusted delivery and operational readiness | GitHub workshop</title>
   <meta name="doc-id" content="workshop-lab-04-trusted-delivery">
   <script data-doc-bootstrap>
@@ -183,103 +183,119 @@
 </div>
 <div class="doc">
   <header class="doc-header" id="opening">
-    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 4</p><h2 class="slide-title">Release evidence.<br><em>Not release theatre.</em></h2><p class="slide-lead">Bind reviewed source, tested bytes, environment authority, and rollback into one verifiable chain.</p></div>
+    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 4</p><h2 class="slide-title">Build the image.<br><em>Earn the signature.</em></h2><p class="slide-lead">Connect your reviewed retail change to an approved, signed OCI image in Azure Container Registry.</p></div>
     <p class="eyebrow">13:20-14:10 &middot; 50 minutes</p>
     <h1>Trusted delivery and operational readiness</h1>
-    <p class="subtitle">Package the exact reviewed revision, prove the artifact with deterministic tests and smoke checks, wait at a GitHub Environment gate, and make a READY or BLOCKED decision without pretending to deploy production.</p>
-    <p><strong>Result:</strong> one release-rehearsal run that connects the current <code>main</code> SHA, workflow run, immutable artifact digest, smoke evidence, environment approval, rollback candidate, and named owner.</p>
-    <p><strong>Prepared start:</strong> the feature PR from Lab 3 is merged, <code>.github/workflows/release-rehearsal.yml</code> exists on <code>main</code>, and Station has a <code>workshop-preview</code> environment with a required reviewer.</p>
+    <p class="subtitle">Let your agent deploy the prepared test/prod resources into your allocated Azure group. Map two managed identities to GitHub Environments, then build once, sign in test, and approve promotion of the exact digest into prod.</p>
+    <p><strong>Result:</strong> two tagged Azure environments, two distinct OIDC federations, and one image digest with separately verified test/prod signatures, a prod approval record, rollback candidate, and named owner.</p>
+    <p><strong>Prepared start:</strong> the feature PR from Lab 3 is merged. The facilitator supplies your trusted resource-group allocation, Azure and GitHub access, prod reviewer, approved base-image digest, and working Azure CLI. The ARM resource template, <code>/azure-release</code> skill, Dockerfile, and <code>.github/workflows/release-rehearsal.yml</code> are already in your fork. You customize and deploy them; you do not write infrastructure from scratch.</p>
+    <p>This is the same retail API and storefront from Labs 1-3, with hardcoded synthetic stock and no database. ACR publication and signing are real Azure operations. Running the application in Azure Container Apps is optional; image security is the required outcome.</p>
+    <aside class="callout callout--warning"><p class="callout-label">Workshop security model</p><p>Test and prod are tagged resources inside <strong>one allocated resource group</strong>, not separate groups. Both pipeline identities have <strong>Owner</strong> on that group by workshop design. Different tags and client IDs demonstrate mapping and GitHub approvals, <strong>not Azure authorization isolation or production least privilege</strong>. Never copy this shortcut into a production platform.</p></aside>
   </header>
   <nav class="doc-nav" aria-label="Workshop navigation"><a href="../../index.html#ch-agenda">All labs</a><a href="#main">Skip to content</a><a href="../03-governed-pr/index.html">Previous lab</a><a href="../05-agentic-outer-loop/index.html">Next lab</a></nav>
-  <nav class="toc" aria-label="Contents"><p class="toc-label">Contents</p><ol><li><a href="#ch-identity">Choose the revision</a></li><li><a href="#ch-evidence">Build release evidence</a></li><li><a href="#ch-authority">Exercise authority</a></li><li><a href="#ch-decision">Record readiness</a></li></ol></nav>
+  <nav class="toc" aria-label="Contents"><p class="toc-label">Contents</p><ol><li><a href="#ch-identity">Choose the revision</a></li><li><a href="#ch-evidence">Build and publish</a></li><li><a href="#ch-authority">Authorize signing</a></li><li><a href="#ch-decision">Verify and decide</a></li></ol></nav>
   <main id="main">
-    <section class="chapter" id="ch-identity"><h2 class="chapter-label">Name exactly what can move</h2>
+    <section class="chapter" id="ch-identity"><h2 class="chapter-label">Own the allocation before deploying resources</h2>
       <article class="card card--lead" id="card-identity" data-open>
-        <div class="slide-content"><h2 class="slide-title">Reviewed head, merge SHA,<br><em>and artifact are different.</em></h2><ul class="slide-points"><li class="frag">Review judges a PR head.</li><li class="frag">Merge creates a main revision.</li><li class="frag">Packaging creates identifiable bytes.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Select the release candidate</span><span class="card-sub">8 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="slide-content"><h2 class="slide-title">One allocated group.<br><em>Two visible environments.</em></h2><ul class="slide-points"><li class="frag">Your agent reviews a prepared IaC template.</li><li class="frag">Test and prod use different resources.</li><li class="frag">Owner is a workshop shortcut.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Deploy your test/prod resources with the agent</span><span class="card-sub">15 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
-            <li>Open the merged feature PR. Record the reviewed head SHA and the resulting merge commit SHA.</li>
-            <li>Open the repository's <strong>Code</strong> page and confirm the merge commit is the current tip of <code>main</code>.</li>
-            <li>Copy the full 40-character <code>main</code> SHA. This is the only candidate the prepared workflow accepts.</li>
+            <li>Open the trusted allocation supplied by the lab platform. Confirm its subscription, existing resource group, and ownership tag. Never select an arbitrary group from a subscription list.</li>
+            <li>Send:
+              <div class="code"><pre><code>/azure-release Prepare this fork in my allocated Azure resource group. Use the supplied allocation, review the prepared ARM template, guide me through naming and the prod reviewer, and deploy test/prod only after showing the plan and receiving my approval. Keep ACA off for the required path. Stop before wiring the GitHub federations.</code></pre></div>
+            </li>
+            <li>Review the proposed test/prod ACRs, vaults, identities, costs, and Owner-role shortcut. Approve the read-only Azure what-if first, then separately approve deployment. The template uses incremental group-scope deployment and cannot create a resource group.</li>
+            <li>Watch the actual deployment complete. Inspect the resources and their <code>Environment=test|prod</code> and <code>WorkshopStation</code> tags. The allocator still owns cleanup of this group.</li>
           </ol>
-          <p>The workflow rejects an abbreviated SHA, a stale main revision, or a PR head that was never integrated. That prevents a green review from becoming an ambiguous release claim.</p>
-          <p><strong>Checkpoint:</strong> you can state which revision was reviewed, which revision was merged, and which revision will be packaged.</p>
+          <p>The template is ARM JSON deployed through Azure CLI: no Terraform provider install, remote state, or extra package setup is required. The agent may help customize parameters, but must not replace the reviewed template with invented infrastructure.</p>
+          <p><strong>Checkpoint:</strong> your one allocated group contains separate test/prod resources. If deployment or role propagation hits the 15-minute cap, use the facilitator's prepared station and label the evidence accordingly.</p>
         </div>
       </article>
     </section>
-    <section class="chapter" id="ch-evidence"><h2 class="chapter-label">Build deterministic evidence from that revision</h2>
+    <section class="chapter" id="ch-evidence"><h2 class="chapter-label">Map identities before building once</h2>
       <article class="card" id="card-dispatch">
-        <div class="slide-content"><h2 class="slide-title">The workflow accepts<br><em>one exact candidate.</em></h2><ul class="slide-points"><li class="frag">Tests run at the candidate SHA.</li><li class="frag">Smoke checks exercise the service.</li><li class="frag">Packaging produces a digest.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Run the release rehearsal</span><span class="card-sub">10 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="slide-content"><h2 class="slide-title">Two identities.<br><em>Two environment subjects.</em></h2><ul class="slide-points"><li class="frag">Test federation names workshop-test.</li><li class="frag">Prod federation names workshop-prod.</li><li class="frag">Environment variables select the correct client.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Connect test/prod identities to the workflow</span><span class="card-sub">8 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
-            <li>Open <strong>Actions</strong>, select <strong>Trusted release rehearsal</strong>, then choose <strong>Run workflow</strong>.</li>
-            <li>Keep the workflow branch on <code>main</code>. Paste the full candidate SHA into <strong>Full main-branch commit SHA to package and promote</strong>.</li>
-            <li>Start the run and open <strong>Build revision-bound evidence</strong>.</li>
-            <li>Confirm the job validates candidate identity, checks out that exact SHA, requires it to equal current <code>origin/main</code>, runs <code>npm test</code>, and completes the three synthetic smoke checks.</li>
+            <li>Ask the same <code>/azure-release</code> agent to show both immutable GitHub environment subjects, Azure client IDs, issuer, audience, and expected variable scopes before writing the federations.</li>
+            <li>Confirm that test maps to <code>workshop-test</code> and prod maps to <code>workshop-prod</code>, with different managed identities, ACR hosts, vaults, and public certificate fingerprints. Approve wiring only after checking your fork and allocation.</li>
+            <li>Inspect both Environments in GitHub <strong>Settings</strong>. Each selects only <code>main</code>; prod also requires the chosen reviewer, blocks self-review, and disables administrator bypass.</li>
+            <li>Inspect the ready workflow with your agent. Build has no Azure token; test uses the test environment; prod requires successful test and the separate approval. Each environment supplies a different <code>AZURE_CLIENT_ID</code>. Run the agent's read-back preflight.</li>
           </ol>
-          <p><strong>Expected result:</strong> the package job is green and the promotion job waits for the <code>workshop-preview</code> environment reviewer.</p>
-          <aside class="callout callout--warning"><p class="callout-label">Deterministic boundary</p><p>This workflow does not ask a model whether the release is good. It proves fixed conditions against fixed evidence and stops on failure.</p></aside>
+          <p><strong>Expected result:</strong> two real federated credentials and read-back-confirmed environment variables. OIDC uses short-lived tokens, never a client secret. Setup is not proof that an image has been signed.</p>
         </div>
       </article>
       <article class="card" id="card-artifact">
-        <div class="slide-content"><h2 class="slide-title">A file name is not<br><em>artifact identity.</em></h2><ul class="slide-points"><li class="frag">Digest identifies packaged bytes.</li><li class="frag">Manifest records producing context.</li><li class="frag">Smoke evidence names observed behavior.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Inspect the candidate evidence</span><span class="card-sub">10 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="slide-content"><h2 class="slide-title">A tag is a label.<br><em>A digest is identity.</em></h2><ul class="slide-points"><li class="frag">Version tags make images findable.</li><li class="frag">Manifest digests name exact OCI bytes.</li><li class="frag">Source SHA and image digest differ.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Build, sign, and verify the test image</span><span class="card-sub">10 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
-            <li>While promotion waits, open the package job summary and its uploaded <code>release-candidate-&lt;SHA&gt;</code> artifact.</li>
-            <li>Confirm it contains <code>pharmacy-reservation.tgz</code>, <code>pharmacy-reservation.tgz.sha256</code>, and <code>release.json</code>.</li>
-            <li>Read <code>release.json</code>. Match <code>candidateSha</code>, <code>runId</code>, repository, workflow, and the three smoke checks to the current run.</li>
-            <li>Read the digest file. The SHA-256 value identifies the packaged bytes, not merely the source revision or artifact display name.</li>
+            <li>Record the feature PR head and merge SHA, then copy the current full 40-character <code>main</code> SHA. If the bug was also merged, the current tip includes both changes.</li>
+            <li>Under <strong>Actions</strong>, run <strong>Trusted OCI release</strong> on <code>main</code> with that candidate SHA. The workflow rejects a stale SHA or a release started from another branch.</li>
+            <li>Inspect <strong>Test and build exact retail revision</strong>: <code>npm test</code>, one image build from a pinned base, non-root container smoke checks, and no Azure credentials.</li>
+            <li>Inspect <strong>Publish, sign, and verify in test</strong>. It loads the tested image without rebuilding, publishes a version tag to test ACR, signs the manifest digest through test Key Vault, and runs strict Notation verification.</li>
+            <li>Read <code>verified-test-&lt;attempt&gt;</code>. Match source SHA, run/attempt, registry, manifest digest, smoke results, exact test signer, and public certificate fingerprint. Prod now waits for approval.</li>
           </ol>
-          <p><strong>Checkpoint:</strong> you can move the artifact and its evidence together without losing the revision or producing workflow.</p>
+          <p><strong>Checkpoint:</strong> source SHA, local image ID, mutable version tag, and OCI manifest digest are different. Signing always addresses <code>registry/repository@sha256:...</code>.</p>
         </div>
       </article>
     </section>
     <section class="chapter" id="ch-authority"><h2 class="chapter-label">Keep evidence separate from authority</h2>
       <article class="card" id="card-approval">
-        <div class="slide-content"><h2 class="slide-title">Green evidence informs.<br><em>The environment authorizes.</em></h2><ul class="slide-points"><li class="frag">A reviewer reads exact evidence.</li><li class="frag">Approval resumes one environment job.</li><li class="frag">No production write occurs.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 4 &mdash; Review and approve the preview boundary</span><span class="card-sub">10 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="slide-content"><h2 class="slide-title">Promote the digest.<br><em>Do not rebuild for prod.</em></h2><ul class="slide-points"><li class="frag">A different reviewer approves the transition.</li><li class="frag">ORAS copies the identical OCI manifest.</li><li class="frag">Prod Key Vault supplies a different signature.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 4 &mdash; Approve promotion to the prod registry</span><span class="card-sub">9 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
-            <li>Ask the configured reviewer to open the waiting deployment. The person who dispatched the run must not silently approve their own evidence.</li>
-            <li>The reviewer verifies the candidate SHA, required job, artifact digest, smoke checks, and absence of unresolved release blockers.</li>
-            <li>The reviewer approves <code>workshop-preview</code>. Open <strong>Promote approved workshop candidate</strong> and confirm it downloads the named artifact, verifies SHA-256, and checks <code>release.json</code>.</li>
-            <li>Read the job summary. It must explicitly say that no external production deployment was performed.</li>
+            <li>Ask the configured reviewer to inspect the waiting <code>workshop-prod</code> deployment and test evidence. Self-review and administrator bypass are disabled.</li>
+            <li>The reviewer checks the merged PR, SHA, strict test signature verification, image digest, rollback candidate, and unresolved blockers, then approves or rejects the transition.</li>
+            <li>Open <strong>Promote exact test digest and verify the prod signature</strong>. The job uses the prod managed identity, rechecks current <code>main</code> and the test signature, and copies the manifest to prod ACR with ORAS.</li>
+            <li>Confirm the target manifest digest is exactly the test digest. The prod vault signs with its own pinned key version; a new image build or a changed manifest fails the promotion.</li>
           </ol>
-          <p>The GitHub Environment creates a real deployment and approval record. In this workshop, "promotion" means verification at the preview boundary; it does not mean cloud resources or production changed.</p>
-          <aside class="callout callout--warning"><p class="callout-label">Sandbox path</p><p>If required reviewers are unavailable, inspect the facilitator's source-bound recorded run, then execute the workflow only to observe packaging. Label environment approval unavailable; an immediate job is not equivalent to an enforced gate.</p></aside>
+          <p>Notation implements the Notary Project specifications. The workshop uses a non-exportable, self-signed test certificate with an explicitly approved trust root, not a public CA or production PKI. The signature authenticates a publisher of these bytes; it does not prove correctness or absence of vulnerabilities.</p>
+          <p><strong>Expected result:</strong> one image digest in two registries, signed by two explicitly trusted environment publishers, with a real prod approval record. The tag <code>prod</code> means the workshop environment, not actual production infrastructure.</p>
         </div>
       </article>
     </section>
     <section class="chapter" id="ch-decision"><h2 class="chapter-label">Make operational readiness explicit</h2>
       <article class="card" id="card-decision">
-        <div class="slide-content"><h2 class="slide-title">Ready means traceable,<br><em>owned, and reversible.</em></h2><ul class="slide-points"><li class="frag">Record evidence, not impressions.</li><li class="frag">Name rollback bytes and owner.</li><li class="frag">Missing authority means BLOCKED.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 5 &mdash; Record the release decision</span><span class="card-sub">12 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="slide-content"><h2 class="slide-title">Check both publishers.<br><em>Record a reversible decision.</em></h2><ul class="slide-points"><li class="frag">Prod policy requires its own signer.</li><li class="frag">Rollback names another verified digest.</li><li class="frag">ACA is optional, not the finish line.</li></ul></div>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 5 &mdash; Read prod verification and record readiness</span><span class="card-sub">8 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
-          <p>Add a comment to the merged feature PR using this structure:</p>
-          <div class="code"><pre><code>Release rehearsal: READY | BLOCKED
+          <ol>
+            <li>Read <code>verified-prod-&lt;attempt&gt;</code> and the prod job summary. Confirm the test reference and prod reference have the same manifest digest.</li>
+            <li>Inspect both trust policies: <code>strict</code>, exact registry repository, expected X.509 identity, and pinned public certificate fingerprint. Prod does not accept the test certificate as its publisher.</li>
+            <li>Confirm prod <code>notation verify</code> succeeded. The signature authenticates the publisher of these bytes; it does not prove correctness or absence of vulnerabilities.</li>
+            <li>Ask your agent to draft the release decision on the merged feature PR. Review the evidence and separately approve the GitHub write.</li>
+          </ol>
+          <div class="code"><pre><code>OCI release candidate: READY | BLOCKED
 Candidate SHA:
-Workflow run:
-Artifact SHA-256:
+Workflow run and attempt:
+ACR image repository and manifest digest:
+Notation strict verification and signer:
+Public certificate SHA-256:
 Smoke evidence:
-Environment decision and approver:
-Rollback artifact or prior known-good SHA:
+Test/prod identity mapping and prod approver:
+Rollback image digest and verification evidence:
 Operational owner:
 Unresolved blockers:</code></pre></div>
-          <p>Use <code>READY</code> only when every field is concrete and the environment decision is recorded. Use <code>BLOCKED</code> when the merge did not complete, the candidate is stale, evidence failed, approval is unavailable, rollback is unknown, or ownership is missing.</p>
+          <p>Use <code>READY</code> only when all fields are concrete. Identify a previously signed, verified image as the rollback candidate; if none exists in your new station, record BLOCKED rather than borrowing a digest from another repository. Missing approval, invalid signature, stale SHA, or missing owner also means BLOCKED. READY means a trusted release candidate, not proof of a production deployment.</p>
+          <p>Use <a href="artifacts/release-decision.md">the decision reference</a> if you need recovery. It supplies the structure, not invented evidence.</p>
           <dl>
-            <dt>Failure before packaging</dt><dd>Fix through a new PR. Never edit the generated evidence to make it green.</dd>
-            <dt>Rejected environment</dt><dd>Record the reviewer's reason and keep the candidate blocked.</dd>
-            <dt>Cloud deployment</dt><dd>Out of scope. A real implementation would add OIDC, a named target, health evidence, and rollback automation without weakening this boundary.</dd>
+            <dt>Azure login or role failure</dt><dd>Ask the facilitator to repair the prepared station. Do not add passwords, registry admin access, or wider roles.</dd>
+            <dt>Stale candidate or failed signing</dt><dd>Record BLOCKED. Dispatch a new complete run for current main; do not rerun only failed jobs using an older attempt's artifact.</dd>
+            <dt>Failed signature verification</dt><dd>Keep BLOCKED. Never change <code>strict</code> to <code>audit</code>, trust arbitrary signers, or skip verification.</dd>
+            <dt>Sandbox or time limit</dt><dd>Read a facilitator-provided run with its original repository and SHA. Record this as recorded evidence, not a signed image from your fork. Missing capability in your fork remains BLOCKED.</dd>
+            <dt>Optional ACA</dt><dd>Enable ACA only after the image path is complete and time remains. The provided template and workflow run this same API plus same-origin frontend by verified digest, with zero-to-one ephemeral replica and no database. Stock resets on restart; an explicit <code>ALLOWED_ORIGIN</code> is available for a separate frontend, never wildcard credentialed CORS. Runtime identities get only AcrPull, not the Owner pipeline identity.</dd>
+            <dt>Optional Azure SRE</dt><dd>If available, briefly discuss what an SRE agent could observe in the ACA environment. There is no additional SRE setup or lab guide.</dd>
           </dl>
         </div>
       </article>
     </section>
   </main>
-  <section class="takeaway" id="closing"><p>You connected a reviewed merge revision to tested, smoke-checked bytes, verified their digest at a governed environment boundary, and recorded a reversible operational decision without claiming a production deployment.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Trace the bytes.<br><em>Name the authority.</em></h2></div></section>
-  <footer class="doc-footer">Lab 4 of 5 &middot; Synthetic pharmacy data only.</footer>
+  <section class="takeaway" id="closing"><p>You deployed tagged test/prod resources into your allocated group, connected two federated identities, and promoted one tested OCI digest through approval and two verified Key Vault signatures without rebuilding.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Same bytes.<br><em>Different release authority.</em></h2></div></section>
+  <footer class="doc-footer">Lab 4 of 5 &middot; Synthetic retail data only.</footer>
 </div>
 </body>
 </html>

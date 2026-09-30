@@ -18,27 +18,27 @@ async function withServer(run) {
 
 test("unit: selects the first eligible same-category SKU without mutation", () => {
   const inventory = createInventory();
-  inventory.set("MED-009", {
-    sku: "MED-009",
+  inventory.set("SKU-009", {
+    sku: "SKU-009",
     name: "Synthetic Respiratory Option Nine",
-    category: "respiratory",
+    category: "drinkware",
     available: 5
   });
-  inventory.set("MED-000", {
-    sku: "MED-000",
+  inventory.set("SKU-000", {
+    sku: "SKU-000",
     name: "Synthetic Respiratory Option Zero",
-    category: "respiratory",
+    category: "drinkware",
     available: 5
   });
   const before = listStock(inventory);
 
-  assert.deepEqual(reserve(inventory, { sku: "MED-003", quantity: 5 }), {
+  assert.deepEqual(reserve(inventory, { sku: "SKU-003", quantity: 5 }), {
     status: 409,
     body: {
       error: "insufficient stock",
       available: 0,
       suggestion: {
-        sku: "MED-000",
+        sku: "SKU-000",
         name: "Synthetic Respiratory Option Zero",
         available: 5
       }
@@ -49,11 +49,23 @@ test("unit: selects the first eligible same-category SKU without mutation", () =
 
 test("unit: omits a suggestion when no candidate satisfies the quantity", () => {
   const inventory = createInventory();
-  inventory.get("MED-004").available = 4;
-  assert.deepEqual(reserve(inventory, { sku: "MED-003", quantity: 5 }), {
+  inventory.get("SKU-004").available = 4;
+  assert.deepEqual(reserve(inventory, { sku: "SKU-003", quantity: 5 }), {
     status: 409,
     body: { error: "insufficient stock", available: 0 }
   });
+});
+
+test("unit: partial availability remains a conflict, not an alternative-product request", () => {
+  const inventory = createInventory();
+  inventory.set("SKU-005", {
+    sku: "SKU-005", name: "Synthetic Spare Bag", category: "bags", available: 5
+  });
+  const before = listStock(inventory);
+  assert.deepEqual(reserve(inventory, { sku: "SKU-002", quantity: 5 }), {
+    status: 409, body: { error: "insufficient stock", available: 4 }
+  });
+  assert.deepEqual(listStock(inventory), before);
 });
 
 test("http: returns one suggestion without reserving it", async () => {
@@ -62,15 +74,15 @@ test("http: returns one suggestion without reserving it", async () => {
     const response = await fetch(`${baseUrl}/reservations`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sku: "MED-003", quantity: 1 })
+      body: JSON.stringify({ sku: "SKU-003", quantity: 1 })
     });
     assert.equal(response.status, 409);
     assert.deepEqual(await response.json(), {
       error: "insufficient stock",
       available: 0,
       suggestion: {
-        sku: "MED-004",
-        name: "Synthetic Alternative Inhaler",
+        sku: "SKU-004",
+        name: "Synthetic Travel Bottle",
         available: 6
       }
     });

@@ -58,7 +58,7 @@ jobs:
         run: gh extension install github/gh-aw --pin v0.86.2
       - name: Test service and materials
         run: npm test && npm run test:materials
-      - name: Validate content and profiles
+      - name: Validate content
         run: npm run validate
       - name: Exercise browser journeys
         run: npm run test:browser
@@ -71,7 +71,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           npm run compile:workflows
-          git diff --exit-code -- .github/workflows .github/aw platform/demos/security-remediation/workflows
+          git diff --exit-code -- .github/workflows .github/aw
 
   workflow-security:
     name: Audit workflows
@@ -87,9 +87,8 @@ jobs:
           go run github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
           .github/workflows/quality.yml
           .github/workflows/ci.yml
-          platform/demos/security-remediation/fixture/repository/.github/workflows/quality.yml
-          platform/demos/security-remediation/fixture/repository/.github/workflows/codeql.yml
-          platform/demos/security-remediation/workflows/release.yml
+          .github/workflows/title-check.yml
+          .github/workflows/release-rehearsal.yml
       - name: Run zizmor
         uses: zizmorcore/zizmor-action@6fc4b006235f201fdab3722e17240ab420d580e5 # v0.6.1
         with:

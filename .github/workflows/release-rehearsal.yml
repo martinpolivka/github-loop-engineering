@@ -1,10 +1,10 @@
-name: Trusted release rehearsal
+name: Trusted OCI release
 
 on:
   workflow_dispatch:
     inputs:
       candidate_sha:
-        description: Full main-branch commit SHA to package and promote
+        description: Full current main-branch commit SHA to build and promote
         required: true
         type: string
 
@@ -12,134 +12,262 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-rehearsal-${{ inputs.candidate_sha }}
+  group: retail-oci-release
   cancel-in-progress: false
 
-jobs:
-  package:
-    name: Build revision-bound evidence
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    env:
-      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
-    steps:
-      - name: Validate candidate identity
-        shell: bash
-        run: |
-          [[ "$CANDIDATE_SHA" =~ ^[0-9a-f]{40}$ ]]
+env:
+  CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+  ACR_REPOSITORY: ${{ vars.ACR_REPOSITORY }}
+  RETAIL_BASE_IMAGE: ${{ vars.RETAIL_BASE_IMAGE }}
 
-      - name: Check out candidate
+jobs:
+  build:
+    name: Test and build exact retail revision
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ACR_LOGIN_SERVER: ${{ vars.TEST_ACR_LOGIN_SERVER }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Validate current main candidate
+        run: node scripts/release-evidence.mjs candidate
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Checkout candidate
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ inputs.candidate_sha }}
           persist-credentials: false
-
-      - name: Require current main revision
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      - name: Run deterministic tests
+        run: npm test
+      - name: Build and smoke-test without Azure credentials
         shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$(git rev-parse HEAD)" == "$CANDIDATE_SHA" ]]
+          docker build --build-arg BASE_IMAGE="$RETAIL_BASE_IMAGE" \
+            --label "org.opencontainers.image.revision=$CANDIDATE_SHA" \
+            --tag retail-candidate:tested .
+          container_id="$(docker run --detach --publish 127.0.0.1::3000 retail-candidate:tested)"
+          trap 'docker rm --force "$container_id" >/dev/null' EXIT
+          port="$(docker port "$container_id" 3000/tcp | cut -d: -f2)"
+          ready=false
+          for attempt in {1..40}; do
+            if curl --fail --silent "http://127.0.0.1:$port/health" >/dev/null; then ready=true; break; fi
+            sleep 0.25
+          done
+          [[ "$ready" == true ]]
+          node scripts/container-smoke.mjs "http://127.0.0.1:$port"
+          mkdir -p release
+          docker save --output release/image.tar retail-candidate:tested
+          IMAGE_ID="$(docker image inspect retail-candidate:tested --format '{{.Id}}')" \
+            node scripts/release-evidence.mjs build
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: tested-image-${{ github.run_attempt }}
+          path: release/
+          if-no-files-found: error
+          retention-days: 2
+
+  test_release:
+    name: Publish, sign, and verify in test
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: workshop-test
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_ENVIRONMENT: test
+      ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
+      SIGNING_CERTIFICATE_BASE64: ${{ vars.SIGNING_CERTIFICATE_BASE64 }}
+      SIGNING_CERTIFICATE_SHA256: ${{ vars.SIGNING_CERTIFICATE_SHA256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: tested-image-${{ github.run_attempt }}
+          path: release
+      - name: Login using the test managed identity
+        uses: Azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Publish the tested image, never rebuild
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/release-evidence.mjs candidate
+          docker load --input release/image.tar
+          export IMAGE_ID="$(docker image inspect retail-candidate:tested --format '{{.Id}}')"
+          node --input-type=module -e "
+            import {readFileSync} from 'node:fs';
+            import {releaseConfig,assertEvidence} from './scripts/release-evidence.mjs';
+            const e=assertEvidence(JSON.parse(readFileSync('release/release.json')),releaseConfig(process.env));
+            if(e.imageId!==process.env.IMAGE_ID) throw Error('Loaded image identity mismatch');
+          "
+          az acr login --name "${ACR_LOGIN_SERVER%%.*}"
+          tag="$ACR_LOGIN_SERVER/$ACR_REPOSITORY:sha-$CANDIDATE_SHA-run-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          docker tag retail-candidate:tested "$tag"
+          docker push "$tag"
+          IMAGE_DIGEST="$(docker image inspect "$tag" --format '{{index .RepoDigests 0}}' | cut -d@ -f2)" \
+            node scripts/release-evidence.mjs publish
+      - name: Read exact image reference and approved trust root
+        id: evidence
+        run: |
+          node scripts/release-evidence.mjs read
+          node scripts/release-evidence.mjs trust
+      - uses: notaryproject/notation-action/setup@b6fee73110795d6793253c673bd723f12bcf9bbb # v1
+        with:
+          version: 1.3.2
+      - name: Sign and strictly verify the test digest
+        env:
+          IMAGE_REFERENCE: ${{ steps.evidence.outputs.image_reference }}
+          KEY_ID: ${{ vars.SIGNING_KEY_ID }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$KEY_ID" =~ ^https://[a-z0-9-]+\.vault\.azure\.net/keys/[a-z0-9-]+/[0-9a-f]{32}$ ]]
+          notation plugin install \
+            --url https://github.com/Azure/notation-azure-kv/releases/download/v1.2.1/notation-azure-kv_1.2.1_linux_amd64.tar.gz \
+            --sha256sum 67c5ccaaf28dd44d2b6572684d84e344a02c2258af1d65ead3910b3156d3eaf5
+          notation sign --signature-format cose --id "$KEY_ID" --plugin azure-kv \
+            --plugin-config self_signed=true --plugin-config credential_type=azurecli "$IMAGE_REFERENCE"
+          notation cert add --type ca --store workshop release/certificate.pem
+          notation policy import release/trustpolicy.json
+          notation verify "$IMAGE_REFERENCE"
+          node scripts/release-evidence.mjs verified
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: verified-test-${{ github.run_attempt }}
+          path: release/verified-release.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Optional test ACA deployment by verified digest
+        if: vars.ACA_ENABLED == 'true'
+        env:
+          IMAGE_REFERENCE: ${{ steps.evidence.outputs.image_reference }}
+          ACA_ENVIRONMENT_NAME: ${{ vars.ACA_ENVIRONMENT_NAME }}
+          ACA_APP_NAME: ${{ vars.ACA_APP_NAME }}
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          ACA_RUNTIME_IDENTITY_ID: ${{ vars.ACA_RUNTIME_IDENTITY_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ALLOCATION_TAG_NAME: ${{ vars.ALLOCATION_TAG_NAME }}
+          ALLOCATION_TAG_VALUE: ${{ vars.ALLOCATION_TAG_VALUE }}
+        run: node scripts/deploy-aca.mjs
+
+  prod_release:
+    name: Promote exact test digest and verify the prod signature
+    needs: test_release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: workshop-prod
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      RELEASE_ENVIRONMENT: prod
+      ACR_LOGIN_SERVER: ${{ vars.ACR_LOGIN_SERVER }}
+      TEST_ACR_LOGIN_SERVER: ${{ vars.TEST_ACR_LOGIN_SERVER }}
+      SIGNING_CERTIFICATE_BASE64: ${{ vars.SIGNING_CERTIFICATE_BASE64 }}
+      SIGNING_CERTIFICATE_SHA256: ${{ vars.SIGNING_CERTIFICATE_SHA256 }}
+      TEST_SIGNING_CERTIFICATE_BASE64: ${{ vars.TEST_SIGNING_CERTIFICATE_BASE64 }}
+      TEST_SIGNING_CERTIFICATE_SHA256: ${{ vars.TEST_SIGNING_CERTIFICATE_SHA256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: verified-test-${{ github.run_attempt }}
+          path: release
+      - name: Reject a stale candidate after the prod approval
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          [[ "$(git rev-parse HEAD)" == "$CANDIDATE_SHA" ]]
-          main_sha="$(
-            curl --fail-with-body --silent --show-error \
-              --header "Authorization: Bearer $GITHUB_TOKEN" \
-              --header "Accept: application/vnd.github+json" \
-              "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/commits/main" |
-              node --input-type=module -e "
-                const chunks = [];
-                for await (const chunk of process.stdin) chunks.push(chunk);
-                process.stdout.write(JSON.parse(Buffer.concat(chunks)).sha);
-              "
-          )"
-          [[ "$main_sha" == "$CANDIDATE_SHA" ]]
-
-      - name: Configure Node.js
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+          node scripts/release-evidence.mjs candidate
+          mv release/verified-release.json release/release.json
+      - name: Login using the separate prod managed identity
+        uses: Azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
         with:
-          node-version: 24
-
-      - name: Run deterministic tests
-        run: npm test
-
-      - name: Run packaged-service smoke checks
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - uses: notaryproject/notation-action/setup@b6fee73110795d6793253c673bd723f12bcf9bbb # v1
+        with:
+          version: 1.3.2
+      - uses: oras-project/setup-oras@22ce207df3b08e061f537244349aac6ae1d214f6 # v1
+        with:
+          version: 1.3.0
+      - name: Verify test signature and copy the exact manifest to prod
         shell: bash
         run: |
-          node src/server.mjs >server.log 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
-          for attempt in {1..20}; do
-            curl --fail --silent http://127.0.0.1:3000/health >health.json && break
-            sleep 0.25
-          done
-          node -e "const h=require('./health.json'); if(h.status!=='ready'||h.service!=='pharmacy-reservation') process.exit(1)"
-          curl --fail --silent http://127.0.0.1:3000/stock >stock-before.json
-          curl --fail --silent \
-            -H 'content-type: application/json' \
-            -d '{"sku":"MED-001","quantity":1}' \
-            http://127.0.0.1:3000/reservations >reservation.json
-          node -e "const r=require('./reservation.json'); if(r.sku!=='MED-001'||r.remaining!==11) process.exit(1)"
-
-      - name: Package exact candidate
+          set -euo pipefail
+          az acr login --name "${TEST_ACR_LOGIN_SERVER%%.*}"
+          az acr login --name "${ACR_LOGIN_SERVER%%.*}"
+          ACR_LOGIN_SERVER="$TEST_ACR_LOGIN_SERVER" node scripts/release-evidence.mjs read
+          ACR_LOGIN_SERVER="$TEST_ACR_LOGIN_SERVER" \
+            SIGNING_CERTIFICATE_BASE64="$TEST_SIGNING_CERTIFICATE_BASE64" \
+            SIGNING_CERTIFICATE_SHA256="$TEST_SIGNING_CERTIFICATE_SHA256" \
+            node scripts/release-evidence.mjs trust
+          notation cert add --type ca --store workshop release/certificate.pem
+          notation policy import release/trustpolicy.json
+          test_ref="$(node -p "require('./release/release.json').imageReference")"
+          notation verify "$test_ref"
+          target="$ACR_LOGIN_SERVER/$ACR_REPOSITORY:sha-$CANDIDATE_SHA-run-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          oras copy "$test_ref" "$target"
+          IMAGE_DIGEST="$(oras resolve "$target")" node scripts/release-evidence.mjs promote
+      - name: Read prod digest and independent prod trust root
+        id: evidence
+        run: |
+          node scripts/release-evidence.mjs read
+          node scripts/release-evidence.mjs trust
+      - name: Sign and strictly verify the approved prod candidate
+        env:
+          IMAGE_REFERENCE: ${{ steps.evidence.outputs.image_reference }}
+          KEY_ID: ${{ vars.SIGNING_KEY_ID }}
         shell: bash
         run: |
-          mkdir release
-          tar -czf release/pharmacy-reservation.tgz src public package.json AGENTS.md
-          (
-            cd release
-            sha256sum pharmacy-reservation.tgz >pharmacy-reservation.tgz.sha256
-          )
-          node --input-type=module -e "
-            import { writeFileSync } from 'node:fs';
-            writeFileSync('release/release.json', JSON.stringify({
-              candidateSha: process.env.CANDIDATE_SHA,
-              runId: process.env.GITHUB_RUN_ID,
-              runAttempt: process.env.GITHUB_RUN_ATTEMPT,
-              repository: process.env.GITHUB_REPOSITORY,
-              workflow: process.env.GITHUB_WORKFLOW,
-              smokeChecks: ['health', 'stock-read', 'synthetic-reservation']
-            }, null, 2) + '\n');
-          "
-
-      - name: Upload release candidate
+          set -euo pipefail
+          [[ "$KEY_ID" =~ ^https://[a-z0-9-]+\.vault\.azure\.net/keys/[a-z0-9-]+/[0-9a-f]{32}$ ]]
+          notation plugin install \
+            --url https://github.com/Azure/notation-azure-kv/releases/download/v1.2.1/notation-azure-kv_1.2.1_linux_amd64.tar.gz \
+            --sha256sum 67c5ccaaf28dd44d2b6572684d84e344a02c2258af1d65ead3910b3156d3eaf5
+          notation sign --signature-format cose --id "$KEY_ID" --plugin azure-kv \
+            --plugin-config self_signed=true --plugin-config credential_type=azurecli "$IMAGE_REFERENCE"
+          notation cert add --type ca --store workshop release/certificate.pem
+          notation policy import release/trustpolicy.json
+          notation verify "$IMAGE_REFERENCE"
+          node scripts/release-evidence.mjs verified
+      - name: Retain test/prod promotion evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: release-candidate-${{ inputs.candidate_sha }}
-          path: release/
+          name: verified-prod-${{ github.run_attempt }}
+          path: release/verified-release.json
           if-no-files-found: error
           retention-days: 7
-
-  promote:
-    name: Promote approved workshop candidate
-    needs: package
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    environment:
-      name: workshop-preview
-    env:
-      CANDIDATE_SHA: ${{ inputs.candidate_sha }}
-    steps:
-      - name: Download exact candidate
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: release-candidate-${{ inputs.candidate_sha }}
-          path: release
-
-      - name: Verify digest and revision
-        shell: bash
-        run: |
-          cd release
-          sha256sum --check pharmacy-reservation.tgz.sha256
-          node -e "const r=require('./release.json'); if(r.candidateSha!==process.env.CANDIDATE_SHA) process.exit(1)"
-
-      - name: Record promotion evidence
-        shell: bash
-        run: |
-          digest="$(cut -d ' ' -f 1 release/pharmacy-reservation.tgz.sha256)"
-          {
-            echo "## Workshop preview promotion"
-            echo ""
-            echo "- Candidate SHA: \`$CANDIDATE_SHA\`"
-            echo "- Artifact SHA-256: \`$digest\`"
-            echo "- Environment: \`workshop-preview\`"
-            echo "- External production deployment: not performed"
-          } >>"$GITHUB_STEP_SUMMARY"
+      - name: Optional ACA deployment by verified digest
+        if: vars.ACA_ENABLED == 'true'
+        env:
+          IMAGE_REFERENCE: ${{ steps.evidence.outputs.image_reference }}
+          ACA_ENVIRONMENT_NAME: ${{ vars.ACA_ENVIRONMENT_NAME }}
+          ACA_APP_NAME: ${{ vars.ACA_APP_NAME }}
+          AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+          AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+          ACA_RUNTIME_IDENTITY_ID: ${{ vars.ACA_RUNTIME_IDENTITY_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+          ALLOCATION_TAG_NAME: ${{ vars.ALLOCATION_TAG_NAME }}
+          ALLOCATION_TAG_VALUE: ${{ vars.ALLOCATION_TAG_VALUE }}
+        run: node scripts/deploy-aca.mjs
