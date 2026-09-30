@@ -1,4 +1,1 @@
 .github/workflows/*.lock.yml linguist-generated=true text eol=lf
-platform/demos/security-remediation/workflows/*.lock.yml linguist-generated=true text eol=lf
-
-.github/workflows/*.lock.yml linguist-generated=true

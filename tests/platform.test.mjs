@@ -241,7 +241,7 @@ test("station evidence, intake skill, and path-scoped instructions stay consiste
   }
   assert.match(read(".github", "workflows", "title-check.yml"), /PR_TITLE/);
   assert.doesNotMatch(read(".github", "workflows", "title-check.yml"), /run:.*github\.event\.pull_request\.title/);
-  for (const file of ["AGENTS.md", "CLAUDE.md", join(".github", "copilot-instructions.md"),
+  for (const file of ["AGENTS.md", join(".github", "copilot-instructions.md"),
     ...readdirSync(join(template, ".github", "instructions")).map((name) => join(".github", "instructions", name))]) {
     if (existsSync(join(template, file))) {
       assert.doesNotMatch(read(file), /substitut|same[- ]category|lowest SKU/i, `${file} must not settle the feature before intake`);

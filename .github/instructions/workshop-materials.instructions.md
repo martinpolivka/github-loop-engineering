@@ -39,7 +39,7 @@ Prefer current first-party GitHub documentation. Record the validation date for 
 
 ## Repository layout
 
-The repository root is the attendee station: the retail service in `src/`, `test/`, `public/`, `data/`, `scripts/`, and `context/`, with `.devcontainer/`, `AGENTS.md`, and `CLAUDE.md`. Attendees fork the whole repository. The workshop materials live beside it:
+The repository root is the attendee station: the retail service in `src/`, `test/`, `public/`, `data/`, `scripts/`, and `context/`, with `.devcontainer/` and `AGENTS.md`. Attendees fork the whole repository. The workshop materials live beside it:
 
 ```text
 docs/                    index.html (agenda, opening demo, Slides), labs/, assets/, adr/
