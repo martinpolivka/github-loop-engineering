@@ -10,10 +10,14 @@ import { chromium } from "playwright";
 import { htmlMarkup, materialFiles, root, screenshotInputs } from "./validation.mjs";
 import { copyService } from "../../tests/helpers/service-fixture.mjs";
 import { runtime } from "./html-docs-runtime.mjs";
+import { runBounded, validationJobs } from "./validation-jobs.mjs";
+import { performance } from "node:perf_hooks";
 const { printPlan, preparePrint, printOverflow, renderPdf, pdfPages } =
   createRequire(import.meta.url)(join(runtime, "validate.js"));
 
 const capture = process.argv.includes("--capture");
+const jobs = validationJobs(process.argv.slice(2));
+const started = performance.now();
 const output = join(root, ".workshop", "screenshots");
 const failures = [];
 const captures = [];
@@ -574,8 +578,9 @@ async function presentation(page, path, url, isDeck, theme, accent, viewport) {
 }
 
 async function preferenceChecks() {
-  for (const theme of ["light", "dark"]) {
+  await runBounded(["light", "dark"], jobs, async (theme) => {
     const context = await browser.newContext({ colorScheme: theme, reducedMotion: "reduce" });
+    try {
     const page = await context.newPage();
     monitor(page);
     for (const file of pages) {
@@ -602,8 +607,10 @@ async function preferenceChecks() {
         new URL(page.url()).searchParams.get("accent") === "yellow", `${path}: toggles update query overrides`);
       await page.locator('[data-action="toggle-accent"]').click();
     }
-    await context.close();
-  }
+    } finally {
+      await context.close();
+    }
+  });
   const context = await browser.newContext({ colorScheme: "dark", reducedMotion: "reduce" });
   await context.addInitScript(() => {
     Object.defineProperty(window, "localStorage", { get() { throw new DOMException("Storage disabled by policy", "SecurityError"); } });
@@ -618,8 +625,9 @@ async function preferenceChecks() {
   await context.close();
 }
 async function noScriptChecks() {
-  for (const theme of ["light", "dark"]) {
+  await runBounded(["light", "dark"], jobs, async (theme) => {
     const context = await browser.newContext({ javaScriptEnabled: false, colorScheme: theme });
+    try {
     const page = await context.newPage();
     monitor(page);
     for (const file of pages) {
@@ -642,8 +650,10 @@ async function noScriptChecks() {
       check(await page.locator('[data-action]:visible, [data-deck]:visible').count() === 0, `${path}: no dead no-JS controls`);
       await documentChecks(page, `${path} no-JS ${theme}`);
     }
-    await context.close();
-  }
+    } finally {
+      await context.close();
+    }
+  });
 }
 
 async function landingPrintChecks() {
@@ -698,8 +708,10 @@ try {
   assert.equal((await fetch(`${base}/docs/`, { signal: AbortSignal.timeout(5000) })).status, 200);
   browser = process.env.BROWSER_ENDPOINT ? await chromium.connectOverCDP(process.env.BROWSER_ENDPOINT) :
     await chromium.launch({ executablePath: process.env.PLAYWRIGHT_CHROMIUM });
-  for (const theme of ["light", "dark"]) for (const accent of accents) {
+  await runBounded(["light", "dark"].flatMap((theme) => accents.map((accent) => ({ theme, accent }))),
+    jobs, async ({ theme, accent }) => {
     const context = await browser.newContext({ colorScheme: opposite(theme), reducedMotion: "reduce" });
+    try {
     const page = await context.newPage();
     monitor(page);
     for (const file of pages) {
@@ -738,20 +750,23 @@ try {
         await presentation(page, path, url, isDeck, theme, accent, viewport);
       }
     }
-    await context.close();
-  }
-  await preferenceChecks();
-  await noScriptChecks();
+    } finally {
+      await context.close();
+    }
+  });
+  console.log(`MATRIX ${((performance.now() - started) / 1000).toFixed(2)}s`);
+  const finishingChecks = [preferenceChecks, noScriptChecks];
   if (pages.some((file) => relative(root, file).replaceAll("\\", "/") === "docs/index.html")) {
-    await landingPrintChecks();
+    finishingChecks.push(landingPrintChecks);
   }
-  if (!pageFilter) await retailJourney();
+  if (!pageFilter) finishingChecks.push(retailJourney);
+  await runBounded(finishingChecks, Math.max(1, Math.floor(jobs / 2)), (run) => run());
   assert.deepEqual(failures, [], `Browser defects:\n${failures.join("\n")}`);
   const manifest = (records) => `${JSON.stringify({ capturedAt: new Date().toISOString(), browser: browser.version(),
-    sourceHashFormat: "sha256-utf8-lf", captures: records }, null, 2)}\n`;
+    sourceHashFormat: "sha256-utf8-lf", captures: records.sort((left, right) => left.file.localeCompare(right.file)) }, null, 2)}\n`;
   if (capture) writeFileSync(join(output, "manifest.json"), manifest(captures));
   if (paletteOutput) writeFileSync(join(paletteOutput, "manifest.json"), manifest(paletteCaptures));
-  console.log(`PASS ${pages.length} materials; eight palettes, opposite OS, responsive layouts, presentation order, preferences and no-JS`);
+  console.log(`PASS ${pages.length} materials; eight palettes, opposite OS, responsive layouts, presentation order, preferences and no-JS. ${((performance.now() - started) / 1000).toFixed(2)}s; ${jobs} workers.`);
   if (capture) console.log(`CAPTURE ${captures.length} source-bound browser screenshots in .workshop/screenshots`);
   if (paletteOutput) console.log(`REVIEW ${paletteCaptures.length} source-bound palette screenshots in ${relative(root, paletteOutput)}`);
 } finally {

@@ -102,12 +102,25 @@ Record significant decisions about content architecture, station isolation, work
 npm test                 # demo application behavior
 npm run test:materials    # materials integrity, lab artifacts, and release tooling
 npm run validate          # HTML structure and local references
-npm run validate:html     # six palettes, offline, responsive, no-JS
+npm run check:html -- docs\loop-engineering.en.html # edit-time smoke, select changed HTML
+npm run validate:html     # full eight palettes, offline, responsive, no-JS, PDF
 npm run validate:workflows
 npm run capture           # regenerate source-bound screenshots
 ```
 
-Verify attendee-visible outcomes and the operator path, not only file existence. After changing any material, re-run `validate:html`; after changing a captured page, re-run `capture`.
+Verify attendee-visible outcomes and the operator path, not only file existence.
+During ordinary editing, export the changed HTML and run `check:html` only for
+the changed documents. This checks static references, offline runtime, all
+presentation surfaces at 1280x720, and light/dark blue without PDF or captures.
+It is a smoke check, not release evidence. Do not run the full workshop matrix,
+screenshots, or capture manifest after every text edit.
+
+At review completion, before publication, or after shared runtime, theme,
+navigation, export, or validation-tool changes, run `validate:html` and the full
+browser checks. Run `capture` only when refreshing screenshot evidence for that
+milestone; it already includes the full workshop browser checks. Keep
+`--jobs 1` available for serial diagnosis; parallel execution must preserve
+the full matrix and must not skip failed or uncaptured pages.
 
 ## Review gates
 

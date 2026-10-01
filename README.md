@@ -33,5 +33,33 @@ files. In each lab, **Slides** switches between reading and presentation views.
 
 Material authoring and `npm run validate:html` use the globally installed
 `html-docs` skill, not a vendored copy. Set `HTML_DOCS_SKILL` to its directory
-if it is not under `~/.copilot/skills/html-docs`. `npm run capture` writes
-source-bound review screenshots to ignored `.workshop/screenshots/`.
+if it is not under `~/.copilot/skills/html-docs`.
+
+During editing, export the changed HTML and run a targeted smoke check:
+
+```powershell
+npm run check:html -- docs\loop-engineering.en.html
+```
+
+This checks static references, offline runtime, every slide at 1280x720, and
+light/dark blue. It writes no screenshots, manifest, or PDF. It is intentionally
+not the full accessibility, appearance, interaction, and print certification.
+Run `npm run test:html-smoke` when changing the smoke checker; it verifies that
+intentional overflow, broken images, and broken navigation are rejected.
+
+At review completion, before publication, or after shared runtime or validation
+changes, run `npm run validate:html` and `npm run test:browser`. Both preserve
+the full matrix and run independent jobs concurrently, capped at eight workers
+by default. Canonical validation uses the headless browser from the pinned
+Playwright revision when installed, otherwise that revision's full Chromium;
+`PLAYWRIGHT_CHROMIUM` remains an explicit override. Use `-- --jobs 1` for serial diagnosis or a smaller `--jobs` value
+on a constrained machine. For selected full HTML checks, pass document paths
+after `--`.
+
+Run `npm run capture` only when refreshing milestone screenshot evidence.
+It already runs the full browser checks, so do not run `test:browser` again
+for the same revision. It writes source-bound screenshots and a manifest to
+ignored `.workshop/screenshots/`. The manifest binds screenshots to exact
+sources; it is not an HTML quality check and is not required for edit-time smoke.
+Each canonical document job has a 120-second timeout and reports failures rather
+than treating partial output as a pass.

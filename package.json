@@ -8,6 +8,8 @@
     "test": "npm --prefix demo-app test",
     "test:materials": "node --test --test-concurrency=1 \"workshop/tests/*.test.mjs\"",
     "validate": "node workshop/tools/materials/validate-content.mjs",
+    "check:html": "node workshop/tools/materials/smoke.mjs",
+    "test:html-smoke": "node --test workshop/tests/html-smoke.browser.mjs",
     "validate:workflows": "gh aw validate documentation-review goal-review repository-pulse showcase-signal --strict",
     "compile:workflows": "gh aw compile documentation-review goal-review repository-pulse showcase-signal --schedule-seed workshop/github-loop-engineering --validate",
     "preflight": "node workshop/tools/preflight/preflight.mjs --profile sandbox",
