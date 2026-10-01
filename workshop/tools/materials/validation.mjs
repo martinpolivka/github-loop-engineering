@@ -18,9 +18,9 @@ function walk(directory, extension) {
   return files;
 }
 
-function localTarget(file, value) {
+export function localTarget(file, value) {
   const clean = value.split("#")[0].split("?")[0];
-  if (!clean || /^(https?:|mailto:|tel:|javascript:)/.test(clean)) return null;
+  if (!clean || /^(https?:|mailto:|tel:|javascript:|data:)/i.test(clean)) return null;
   const target = resolve(dirname(file), decodeURIComponent(clean));
   return clean.endsWith("/") ? join(target, "index.html") : target;
 }

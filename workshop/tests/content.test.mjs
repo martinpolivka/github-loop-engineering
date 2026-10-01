@@ -41,7 +41,10 @@ test("the separate English deck explains principles across the complete workshop
   assert.match(markup, /<html lang="en"/);
   assert.match(markup, /class="deck-stage"/);
   const slides = [...markup.matchAll(/<section class="slide[^"]*" id="([^"]+)"/g)];
-  assert.equal(slides.length, 18);
+  assert.deepEqual(slides.map(([, id]) => id), [
+    "s-title", "s-goal", "s-before-code", "s-after-code", "s-loops", "s-evidence",
+    "s-goal-card", "s-measure", "s-end"
+  ], "Supporting explanations are consolidated around the lifecycle pair and loops");
   assert.deepEqual(slides.slice(2, 5).map(([, id]) => id),
     ["s-before-code", "s-after-code", "s-loops"], "The lifecycle pair leads directly into the loop diagram");
   for (const [, id] of slides) {
@@ -49,6 +52,7 @@ test("the separate English deck explains principles across the complete workshop
     const wordLimit = ["s-before-code", "s-after-code"].includes(id) ? 65 : 45;
     assert.ok(sourceText(slide).split(/\s+/).length <= wordLimit, `${id}: sparse speaking aid`);
     assert.doesNotMatch(slide, /<(?:a|button|details|input)\b/, `${id}: no interactive slide content`);
+    assert.doesNotMatch(slide, /class="slide-note"/, `${id}: key ideas are not small footnotes`);
   }
   const opening = sourceElement(source, "s-title");
   assert.match(opening, /class="slide-eyebrow">Hands-on workshop/);
@@ -75,14 +79,29 @@ test("the separate English deck explains principles across the complete workshop
   assert.match(loops, /Inner loop/);
   assert.match(loops, /Outer loop/);
   assert.match(loops, /Pull request/);
-  assert.match(loops, /Conceptual roles, not automatic authority/);
+  assert.match(loops, /GitHub Platform/);
+  assert.match(loops, /id="implementation-cycle"/);
+  assert.match(loops, /marker-end="url\(#implementation-arrow\)"/);
   assert.match(sourceElement(source, "s-before-code"), /Goal Card/);
+  assert.doesNotMatch(sourceElement(source, "s-before-code"), /Example: (?:PRD\.md|ADRs|goal-card\.md)/);
+  const closing = sourceElement(source, "s-end");
+  assert.match(closing, /Define the goal\.<br>Let the loops do the work\./);
+  assert.match(closing, /<em>GitHub Copilot<\/em> for the inner loop\./);
+  assert.match(closing, /<em>GitHub Platform<\/em> for the outer loop\./);
   assert.match(sourceElement(source, "s-after-code"), /Security/);
-  assert.match(sourceElement(source, "s-checks"), /Changing acceptance criteria requires owner approval/);
-  assert.match(sourceElement(source, "s-authority"), /Human authority/);
-  assert.match(sourceElement(source, "s-recurrence"), /no-op/);
-  assert.match(sourceElement(source, "s-stop"), /BLOCKED or CAPPED/);
-  assert.match(sourceElement(source, "s-measure"), /baseline and evaluation cases/);
+  assert.doesNotMatch(sourceElement(source, "s-after-code"), /SRE agent/);
+  assert.match(sourceElement(source, "s-goal"), /People bring ideas, intent, and critical thinking/);
+  assert.match(sourceElement(source, "s-goal-card"), /criteria changes need owner approval/);
+  for (const id of ["s-goal", "s-evidence", "s-goal-card", "s-measure"]) {
+    assert.match(sourceElement(source, id), /<blockquote class="key-thought">/, `${id}: prominent closing thought`);
+  }
+  assert.match(sourceElement(source, "s-evidence"), /A loop can efficiently optimize the wrong goal/);
+  assert.match(sourceElement(source, "s-goal-card"), /define success checks and who approves/);
+  const measurement = sourceElement(source, "s-measure");
+  for (const dimension of ["Speed", "Ease", "Quality", "Thriving"]) assert.match(measurement, new RegExp(dimension));
+  assert.match(measurement, /Measure better outcomes\. Not more activity\./);
+  assert.match(measurement, /Microsoft Research: EngThrive \(2026\)/);
+  assert.match(measurement, /data-source-url="https:\/\/www\.microsoft\.com\/en-us\/research\/publication\/engthrive-make-it-fast-and-easy-to-do-great-work\/"/);
 });
 
 test("labs present one progressive loop without promising unavailable controls", () => {

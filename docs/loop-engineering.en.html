@@ -779,12 +779,41 @@ th {
   <style>
     #s-title h1 em { color: var(--accent); font-style: normal; }
     .title-logos { display: flex; align-items: center; gap: 48px; }
-    .title-logos svg { display: block; height: 36px; width: auto; }
-    .title-logos text, .title-logos .github-mark { fill: var(--text); }
+    .title-logos img { display: block; height: 36px; width: auto; }
+    .title-logos .github-logo-dark { display: none; }
+    @media screen {
+      :root[data-theme="dark"] .title-logos .github-logo-light { display: none; }
+      :root[data-theme="dark"] .title-logos .github-logo-dark { display: block; }
+    }
+    .slide-body .sequence { gap: 32px; }
+    .slide-body .sequence > li:not(:last-child)::after {
+      width: 14px;
+      height: 14px;
+      right: -24px;
+      border-color: var(--accent);
+      border-width: 4px;
+      z-index: 1;
+    }
+    .key-thought {
+      margin: 48px 0 0;
+      padding: 12px 0 12px 28px;
+      border-left: 5px solid var(--accent);
+      font-size: 32px;
+      line-height: 1.35;
+      font-weight: 560;
+      color: var(--text);
+      max-width: 32em;
+    }
+    .slide-body:has(> .key-thought) { display: flex; flex-direction: column; }
+    .slide-body > .key-thought { margin-top: auto; flex-shrink: 0; }
+    .seq-artifact { display: block; margin-top: 10px; font-size: 18px; color: var(--text-faint); }
+    .measurement-guardrail { margin-top: 28px; font-size: 24px; color: var(--text-muted); }
+    .research-reference { margin: 16px 0 0; font-size: 18px; color: var(--text-muted); }
+    .research-reference cite { font-style: normal; }
     .slide-body .lifecycle {
       grid-auto-flow: row;
       grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 32px 24px;
+      gap: 40px 32px;
       margin: 0;
       padding: 0;
     }
@@ -802,11 +831,11 @@ th {
     }
     .lifecycle .seq-title { font-size: 27px; margin-bottom: 12px; }
     .lifecycle .seq-note { font-size: 23px; line-height: 1.35; }
-    .slide-body .lifecycle > li::after { right: -17px; }
+    .slide-body .lifecycle > li::after { right: -24px; }
     .slide-body .lifecycle > li:nth-child(3)::after {
       top: auto;
       right: auto;
-      bottom: -22px;
+      bottom: -28px;
       left: 50%;
       transform: translateX(-50%) rotate(135deg);
     }
@@ -816,11 +845,8 @@ th {
     .slide-body .lifecycle > li:nth-child(4)::after,
     .slide-body .lifecycle > li:nth-child(5)::after {
       right: auto;
-      left: -17px;
+      left: -24px;
       transform: translateY(-50%) rotate(225deg);
-    }
-    @media print {
-      .title-logos text, .title-logos .github-mark { fill: #161616; }
     }
   </style>
   <script>
@@ -1300,20 +1326,13 @@ th {
     <h1>Loop Engineering<br>with <em>GitHub</em></h1>
     <p class="slide-sub">Define the goal. Let the loops do the work.</p>
     <div class="title-logos">
+      <!-- Original brand assets, without redrawing or recoloring. Trademark rights remain with their respective owners. -->
       <span role="img" aria-label="Microsoft">
-        <svg viewBox="0 0 118 23" aria-hidden="true">
-          <rect width="11" height="11" fill="#f25022"/>
-          <rect x="12" width="11" height="11" fill="#7fba00"/>
-          <rect y="12" width="11" height="11" fill="#00a4ef"/>
-          <rect x="12" y="12" width="11" height="11" fill="#ffb900"/>
-          <text x="31" y="18.5" font-size="19" font-weight="600" font-family="Segoe UI, Arial, sans-serif">Microsoft</text>
-        </svg>
+        <img data-brand-asset="microsoft" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANgAAAAuCAYAAABK69fpAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyhpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuNi1jMTMyIDc5LjE1OTI4NCwgMjAxNi8wNC8xOS0xMzoxMzo0MCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6QTAwQkM2Mzk4NDBBMTFFNjhDQkVCOTdDMjE1NkM3RkQiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6QTAwQkM2Mzg4NDBBMTFFNjhDQkVCOTdDMjE1NkM3RkQiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENDIDIwMTUuNSAoV2luZG93cykiPiA8eG1wTU06RGVyaXZlZEZyb20gc3RSZWY6aW5zdGFuY2VJRD0ieG1wLmlpZDpBMkM5MzFBNDcwQTExMUU2QUVERkExNDU3ODU1M0I3QiIgc3RSZWY6ZG9jdW1lbnRJRD0ieG1wLmRpZDpBMkM5MzFBNTcwQTExMUU2QUVERkExNDU3ODU1M0I3QiIvPiA8L3JkZjpEZXNjcmlwdGlvbj4gPC9yZGY6UkRGPiA8L3g6eG1wbWV0YT4gPD94cGFja2V0IGVuZD0iciI/PgQJy/MAAAxESURBVHja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" width="216" height="46" alt="Microsoft logo" data-source-url="https://uhf.microsoft.com/images/microsoft/RE1Mu3b.png">
       </span>
       <span role="img" aria-label="GitHub">
-        <svg viewBox="0 0 126 33" aria-hidden="true">
-          <path class="github-mark" d="M16 0C7.2 0 0 7.4 0 16.5c0 7.3 4.6 13.5 10.9 15.7.8.2 1.1-.4 1.1-.8v-3.1c-4.4 1-5.4-2.2-5.4-2.2-.7-1.9-1.8-2.4-1.8-2.4-1.5-1 .1-1 .1-1 1.6.1 2.5 1.7 2.5 1.7 1.5 2.6 3.8 1.8 4.7 1.4.1-1.1.6-1.8 1-2.2-3.5-.4-7.2-1.8-7.2-8.1 0-1.8.6-3.3 1.7-4.5-.2-.4-.7-2.1.2-4.4 0 0 1.4-.5 4.6 1.7a15.6 15.6 0 0 1 8.4 0c3.2-2.2 4.6-1.7 4.6-1.7.9 2.3.3 4 .2 4.4 1.1 1.2 1.7 2.7 1.7 4.5 0 6.3-3.7 7.7-7.2 8.1.6.5 1.1 1.5 1.1 3v4.5c0 .4.3 1 1.1.8A16.4 16.4 0 0 0 32 16.5C32 7.4 24.8 0 16 0Z"/>
-          <text x="42" y="23" font-size="24" font-weight="650" font-family="Segoe UI, Arial, sans-serif">GitHub</text>
-        </svg>
+        <img class="github-logo-light" data-brand-asset="github-black" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDE2IiBoZWlnaHQ9Ijk1IiB2aWV3Qm94PSIwIDAgNDE2IDk1IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZyBjbGlwLXBhdGg9InVybCgjY2xpcDBfNzMwXzI3MTI4KSI+CjxwYXRoIGQ9Ik00MS42Mzk0IDY5LjM4NDhDMjkuMDA2NiA2Ny44NTM1IDIwLjEwNjIgNTguNzYxNyAyMC4xMDYyIDQ2Ljk5MDJDMjAuMTA2MiA0Mi4yMDUxIDIxLjgyODkgMzcuMDM3MSAyNC43IDMzLjU5MThDMjMuNDU1OCAzMC40MzM2IDIzLjY0NzIgMjMuNzM0NCAyNS4wODI4IDIwLjk1OUMyOC45MTA5IDIwLjQ4MDUgMzQuMDc4OSAyMi40OTAyIDM3LjE0MTQgMjUuMjY1NkM0MC43NzgxIDI0LjExNzIgNDQuNjA2MiAyMy41NDMgNDkuMjk1NyAyMy41NDNDNTMuOTg1MSAyMy41NDMgNTcuODEzMiAyNC4xMTcyIDYxLjI1ODUgMjUuMTY5OUM2NC4yMjUzIDIyLjQ5MDIgNjkuNDg5IDIwLjQ4MDUgNzMuMzE3MSAyMC45NTlDNzQuNjU3IDIzLjU0MyA3NC44NDg0IDMwLjI0MjIgNzMuNjA0MiAzMy40OTYxQzc2LjY2NjcgMzcuMTMyOCA3OC4yOTM3IDQyLjAxMzcgNzguMjkzNyA0Ni45OTAyQzc4LjI5MzcgNTguNzYxNyA2OS4zOTMzIDY3LjY2MjEgNTYuNTY5MSA2OS4yODkxQzU5LjgyMyA3MS4zOTQ1IDYyLjAyNDIgNzUuOTg4MyA2Mi4wMjQyIDgxLjI1Mkw2Mi4wMjQyIDkxLjIwNTFDNjIuMDI0MiA5NC4wNzYyIDY0LjQxNjcgOTUuNzAzMSA2Ny4yODc4IDk0LjU1NDdDODQuNjEwMSA4Ny45NTEyIDk4LjIgNzAuNjI4OSA5OC4yIDQ5LjE5MTRDOTguMiAyMi4xMDc0IDc2LjE4ODIgNi42OTUzOWUtMDcgNDkuMTA0MiA0LjMwOWUtMDdDMjIuMDIwMyAxLjkyMjYxZS0wNyAwLjE5OTk1MSAyMi4xMDc0IDAuMTk5OTUxIDQ5LjE5MTRDMC4xOTk5NTEgNzAuNDM3NSAxMy42OTQxIDg4LjA0NjkgMzEuODc3NyA5NC42NTA0QzM0LjQ2MTcgOTUuNjA3NCAzNi45NSA5My44ODQ4IDM2Ljk1IDkxLjMwMDhMMzYuOTUgODMuNjQ0NUMzNS42MTAxIDg0LjIxODggMzMuODg3NSA4NC42MDE2IDMyLjM1NjIgODQuNjAxNkMyNi4wMzk4IDg0LjYwMTYgMjIuMzA3NCA4MS4xNTYzIDE5LjYyNzcgNzQuNzQ0MUMxOC41NzUgNzIuMTYwMiAxNy40MjY1IDcwLjYyODkgMTUuMjI1MyA3MC4zNDE4QzE0LjA3NjkgNzAuMjQ2MSAxMy42OTQxIDY5Ljc2NzYgMTMuNjk0MSA2OS4xOTM0QzEzLjY5NDEgNjguMDQ0OSAxNS42MDgyIDY3LjE4MzYgMTcuNTIyMiA2Ny4xODM2QzIwLjI5NzYgNjcuMTgzNiAyMi42OTAyIDY4LjkwNjMgMjUuMTc4NSA3Mi40NDczQzI3LjA5MjUgNzUuMjIyNyAyOS4xMDIzIDc2LjQ2NjggMzEuNDk0OSA3Ni40NjY4QzMzLjg4NzUgNzYuNDY2OCAzNS40MTg3IDc1LjYwNTUgMzcuNjE5OSA3My40MDQzQzM5LjI0NjggNzEuNzc3MyA0MC40OTEgNzAuMzQxOCA0MS42Mzk0IDY5LjM4NDhaIiBmaWxsPSJibGFjayIvPgo8ZyBjbGlwLXBhdGg9InVybCgjY2xpcDFfNzMwXzI3MTI4KSI+CjxwYXRoIGQ9Ik0xODguOTM3IDgzLjAwNDVMMTg4LjkzNyAzMy4yODI3TDIwMi45MTUgMzMuMjgyN0wyMDIuOTE1IDgzLjAwNDVMMTg4LjkzNyA4My4wMDQ1Wk0yMzAuMDE2IDgzLjAwNDVDMjIwLjcyNyA4My4wMDQ1IDIxNy4wOTkgNzkuMDIzMiAyMTcuMDk5IDcwLjYxODNMMjE3LjA5OSA0NC45NjExTDIwOC4yNTIgNDQuOTYxMUwyMDguMjUyIDMzLjI4MjdMMjE3LjA5OSAzMy4yODI3TDIxNy4wOTkgMjMuMzczN0wyMzEuMDc4IDIwLjEwMDJMMjMxLjA3OCAzMy4yODI3TDI0MS40MjkgMzMuMjgyN0wyNDEuNDI5IDQ0Ljk2MTFMMjMxLjA3OCA0NC45NjExTDIzMS4wNzggNjcuNTIxN0MyMzEuMDc4IDcwLjI2NDQgMjMyLjMxNyA3MS4zMjYxIDIzNS4wNTkgNzEuMzI2MUwyNDEuNDI5IDcxLjMyNjFMMjQxLjQyOSA4My4wMDQ1TDIzMC4wMTYgODMuMDA0NVpNMzI3LjQ3IDgzLjg4OTJDMzE2LjU4OCA4My44ODkyIDMxMC42NiA3Ny44NzMxIDMxMC42NiA2Ni45MDI0TDMxMC42NiAzMy4yODI3TDMyNC43MjggMzMuMjgyN0wzMjQuNzI4IDYzLjE4NjZDMzI0LjcyOCA2OS4yOTEyIDMyNy40NyA3Mi42NTMyIDMzMi42OSA3Mi42NTMyQzMzOC43MDYgNzIuNjUzMiAzNDMuMzA3IDY3LjA3OTQgMzQzLjMwNyA1OS40NzA3TDM0My4zMDcgMzMuMjgyN0wzNTcuMzc0IDMzLjI4MjdMMzU3LjM3NCA4My4wMDQ1TDM0My4zMDcgODMuMDA0NUwzNDMuMzA3IDc0LjU5OTZDMzQwLjY1MyA3OS45OTY0IDMzNC4yODMgODMuODg5MiAzMjcuNDcgODMuODg5MlpNMzk0LjYxMyA4My44ODkyQzM4Ny44MzIgODMuODg5MiAzODEuNjM5IDc5Ljk5NjQgMzc4LjY4NyA3NC40MjI2TDM3OC42ODcgODMuMDA0NUwzNjQuNzA5IDgzLjAwNDVMMzY0LjcwOSAxMy42NDE3TDM3OC43NzYgMTMuNjQxN0wzNzguNzc2IDQyLjM5NTRDMzgxLjYzOSAzNi4zNzkyIDM4OC4wOTggMzIuMTMyNSAzOTQuNjEzIDMyLjEzMjVDNDA4LjE4MSAzMi4xMzI1IDQxNS4zNDggNDEuNTEwNyA0MTQuODczIDU4LjA1NTFDNDE1LjM0OCA3NC40MjI2IDQwNy45MTYgODMuODg5MiAzOTQuNjEzIDgzLjg4OTJaTTM4OS42NTggNzIuMTIyM0MzOTYuOTQ1IDcyLjEyMjMgNDAwLjkyNiA2Ni43MjU1IDQwMC40NTIgNTguMDU1MUM0MDAuOTI2IDQ5LjI5NjMgMzk2Ljk0NSA0My44OTk0IDM4OS42NTggNDMuODk5NEMzODMuODUxIDQzLjg5OTQgMzc5LjI1MSA0OS41NjE3IDM3OC43NzYgNTcuMzQ3M0wzNzguNzc2IDU4LjE0MzZDMzc5LjI1MSA2Ni4xOTQ2IDM4My44NTEgNzIuMTIyMyAzODkuNjU4IDcyLjEyMjNaTTI4OC43MzQgMTMuNjQxN0wyODguNzM0IDQxLjc3NjFMMjYyLjM2OSA0MS43NzYxTDI2Mi4zNjkgMTMuNjQxN0wyNDcuMzI5IDEzLjY0MTdMMjQ3LjMyOSA4My4wMDQ1TDI2Mi4zNjkgODMuMDA0NUwyNjIuMzY5IDU1LjIyNEwyODguNzM0IDU1LjIyNEwyODguNzM0IDgzLjAwNDVMMzAzLjc3NSA4My4wMDQ1TDMwMy43NzUgMTMuNjQxN0wyODguNzM0IDEzLjY0MTdaTTE1MC42MjggODQuMzMxNkMxMzAuMTAyIDg0LjMzMTYgMTE3LjE4NSA3MC4yNjQ0IDExNy4xODUgNDguMjM0NkMxMTcuMTg1IDI2LjIwNDggMTMwLjM2OCAxMi4zMTQ2IDE1MS4yNDcgMTIuMzE0NkMxNjguMjM0IDEyLjMxNDYgMTc4LjQ5NyAxOS41NjkzIDE4MS43NyAzMS43Nzg2TDE2Ni41NTMgMzUuNDA2QzE2NC42OTUgMjguNzcwNSAxNTkuMzg3IDI1LjE0MzEgMTUxLjI0NyAyNS4xNDMxQzEzOS4xMjYgMjUuMTQzMSAxMzIuNTc5IDMzLjEwNTcgMTMyLjU3OSA0OC4yMzQ2QzEzMi41NzkgNjMuMzYzNSAxMzguOTQ5IDcxLjUwMyAxNTAuODkzIDcxLjUwM0MxNjEuODY0IDcxLjUwMyAxNjguNDExIDY0Ljc3OTEgMTY4LjQxMSA1My4zNjZMMTY4LjQxMSA1MC43MTE5TDE3Mi4zMDQgNTYuMTA4N0wxNDkuNjU1IDU2LjEwODdMMTQ5LjY1NSA0My4zNjg2TDE4My42MjggNDMuMzY4NkwxODMuNjI4IDUxLjQxOTZDMTgzLjYyOCA3Mi41NjQ3IDE3MS4zMzEgODQuMzMxNiAxNTAuNjI4IDg0LjMzMTZaTTE5NS45MjYgMjguNTkzNkMyMDAuNjE1IDI4LjU5MzYgMjA0LjI0MyAyNC45NjYyIDIwNC4yNDMgMjAuMjc3MUMyMDQuMjQzIDE1LjU4ODEgMjAwLjYxNSAxMS45NjA3IDE5NS45MjYgMTEuOTYwN0MxOTEuMjM3IDExLjk2MDcgMTg3LjYxIDE1LjU4ODEgMTg3LjYxIDIwLjI3NzFDMTg3LjYxIDI0Ljk2NjIgMTkxLjIzNyAyOC41OTM2IDE5NS45MjYgMjguNTkzNloiIGZpbGw9ImJsYWNrIi8+CjwvZz4KPC9nPgo8ZGVmcz4KPGNsaXBQYXRoIGlkPSJjbGlwMF83MzBfMjcxMjgiPgo8cmVjdCB3aWR0aD0iNDE2IiBoZWlnaHQ9Ijk1IiBmaWxsPSJ3aGl0ZSIvPgo8L2NsaXBQYXRoPgo8Y2xpcFBhdGggaWQ9ImNsaXAxXzczMF8yNzEyOCI+CjxyZWN0IHdpZHRoPSIyOTguMDY4IiBoZWlnaHQ9Ijc1Ljk0MDgiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMTcuMTg1IDkuNDkyNTgpIi8+CjwvY2xpcFBhdGg+CjwvZGVmcz4KPC9zdmc+Cg==" width="416" height="95" alt="GitHub logo" data-source-url="https://brand.github.com/GitHub_Logos.zip" data-source-entry="GitHub Logos/SVG/GitHub_Lockup_Black.svg">
+        <img class="github-logo-dark" data-brand-asset="github-white" src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDE2IiBoZWlnaHQ9Ijk1IiB2aWV3Qm94PSIwIDAgNDE2IDk1IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8ZyBjbGlwLXBhdGg9InVybCgjY2xpcDBfNzMxXzI3MTczKSI+CjxwYXRoIGQ9Ik00MS42Mzk0IDY5LjM4NDhDMjkuMDA2NiA2Ny44NTM1IDIwLjEwNjIgNTguNzYxNyAyMC4xMDYyIDQ2Ljk5MDJDMjAuMTA2MiA0Mi4yMDUxIDIxLjgyODkgMzcuMDM3MSAyNC43IDMzLjU5MThDMjMuNDU1OCAzMC40MzM2IDIzLjY0NzIgMjMuNzM0NCAyNS4wODI4IDIwLjk1OUMyOC45MTA5IDIwLjQ4MDUgMzQuMDc4OSAyMi40OTAyIDM3LjE0MTQgMjUuMjY1NkM0MC43NzgxIDI0LjExNzIgNDQuNjA2MiAyMy41NDMgNDkuMjk1NyAyMy41NDNDNTMuOTg1MSAyMy41NDMgNTcuODEzMiAyNC4xMTcyIDYxLjI1ODUgMjUuMTY5OUM2NC4yMjUzIDIyLjQ5MDIgNjkuNDg5IDIwLjQ4MDUgNzMuMzE3MSAyMC45NTlDNzQuNjU3IDIzLjU0MyA3NC44NDg0IDMwLjI0MjIgNzMuNjA0MiAzMy40OTYxQzc2LjY2NjcgMzcuMTMyOCA3OC4yOTM3IDQyLjAxMzcgNzguMjkzNyA0Ni45OTAyQzc4LjI5MzcgNTguNzYxNyA2OS4zOTMzIDY3LjY2MjEgNTYuNTY5MSA2OS4yODkxQzU5LjgyMyA3MS4zOTQ1IDYyLjAyNDIgNzUuOTg4MyA2Mi4wMjQyIDgxLjI1Mkw2Mi4wMjQyIDkxLjIwNTFDNjIuMDI0MiA5NC4wNzYyIDY0LjQxNjcgOTUuNzAzMSA2Ny4yODc4IDk0LjU1NDdDODQuNjEwMSA4Ny45NTEyIDk4LjIgNzAuNjI4OSA5OC4yIDQ5LjE5MTRDOTguMiAyMi4xMDc0IDc2LjE4ODIgNi42OTUzOWUtMDcgNDkuMTA0MiA0LjMwOWUtMDdDMjIuMDIwMyAxLjkyMjYxZS0wNyAwLjE5OTk1MSAyMi4xMDc0IDAuMTk5OTUxIDQ5LjE5MTRDMC4xOTk5NTEgNzAuNDM3NSAxMy42OTQxIDg4LjA0NjkgMzEuODc3NyA5NC42NTA0QzM0LjQ2MTcgOTUuNjA3NCAzNi45NSA5My44ODQ4IDM2Ljk1IDkxLjMwMDhMMzYuOTUgODMuNjQ0NUMzNS42MTAxIDg0LjIxODggMzMuODg3NSA4NC42MDE2IDMyLjM1NjIgODQuNjAxNkMyNi4wMzk4IDg0LjYwMTYgMjIuMzA3NCA4MS4xNTYzIDE5LjYyNzcgNzQuNzQ0MUMxOC41NzUgNzIuMTYwMiAxNy40MjY1IDcwLjYyODkgMTUuMjI1MyA3MC4zNDE4QzE0LjA3NjkgNzAuMjQ2MSAxMy42OTQxIDY5Ljc2NzYgMTMuNjk0MSA2OS4xOTM0QzEzLjY5NDEgNjguMDQ0OSAxNS42MDgyIDY3LjE4MzYgMTcuNTIyMiA2Ny4xODM2QzIwLjI5NzYgNjcuMTgzNiAyMi42OTAyIDY4LjkwNjMgMjUuMTc4NSA3Mi40NDczQzI3LjA5MjUgNzUuMjIyNyAyOS4xMDIzIDc2LjQ2NjggMzEuNDk0OSA3Ni40NjY4QzMzLjg4NzUgNzYuNDY2OCAzNS40MTg3IDc1LjYwNTUgMzcuNjE5OSA3My40MDQzQzM5LjI0NjggNzEuNzc3MyA0MC40OTEgNzAuMzQxOCA0MS42Mzk0IDY5LjM4NDhaIiBmaWxsPSJ3aGl0ZSIvPgo8ZyBjbGlwLXBhdGg9InVybCgjY2xpcDFfNzMxXzI3MTczKSI+CjxwYXRoIGQ9Ik0xODguOTM3IDgzLjAwNDVMMTg4LjkzNyAzMy4yODI3TDIwMi45MTUgMzMuMjgyN0wyMDIuOTE1IDgzLjAwNDVMMTg4LjkzNyA4My4wMDQ1Wk0yMzAuMDE2IDgzLjAwNDVDMjIwLjcyNyA4My4wMDQ1IDIxNy4wOTkgNzkuMDIzMiAyMTcuMDk5IDcwLjYxODNMMjE3LjA5OSA0NC45NjExTDIwOC4yNTIgNDQuOTYxMUwyMDguMjUyIDMzLjI4MjdMMjE3LjA5OSAzMy4yODI3TDIxNy4wOTkgMjMuMzczN0wyMzEuMDc4IDIwLjEwMDJMMjMxLjA3OCAzMy4yODI3TDI0MS40MjkgMzMuMjgyN0wyNDEuNDI5IDQ0Ljk2MTFMMjMxLjA3OCA0NC45NjExTDIzMS4wNzggNjcuNTIxN0MyMzEuMDc4IDcwLjI2NDQgMjMyLjMxNyA3MS4zMjYxIDIzNS4wNTkgNzEuMzI2MUwyNDEuNDI5IDcxLjMyNjFMMjQxLjQyOSA4My4wMDQ1TDIzMC4wMTYgODMuMDA0NVpNMzI3LjQ3IDgzLjg4OTJDMzE2LjU4OCA4My44ODkyIDMxMC42NiA3Ny44NzMxIDMxMC42NiA2Ni45MDI0TDMxMC42NiAzMy4yODI3TDMyNC43MjggMzMuMjgyN0wzMjQuNzI4IDYzLjE4NjZDMzI0LjcyOCA2OS4yOTEyIDMyNy40NyA3Mi42NTMyIDMzMi42OSA3Mi42NTMyQzMzOC43MDYgNzIuNjUzMiAzNDMuMzA3IDY3LjA3OTQgMzQzLjMwNyA1OS40NzA3TDM0My4zMDcgMzMuMjgyN0wzNTcuMzc0IDMzLjI4MjdMMzU3LjM3NCA4My4wMDQ1TDM0My4zMDcgODMuMDA0NUwzNDMuMzA3IDc0LjU5OTZDMzQwLjY1MyA3OS45OTY0IDMzNC4yODMgODMuODg5MiAzMjcuNDcgODMuODg5MlpNMzk0LjYxMyA4My44ODkyQzM4Ny44MzIgODMuODg5MiAzODEuNjM5IDc5Ljk5NjQgMzc4LjY4NyA3NC40MjI2TDM3OC42ODcgODMuMDA0NUwzNjQuNzA5IDgzLjAwNDVMMzY0LjcwOSAxMy42NDE3TDM3OC43NzYgMTMuNjQxN0wzNzguNzc2IDQyLjM5NTRDMzgxLjYzOSAzNi4zNzkyIDM4OC4wOTggMzIuMTMyNSAzOTQuNjEzIDMyLjEzMjVDNDA4LjE4MSAzMi4xMzI1IDQxNS4zNDggNDEuNTEwNyA0MTQuODczIDU4LjA1NTFDNDE1LjM0OCA3NC40MjI2IDQwNy45MTYgODMuODg5MiAzOTQuNjEzIDgzLjg4OTJaTTM4OS42NTggNzIuMTIyM0MzOTYuOTQ1IDcyLjEyMjMgNDAwLjkyNiA2Ni43MjU1IDQwMC40NTIgNTguMDU1MUM0MDAuOTI2IDQ5LjI5NjMgMzk2Ljk0NSA0My44OTk0IDM4OS42NTggNDMuODk5NEMzODMuODUxIDQzLjg5OTQgMzc5LjI1MSA0OS41NjE3IDM3OC43NzYgNTcuMzQ3M0wzNzguNzc2IDU4LjE0MzZDMzc5LjI1MSA2Ni4xOTQ2IDM4My44NTEgNzIuMTIyMyAzODkuNjU4IDcyLjEyMjNaTTI4OC43MzQgMTMuNjQxN0wyODguNzM0IDQxLjc3NjFMMjYyLjM2OSA0MS43NzYxTDI2Mi4zNjkgMTMuNjQxN0wyNDcuMzI5IDEzLjY0MTdMMjQ3LjMyOSA4My4wMDQ1TDI2Mi4zNjkgODMuMDA0NUwyNjIuMzY5IDU1LjIyNEwyODguNzM0IDU1LjIyNEwyODguNzM0IDgzLjAwNDVMMzAzLjc3NSA4My4wMDQ1TDMwMy43NzUgMTMuNjQxN0wyODguNzM0IDEzLjY0MTdaTTE1MC42MjggODQuMzMxNkMxMzAuMTAyIDg0LjMzMTYgMTE3LjE4NSA3MC4yNjQ0IDExNy4xODUgNDguMjM0NkMxMTcuMTg1IDI2LjIwNDggMTMwLjM2OCAxMi4zMTQ2IDE1MS4yNDcgMTIuMzE0NkMxNjguMjM0IDEyLjMxNDYgMTc4LjQ5NyAxOS41NjkzIDE4MS43NyAzMS43Nzg2TDE2Ni41NTMgMzUuNDA2QzE2NC42OTUgMjguNzcwNSAxNTkuMzg3IDI1LjE0MzEgMTUxLjI0NyAyNS4xNDMxQzEzOS4xMjYgMjUuMTQzMSAxMzIuNTc5IDMzLjEwNTcgMTMyLjU3OSA0OC4yMzQ2QzEzMi41NzkgNjMuMzYzNSAxMzguOTQ5IDcxLjUwMyAxNTAuODkzIDcxLjUwM0MxNjEuODY0IDcxLjUwMyAxNjguNDExIDY0Ljc3OTEgMTY4LjQxMSA1My4zNjZMMTY4LjQxMSA1MC43MTE5TDE3Mi4zMDQgNTYuMTA4N0wxNDkuNjU1IDU2LjEwODdMMTQ5LjY1NSA0My4zNjg2TDE4My42MjggNDMuMzY4NkwxODMuNjI4IDUxLjQxOTZDMTgzLjYyOCA3Mi41NjQ3IDE3MS4zMzEgODQuMzMxNiAxNTAuNjI4IDg0LjMzMTZaTTE5NS45MjYgMjguNTkzNkMyMDAuNjE1IDI4LjU5MzYgMjA0LjI0MyAyNC45NjYyIDIwNC4yNDMgMjAuMjc3MUMyMDQuMjQzIDE1LjU4ODEgMjAwLjYxNSAxMS45NjA3IDE5NS45MjYgMTEuOTYwN0MxOTEuMjM3IDExLjk2MDcgMTg3LjYxIDE1LjU4ODEgMTg3LjYxIDIwLjI3NzFDMTg3LjYxIDI0Ljk2NjIgMTkxLjIzNyAyOC41OTM2IDE5NS45MjYgMjguNTkzNloiIGZpbGw9IndoaXRlIi8+CjwvZz4KPC9nPgo8ZGVmcz4KPGNsaXBQYXRoIGlkPSJjbGlwMF83MzFfMjcxNzMiPgo8cmVjdCB3aWR0aD0iNDE2IiBoZWlnaHQ9Ijk1IiBmaWxsPSJ3aGl0ZSIvPgo8L2NsaXBQYXRoPgo8Y2xpcFBhdGggaWQ9ImNsaXAxXzczMV8yNzE3MyI+CjxyZWN0IHdpZHRoPSIyOTguMDY4IiBoZWlnaHQ9Ijc1Ljk0MDgiIGZpbGw9IndoaXRlIiB0cmFuc2Zvcm09InRyYW5zbGF0ZSgxMTcuMTg1IDkuNDkyNTgpIi8+CjwvY2xpcFBhdGg+CjwvZGVmcz4KPC9zdmc+Cg==" width="416" height="95" alt="GitHub logo" data-source-url="https://brand.github.com/GitHub_Logos.zip" data-source-entry="GitHub Logos/SVG/GitHub_Lockup_White.svg">
       </span>
     </div>
   </section>
@@ -1322,26 +1341,25 @@ th {
     <div class="slide-head"><h2 class="slide-title">Stop managing prompts. Define the goal.</h2></div>
     <div class="slide-body">
       <div class="two-col">
-        <div><span class="col-label">Prompt-driven</span><p>You prescribe each step.<br>You evaluate each answer.</p></div>
-        <div><span class="col-label">Goal-driven</span><p>You define the outcome and boundaries.<br>The agent acts, checks, and adjusts.</p></div>
+        <div><span class="col-label">Prompt-driven</span><p>You prescribe each step.</p></div>
+        <div><span class="col-label">Goal-driven</span><p>You define outcomes and boundaries.</p></div>
       </div>
+      <blockquote class="key-thought">People bring ideas, intent, and critical thinking.<br>AI orchestrates the steps.</blockquote>
     </div>
-    <p class="slide-note">Delegate iteration, not judgment.</p>
   </section>
 
   <section class="slide" id="s-before-code">
     <div class="slide-head"><h2 class="slide-title">Engineering starts before the first line of code.</h2></div>
     <div class="slide-body">
       <ol class="sequence lifecycle">
-        <li><span class="seq-title">Need</span><span class="seq-note">Understand users and desired outcomes</span></li>
-        <li><span class="seq-title">Design</span><span class="seq-note">Choose contracts and resolve tradeoffs</span></li>
-        <li><span class="seq-title">Goal Card</span><span class="seq-note">Define evidence, permissions, and limits</span></li>
+        <li><span class="seq-title">Need</span><span class="seq-note">Understand users and desired outcomes</span><span class="seq-artifact"></span></li>
+        <li><span class="seq-title">Design</span><span class="seq-note">Choose contracts and resolve tradeoffs</span><span class="seq-artifact"></span></li>
+        <li><span class="seq-title">Goal Card</span><span class="seq-note">Define evidence, permissions, and limits</span><span class="seq-artifact"></span></li>
         <li><span class="seq-title">Stories</span><span class="seq-note">Describe observable behavior and exceptions</span></li>
         <li><span class="seq-title">Tests</span><span class="seq-note">Turn acceptance criteria into checks</span></li>
         <li class="code-step"><span class="seq-title">Code</span><span class="seq-note">Implement against approved evidence</span></li>
       </ol>
     </div>
-    <p class="slide-note">Refine the artifacts as evidence changes.</p>
   </section>
 
   <section class="slide" id="s-after-code">
@@ -1354,7 +1372,6 @@ th {
       <li><span class="seq-title">Operations</span><span class="seq-note">Observe outcomes and respond to incidents</span></li>
       <li><span class="seq-title">Feedback</span><span class="seq-note">Turn evidence into the next goal</span></li>
     </ol></div>
-    <p class="slide-note">Reviews can run in parallel. Humans authorize protected transitions.</p>
   </section>
 
   <section class="slide" id="s-loops">
@@ -1362,8 +1379,11 @@ th {
     <div class="slide-body">
       <svg viewBox="0 40 1100 360" role="img" aria-labelledby="loops-title loops-desc">
         <title id="loops-title">Connected engineering loops</title>
-        <desc id="loops-desc">Clockwise loops connect workspace iteration to shared review, delivery, and feedback.</desc>
-        <defs><marker id="loops-arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker></defs>
+        <desc id="loops-desc">Implement includes an inner loop; review, delivery, and feedback connect it to the platform.</desc>
+        <defs>
+          <marker id="loops-arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker>
+          <marker id="implementation-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker>
+        </defs>
         <g fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" marker-end="url(#loops-arrow)">
           <path d="M176.7 118.8A110 110 0 0 1 283.3 118.8"/><path d="M326.2 161.7A110 110 0 0 1 326.2 268.3"/>
           <path d="M283.3 311.2A110 110 0 0 1 176.7 311.2"/><path d="M133.8 268.3A110 110 0 0 1 133.8 161.7"/>
@@ -1374,8 +1394,16 @@ th {
         </g>
         <g fill="var(--accent)">
           <circle cx="152.2" cy="137.2" r="9"/><circle cx="307.8" cy="137.2" r="9"/><circle cx="307.8" cy="292.8" r="9"/><circle cx="152.2" cy="292.8" r="9"/>
-          <circle cx="670" cy="215" r="9"/><circle cx="726.5" cy="97.7" r="9"/><circle cx="853.4" cy="68.8" r="9"/>
+          <circle cx="670" cy="215" r="9"/><circle cx="726.5" cy="97.7" r="9"/>
           <circle cx="955.1" cy="149.9" r="9"/><circle cx="955.1" cy="280.1" r="9"/><circle cx="853.4" cy="361.2" r="9"/><circle cx="726.5" cy="332.3" r="9"/>
+        </g>
+        <g id="implementation-cycle" transform="translate(853.4 68.8)">
+          <circle r="17" fill="var(--bg)" stroke="var(--accent)" stroke-width="2"/>
+          <g fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#implementation-arrow)">
+            <path d="M5 -8.66A10 10 0 0 1 9.4 3.42"/>
+            <path d="M5 8.66A10 10 0 0 1 -7.66 6.43"/>
+            <path d="M-10 0A10 10 0 0 1 -1.74 -9.85"/>
+          </g>
         </g>
         <g fill="var(--text)" font-size="22">
           <text x="140" y="114" text-anchor="end">Goal Card</text><text x="320" y="114">Create</text>
@@ -1387,135 +1415,49 @@ th {
         </g>
         <g text-anchor="middle" fill="var(--text)">
           <text x="230" y="212" font-size="24" font-weight="600">Inner loop</text><text x="230" y="240" font-size="19" fill="var(--text-muted)">Workspace</text>
-          <text x="820" y="212" font-size="24" font-weight="600">Outer loop</text><text x="820" y="240" font-size="19" fill="var(--text-muted)">Shared evidence</text>
+          <text x="820" y="212" font-size="24" font-weight="600">Outer loop</text><text x="820" y="240" font-size="19" fill="var(--text-muted)">GitHub Platform</text>
         </g>
       </svg>
     </div>
-    <p class="slide-note">Conceptual roles, not automatic authority. Either coding loop can run locally or remotely.</p>
   </section>
 
   <section class="slide" id="s-evidence">
-    <div class="slide-head"><h2 class="slide-title">Evidence informs intent. It does not authorize it.</h2></div>
-    <div class="slide-body"><ul class="arrow-list">
-      <li class="frag">Correlate sources; expose contradictions and uncertainty.</li>
-      <li class="frag">Separate a missing capability from a broken contract.</li>
-      <li class="frag">A person confirms scope before implementation begins.</li>
-    </ul></div>
-    <p class="slide-note">A confident summary is not a product decision.</p>
+    <div class="slide-head"><h2 class="slide-title">Solve the right problem. Not just the visible symptom.</h2></div>
+    <div class="slide-body"><ol class="sequence">
+      <li><span class="seq-title">Observe</span><span class="seq-note">Read the signals</span></li>
+      <li><span class="seq-title">Understand</span><span class="seq-note">Find the underlying problem</span></li>
+      <li><span class="seq-title">Choose</span><span class="seq-note">Define the desired outcome</span></li>
+    </ol>
+      <blockquote class="key-thought">A loop can efficiently optimize the wrong goal.<br>Choose the goal before accelerating.</blockquote>
+    </div>
   </section>
 
   <section class="slide" id="s-goal-card">
     <div class="slide-head"><h2 class="slide-title">A Goal Card makes delegation inspectable.</h2></div>
     <div class="slide-body"><ul class="arrow-list">
-      <li class="frag">Outcome: observable behavior and proof of completion.</li>
-      <li class="frag">Boundary: permitted changes, tools, and protected invariants.</li>
+      <li class="frag">Outcome: define success checks and who approves.</li>
+      <li class="frag">Boundary: tools, invariants; criteria changes need owner approval.</li>
       <li class="frag">Stop: blockers, budgets, and human escalation.</li>
-    </ul></div>
-    <p class="slide-note">Approve the finish line before the agent starts running.</p>
-  </section>
-
-  <section class="slide" id="s-checks">
-    <div class="slide-head"><h2 class="slide-title">Repair the implementation, not the finish line.</h2></div>
-    <div class="slide-body"><ul class="arrow-list">
-      <li class="frag">First show a check failing for the right reason.</li>
-      <li class="frag">Let failed evidence select the smallest repair.</li>
-      <li class="frag">Changing acceptance criteria requires owner approval.</li>
-    </ul></div>
-    <p class="slide-note">Tests sample behavior; green output alone does not prove completeness.</p>
-  </section>
-
-  <section class="slide" id="s-handoff">
-    <div class="slide-head"><h2 class="slide-title">A handoff transfers evidence, not confidence.</h2></div>
-    <div class="slide-body"><ol class="sequence">
-      <li><span class="seq-title">Intent</span><span class="seq-note">Approved goal and scope</span></li>
-      <li><span class="seq-title">Revision</span><span class="seq-note">Exact diff and checks</span></li>
-      <li><span class="seq-title">Decision</span><span class="seq-note">Gaps and accountable owner</span></li>
-    </ol></div>
-    <p class="slide-note">A changed revision invalidates affected evidence. Recheck before approval.</p>
-  </section>
-
-  <section class="slide" id="s-authority">
-    <div class="slide-head"><h2 class="slide-title">Checks, reasoning, and authority answer different questions.</h2></div>
-    <div class="slide-body"><ol class="sequence">
-      <li><span class="seq-title">Checks</span><span class="seq-note">Does this revision pass?</span></li>
-      <li><span class="seq-title">Independent review</span><span class="seq-note">What did we miss?</span></li>
-      <li><span class="seq-title">Human authority</span><span class="seq-note">May it cross the boundary?</span></li>
-    </ol></div>
-    <p class="slide-note">A reviewer challenges the proposal; it does not inherit merge or release permissions.</p>
-  </section>
-
-  <section class="slide" id="s-trust">
-    <div class="slide-head"><h2 class="slide-title">Retrieved context must not become executable authority.</h2></div>
-    <div class="slide-body"><ul class="arrow-list">
-      <li class="frag">Treat tickets, comments, and documents as untrusted data.</li>
-      <li class="frag">Give each role only the tools it needs.</li>
-      <li class="frag">Enforce privileged boundaries outside the model.</li>
-    </ul></div>
-    <p class="slide-note">A prompt is not an access-control mechanism.</p>
-  </section>
-
-  <section class="slide" id="s-delivery">
-    <div class="slide-head"><h2 class="slide-title">Promote verified bytes. Do not rebuild the evidence.</h2></div>
-    <div class="slide-body"><ol class="sequence">
-      <li><span class="seq-title">Build once</span><span class="seq-note">Bind source to image digest</span></li>
-      <li><span class="seq-title">Verify in test</span><span class="seq-note">Checks and trusted publisher</span></li>
-      <li><span class="seq-title">Approve promotion</span><span class="seq-note">Same digest, separate authority</span></li>
-    </ol></div>
-    <p class="slide-note">A signature authenticates a publisher of bytes, not correctness. Readiness is not deployment.</p>
-  </section>
-
-  <section class="slide" id="s-operations">
-    <div class="slide-head"><h2 class="slide-title">Operational feedback closes the engineering loop.</h2></div>
-    <div class="slide-body"><ul class="arrow-list">
-      <li class="frag">Observe user outcomes, failures, and unexpected behavior.</li>
-      <li class="frag">Keep an operational owner and verified rollback candidate.</li>
-      <li class="frag">Turn new evidence into the next bounded goal.</li>
-    </ul></div>
-    <p class="slide-note">Deployment success and product success are different signals.</p>
-  </section>
-
-  <section class="slide" id="s-recurrence">
-    <div class="slide-head"><h2 class="slide-title">Recurrence means reconciliation, not repeated creation.</h2></div>
-    <div class="slide-body"><ol class="sequence">
-      <li><span class="seq-title">Read state</span><span class="seq-note">Evidence and prior output</span></li>
-      <li><span class="seq-title">Reconcile</span><span class="seq-note">Changed, duplicate, or waiting?</span></li>
-      <li><span class="seq-title">Bound the effect</span><span class="seq-note">Update owned work or no-op</span></li>
-    </ol></div>
-    <p class="slide-note">A trigger repeats the assessment. It does not expand permissions.</p>
-  </section>
-
-  <section class="slide" id="s-stop">
-    <div class="slide-head"><h2 class="slide-title">A useful loop knows when not to act.</h2></div>
-    <div class="slide-body"><ul class="arrow-list">
-      <li class="frag">DONE: required evidence supports the goal.</li>
-      <li class="frag">BLOCKED or CAPPED: stop and escalate with evidence.</li>
-      <li class="frag">NO-OP: unchanged or waiting state needs no write.</li>
-    </ul></div>
-    <p class="slide-note">Bound time, attempts, inference spend, and side effects before execution.</p>
+    </ul>
+      <blockquote class="key-thought">Approve the finish line before the agent starts running.</blockquote>
+    </div>
   </section>
 
   <section class="slide" id="s-measure">
-    <div class="slide-head"><h2 class="slide-title">Measure accepted outcomes, not agent activity.</h2></div>
-    <div class="slide-body"><ul class="arrow-list">
-      <li class="frag">Track accepted quality, rework, and escaped failures.</li>
-      <li class="frag">Compare end-to-end time, cost, and human intervention.</li>
-      <li class="frag">Review blocked runs and false success claims.</li>
-    </ul></div>
-    <p class="slide-note">Choose a baseline and evaluation cases before the pilot.</p>
-  </section>
-
-  <section class="slide" id="s-adoption">
-    <div class="slide-head"><h2 class="slide-title">Adopt one reversible product slice at a time.</h2></div>
-    <div class="slide-body"><ul class="arrow-list">
-      <li class="frag">Start with a bounded task and named owner.</li>
-      <li class="frag">Preserve identity, approvals, and evidence across platforms.</li>
-      <li class="frag">Expand only after measurable exit criteria are met.</li>
-    </ul></div>
-    <p class="slide-note">Move the control model, not just repositories and pipelines.</p>
+    <div class="slide-head"><h2 class="slide-title">Make great work faster and easier.</h2></div>
+    <div class="slide-body"><div class="two-col" style="grid-template-columns: repeat(3, minmax(0, 1fr))">
+      <div><span class="col-label">Speed</span><p>Faster accepted outcomes</p></div>
+      <div><span class="col-label">Ease</span><p>Less friction and cognitive load</p></div>
+      <div><span class="col-label">Quality</span><p>Less rework and fewer defects</p></div>
+    </div>
+      <p class="measurement-guardrail"><strong>Thriving:</strong> Sustainable work and developer wellbeing.</p>
+      <blockquote class="key-thought">Measure better outcomes. Not more activity.</blockquote>
+      <p class="research-reference"><cite title="https://www.microsoft.com/en-us/research/publication/engthrive-make-it-fast-and-easy-to-do-great-work/" data-source-url="https://www.microsoft.com/en-us/research/publication/engthrive-make-it-fast-and-easy-to-do-great-work/">Microsoft Research: EngThrive (2026)</cite></p>
+    </div>
   </section>
 
   <section class="slide slide--end" id="s-end">
-    <p>Define the goal.<br>Let the loops do the work.<br>Keep judgment and authority explicit.</p>
+    <p>Define the goal.<br>Let the loops do the work.<br><br><em>GitHub Copilot</em> for the inner loop.<br><em>GitHub Platform</em> for the outer loop.</p>
   </section>
 </main>
 </body>

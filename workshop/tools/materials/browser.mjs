@@ -421,6 +421,15 @@ async function presentation(page, path, url, isDeck, theme, accent, viewport) {
         content.x + content.width <= canvas.x + canvas.width &&
         content.y + content.height <= canvas.y + canvas.height;
     })), `${label}: diagram geometry and labels fit without cropping`);
+    check(await panel.locator("img").evaluateAll((images) => images.every((image) => {
+      if (!image.complete || !image.naturalWidth || !image.naturalHeight) return false;
+      if (!image.getClientRects().length) return true;
+      const bounds = image.getBoundingClientRect();
+      const surface = image.closest(".slide, .slide-content, .chapter-label").getBoundingClientRect();
+      return Math.abs(bounds.width / bounds.height - image.naturalWidth / image.naturalHeight) < 0.01 &&
+        bounds.left >= surface.left && bounds.top >= surface.top &&
+        bounds.right <= surface.right && bounds.bottom <= surface.bottom;
+    })), `${label}: original images load, retain their proportions, and fit the presentation surface`);
     if (isDeck) {
       if (accent === "blue" && viewport.width === 1920) {
         if ([0, 1, expected.length - 1].includes(index)) {
