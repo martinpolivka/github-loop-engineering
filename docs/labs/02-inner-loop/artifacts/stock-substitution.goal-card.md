@@ -9,15 +9,15 @@ When a synthetic reservation cannot be fulfilled, return one deterministic
 same-category stock suggestion that a store associate may evaluate. Never reserve
 the suggestion or add it to the customer's basket automatically.
 
-In scope: `src/reservations.mjs` and one focused test file. Not in scope: automatic
+In scope: `demo-app/src/reservations.mjs` and one focused test file. Not in scope: automatic
 replacement, partial fulfilment, unrelated backlog work, workflows, or dependencies.
 
 ## OUTPUT
 
 | Result | Destination | Write rule |
 | --- | --- | --- |
-| Product change | `src/reservations.mjs` | Preserve existing response fields and successful reservations |
-| Acceptance evidence | `test/suggestion.test.mjs` and pull request checks | Add tests; do not weaken existing tests |
+| Product change | `demo-app/src/reservations.mjs` | Preserve existing response fields and successful reservations |
+| Acceptance evidence | `demo-app/test/suggestion.test.mjs` and pull request checks | Add tests; do not weaken existing tests |
 
 ## DONE WHEN
 
@@ -25,9 +25,9 @@ replacement, partial fulfilment, unrelated backlog work, workflows, or dependenc
    Pass: an out-of-stock request returns 409 with the existing `error` and
    `available` fields plus the first eligible same-category item by SKU, including
    `sku`, `name`, and `available`.
-   Verify: run `node --test test/suggestion.test.mjs`.
+   Verify: run `node --test demo-app/test/suggestion.test.mjs`.
    Evidence: test output and pull request check for the reviewed revision.
-   If it fails: repair selection or response construction in `src/reservations.mjs`.
+   If it fails: repair selection or response construction in `demo-app/src/reservations.mjs`.
    Recheck: C01, C02, C03.
 
 2. **C02 - No side effect**
@@ -56,15 +56,15 @@ synthetic identifiers. Category matching is product discovery, not automatic che
 | --- | --- | --- |
 | Confirmed feature Issue | Required | Attendee fork; link before execution |
 | Product evidence | Required | `context/intake/meeting-notes.md` and `stakeholder-email.md` |
-| Current behavior | Required | `src/reservations.mjs`, `src/inventory.mjs`, and `test/inventory.test.mjs` on the working branch |
+| Current behavior | Required | `demo-app/src/reservations.mjs`, `demo-app/src/inventory.mjs`, and `demo-app/test/inventory.test.mjs` on the working branch |
 
 Unresolved: none.
 
 ## CONSTRAINTS
 
 Read: the confirmed Issue, listed evidence, service source, and tests.
-Write: `specs/stock-substitution.goal-card.md`, `src/reservations.mjs`, and optional
-`test/suggestion.test.mjs`.
+Write: `demo-app/specs/stock-substitution.goal-card.md`, `demo-app/src/reservations.mjs`, and optional
+`demo-app/test/suggestion.test.mjs`.
 Never: edit this Goal Card, workflows, ownership, dependencies, or expected
 results merely to obtain a pass.
 Approval: a human approves the pull request after checks and review.

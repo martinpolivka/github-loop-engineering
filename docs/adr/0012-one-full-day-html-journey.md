@@ -3,6 +3,10 @@
 - Status: Accepted
 - Date: 2026-09-25
 - Historical-demo retention superseded by [ADR 0017](0017-current-workshop-only-platform.md).
+- Embedded opening presentation and asset distribution superseded by
+  [ADR 0018](0018-standalone-principles-and-agenda.md).
+- Root layout and operator-guide retention superseded by
+  [ADR 0019](0019-separate-demo-application-and-workshop-tooling.md).
 
 ## Context
 

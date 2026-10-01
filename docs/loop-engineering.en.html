@@ -1,0 +1,1522 @@
+<!doctype html>
+<html lang="en" data-default-accent="blue">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Loop Engineering | Principles for agent-assisted delivery</title>
+  <meta name="description" content="Define outcomes, build evidence, separate authority, and run bounded engineering loops.">
+  <meta name="doc-id" content="loop-engineering-principles-en">
+  <!--
+MIT License
+
+Copyright (c) 2026 Tomáš Kubica
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+  -->
+  <script data-doc-bootstrap>
+/* Inline in the head before styles with sync-head.js. No deferred bootstrap. */
+(() => {
+  "use strict";
+  const root = document.documentElement;
+  const params = new URLSearchParams(location.search);
+  const id = document.querySelector('meta[name="doc-id"]')?.content ||
+    location.pathname.replace(/\.standalone(?=\.html$)/i, "");
+  const prefix = "html-docs:" + id + ":";
+  const choices = { theme: ["light", "dark"], accent: ["blue", "red", "green", "yellow"] };
+  const read = (name) => {
+    try { return localStorage.getItem(prefix + name); }
+    catch { return null; /* Storage may be unavailable for local files. */ }
+  };
+  const write = (name, value) => {
+    try { localStorage.setItem(prefix + name, value); }
+    catch { /* The current view still works without persistence. */ }
+  };
+  function refresh() {
+    for (const name of Object.keys(choices)) {
+      const current = root.getAttribute("data-" + name);
+      const next = choices[name][(choices[name].indexOf(current) + 1) % choices[name].length];
+      document.querySelectorAll('[data-action="toggle-' + name + '"]').forEach(button => {
+        button.textContent = name === "theme" ? (next === "dark" ? "Dark" : "Light") :
+          "Accent: " + current[0].toUpperCase() + current.slice(1);
+        button.setAttribute("aria-label", name === "theme" ? "Switch to " + next + " theme" :
+          "Accent: " + current + ". Switch to " + next);
+      });
+    }
+  }
+  for (const [name, values] of Object.entries(choices)) {
+    const fallback = name === "theme" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : values[0];
+    const value = [params.get(name), read(name), root.getAttribute("data-default-" + name), fallback]
+      .map(candidate => name === "accent" && candidate === "orange" ? "red" : candidate)
+      .find(candidate => values.includes(candidate));
+    root.setAttribute("data-" + name, value);
+  }
+  root.classList.add("js");
+  if (["slides", "sheet"].includes(params.get("view"))) root.setAttribute("data-view", params.get("view"));
+
+  // Print what is on screen. data-print selects the matching print stylesheet.
+  const printTarget = () => {
+    if (document.querySelector(".deck-stage")) return "slides";
+    const view = root.getAttribute("data-view");
+    if (view === "slides" || (view === "sheet" && document.querySelector(".sheet"))) return view;
+    return document.querySelector(".doc") || !document.querySelector(".sheet") ? "read" : "sheet";
+  };
+  let printing = null;
+  addEventListener("beforeprint", () => {
+    if (root.hasAttribute("data-print")) return; // Set by an automated export.
+    const target = printTarget();
+    printing = document.title;
+    root.setAttribute("data-print", target);
+    // The browser proposes the title as the PDF file name.
+    if (target !== "read" && document.querySelector(".doc")) {
+      document.title += target === "slides" ? " - Slides" : " - Sheet";
+    }
+  });
+  addEventListener("afterprint", () => {
+    if (printing === null) return;
+    root.removeAttribute("data-print");
+    document.title = printing;
+    printing = null;
+  });
+
+  // Keep the display awake while presenting, like presentation software does.
+  let lock = null;
+  let awake = false;
+  async function holdScreen() {
+    if (!awake || lock || document.visibilityState !== "visible" || !navigator.wakeLock) return;
+    try {
+      const sentinel = await navigator.wakeLock.request("screen");
+      if (!awake || lock) { sentinel.release(); return; }
+      lock = sentinel;
+      root.setAttribute("data-awake", "");
+      sentinel.addEventListener("release", () => {
+        if (lock !== sentinel) return;
+        lock = null;
+        root.removeAttribute("data-awake");
+      });
+    } catch { /* Denied by battery saver or an embedding policy; retried on input. */ }
+  }
+  function keepAwake(on) {
+    awake = !!on;
+    if (awake) holdScreen();
+    else if (lock) lock.release();
+  }
+  // The browser drops the lock when the tab is hidden; some require a gesture.
+  document.addEventListener("visibilitychange", holdScreen);
+  document.addEventListener("pointerdown", holdScreen);
+  document.addEventListener("keydown", holdScreen);
+
+  window.HtmlDocs = { read, write, refresh, keepAwake };
+  document.addEventListener("DOMContentLoaded", refresh);
+  document.addEventListener("click", event => {
+    if (event.target.closest('[data-action="print"]')) window.print();
+  });
+  document.addEventListener("click", event => {
+    const button = event.target.closest('[data-action="toggle-theme"], [data-action="toggle-accent"]');
+    if (!button) return;
+    const name = button.getAttribute("data-action").slice(7);
+    const values = choices[name];
+    const next = values[(values.indexOf(root.getAttribute("data-" + name)) + 1) % values.length];
+    root.setAttribute("data-" + name, next);
+    write(name, next);
+    // Replace a URL override too, so reloading preserves a deliberate change.
+    const url = new URL(location.href);
+    if (url.searchParams.has(name)) {
+      url.searchParams.set(name, next);
+      history.replaceState(null, "", url.href);
+    }
+    refresh();
+  });
+})();
+</script>
+  <style data-doc-tokens>
+/* Canonical tokens. Inline with sync-head.js; one accent family at a time. */
+:root {
+  color-scheme: light;
+  --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f2; --surface-3: #e8e8e8;
+  --border: #dedede; --border-strong: #b8b8b8;
+  --text: #161616; --text-muted: #565656; --text-faint: #686868;
+  --accent-light: #006da0; --accent-dark: #00a4ef;
+  --accent: var(--accent-light);
+  --accent-strong: var(--accent);
+  --accent-quiet: var(--accent);
+  --accent-soft: color-mix(in srgb, var(--accent) 9%, var(--bg));
+  --accent-border: color-mix(in srgb, var(--accent) 36%, var(--bg));
+  --warn: var(--accent); --warn-soft: var(--accent-soft); --warn-border: var(--accent-border);
+  --code-bg: var(--surface-2); --code-border: var(--border);
+  --focus: var(--accent);
+  --shadow-1: 0 1px 2px rgba(0,0,0,.04);
+  --shadow-2: 0 2px 4px rgba(0,0,0,.04), 0 12px 28px rgba(0,0,0,.06);
+  --radius: 10px; --radius-sm: 6px; --canvas: 1160px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Mono", "Cascadia Code", ui-monospace, Consolas, "SF Mono", "Liberation Mono", Menlo, monospace;
+}
+/* Screen only: every PDF and printout uses the light palette. */
+@media screen {
+  [data-theme="dark"], :root:not([data-theme])[data-default-theme="dark"] {
+    color-scheme: dark;
+    --bg: #101010; --surface: #191919; --surface-2: #232323; --surface-3: #2c2c2c;
+    --border: #363636; --border-strong: #595959;
+    --text: #f2f2f2; --text-muted: #b5b5b5; --text-faint: #a0a0a0;
+    --accent: var(--accent-dark);
+    --shadow-1: 0 1px 2px rgba(0,0,0,.3);
+    --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.4);
+  }
+}
+[data-accent="red"], :root:not([data-accent])[data-default-accent="red"],
+[data-accent="orange"], :root:not([data-accent])[data-default-accent="orange"] {
+  --accent-light: #bc3a16; --accent-dark: #f25022;
+}
+[data-accent="green"], :root:not([data-accent])[data-default-accent="green"] {
+  --accent-light: #4c7100; --accent-dark: #7fba00;
+}
+[data-accent="yellow"], :root:not([data-accent])[data-default-accent="yellow"] {
+  --accent-light: #805b00; --accent-dark: #ffb900;
+}
+</style>
+  <style>
+/* =========================================================================
+   html-docs / deck runtime
+   Shared stylesheet for standalone HTML presentations. Never edit per page.
+
+   Requires canonical tokens inline in the head, synchronized with sync-head.js.
+
+   Geometry: every slide is authored inside a fixed 1280 x 720 stage. The stage
+   is scaled to the viewport, so a slide that fits while authoring fits on any
+   projector.
+   ========================================================================= */
+
+/* ---------- base ---------------------------------------------------- */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+.js body { overflow: hidden; }
+
+a { color: var(--accent); text-underline-offset: 2px; }
+
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
+
+/* ---------- stage ----------------------------------------------------- */
+
+.deck-stage {
+  position: relative;
+  width: 1280px;
+  margin: 0 auto;
+  font-size: 24px;
+}
+
+.js .deck-stage {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  height: 720px;
+  margin: 0;
+  transform: translate(-50%, -50%) scale(var(--deck-scale, 1));
+  transform-origin: center center;
+}
+
+/* ---------- slide ------------------------------------------------------ */
+
+.slide {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 1280px;
+  height: 720px;
+  padding: 54px 72px 62px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.js .slide { position: absolute; inset: 0; display: none; }
+.js .slide[data-current] { display: flex; }
+
+html:not(.js) .slide {
+  border: 1px solid var(--border);
+  margin: 0 0 20px;
+}
+
+.slide-title {
+  margin: 0 0 6px;
+  font-size: 44px;
+  line-height: 1.14;
+  letter-spacing: -0.02em;
+  font-weight: 650;
+}
+
+.slide-lead {
+  margin: 0 0 22px;
+  font-size: 24px;
+  color: var(--text-muted);
+}
+
+.slide-title + .slide-body { margin-top: 26px; }
+
+.slide-head {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 26px;
+}
+.slide-head .slide-title { margin: 0; }
+.slide-head .slide-lead { margin: 8px 0 0; }
+
+.slide-body {
+  flex: 1;
+  min-height: 0;
+  font-size: 26px;
+  zoom: var(--fit, 1);
+}
+
+.slide-note {
+  margin: 18px 0 0;
+  font-size: 18px;
+  color: var(--text-faint);
+}
+
+.slide-eyebrow {
+  margin: 0 0 18px;
+  font-size: 17px;
+  font-weight: 620;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Title, section, and closing slides center their content. */
+.slide--title, .slide--section, .slide--end { justify-content: center; }
+
+.slide--title h1 {
+  margin: 0 0 18px;
+  font-size: 68px;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  font-weight: 680;
+}
+.slide--title .slide-sub {
+  margin: 0 0 32px;
+  max-width: 24em;
+  font-size: 28px;
+  color: var(--text-muted);
+}
+.slide--title .slide-meta {
+  margin: 0;
+  font-size: 19px;
+  color: var(--text-faint);
+}
+
+.slide--section {
+  background: var(--surface-2);
+}
+.slide--section h2 {
+  margin: 0;
+  font-size: 56px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-weight: 620;
+}
+.slide--section .slide-lead { margin-top: 16px; font-size: 26px; }
+
+.slide--end { background: var(--accent-soft); }
+.slide--end p {
+  margin: 0;
+  font-size: 44px;
+  line-height: 1.28;
+  font-weight: 560;
+  letter-spacing: -0.01em;
+  max-width: 22em;
+}
+
+/* ---------- layout helpers ---------------------------------------------- */
+
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+  align-items: start;
+}
+.two-col--wide-left { grid-template-columns: 1.4fr 1fr; }
+.two-col--wide-right { grid-template-columns: 1fr 1.4fr; }
+
+.col-label {
+  display: block;
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 620;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.slide-body p { margin: 0 0 0.7em; }
+.slide-body p:last-child { margin-bottom: 0; }
+.slide-body ul, .slide-body ol { margin: 0 0 0.7em; padding-left: 1.2em; }
+.slide-body li { margin: 0.32em 0; }
+.slide-body h3 { margin: 0 0 10px; font-size: 27px; }
+.slide-body strong { font-weight: 650; }
+
+/* ---------- shared components -------------------------------------------- */
+
+.arrow-list { margin: 0; padding: 0; list-style: none; }
+.arrow-list > li {
+  position: relative;
+  margin: 0 0 14px;
+  padding-left: 38px;
+}
+.arrow-list > li::before {
+  content: "\2192";
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 600;
+  color: var(--accent);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.summary-item {
+  padding: 18px 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 23px;
+}
+.summary-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 15px;
+  font-weight: 620;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.steps { margin: 0; padding: 0; list-style: none; counter-reset: step; }
+.steps > li {
+  position: relative;
+  counter-increment: step;
+  margin: 0 0 16px;
+  padding-left: 58px;
+}
+.steps > li::before {
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: -2px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+  border: 1px solid var(--accent-border);
+  border-radius: 50%;
+}
+.steps h3, .steps h4 { margin: 0 0 2px; font-size: 25px; }
+.steps p { font-size: 22px; color: var(--text-muted); }
+
+.sequence {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.sequence > li {
+  position: relative;
+  padding: 18px 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent-quiet);
+  border-radius: var(--radius-sm);
+}
+.sequence > li:last-child { border-left-color: var(--accent-strong); background: var(--accent-soft); }
+.sequence > li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -12px;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--border-strong);
+  border-top: 2px solid var(--border-strong);
+  transform: translateY(-50%) rotate(45deg);
+}
+.seq-title { display: block; font-weight: 620; font-size: 23px; margin-bottom: 4px; }
+.seq-note { display: block; font-size: 20px; color: var(--text-muted); }
+
+.callout {
+  margin: 0 0 16px;
+  padding: 16px 22px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 23px;
+}
+.callout:last-child { margin-bottom: 0; }
+.callout-label {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 620;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.callout--warning {
+  background: var(--warn-soft);
+  border-color: var(--warn-border);
+  border-left-color: var(--warn);
+}
+.callout--warning .callout-label { color: var(--warn); }
+.callout--verdict {
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  border-left-color: var(--accent-strong);
+}
+.callout--source, .callout--author { border-left-color: var(--border-strong); }
+.callout--source .callout-label, .callout--author .callout-label { color: var(--text-muted); }
+
+/* note is the base appearance; the modifier exists so that every callout in a
+   document names its meaning explicitly */
+.callout--note { border-left-color: var(--accent); }
+.callout--rule { border-left-color: var(--text); background: var(--surface-3); }
+.callout--rule .callout-label { color: var(--text); }
+
+.code { margin: 0 0 16px; }
+.code:last-child { margin-bottom: 0; }
+.code-label {
+  display: inline-block;
+  margin: 0 0 -1px;
+  padding: 6px 14px;
+  font-family: var(--font-mono);
+  font-size: 16px;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--code-border);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+.code pre {
+  margin: 0;
+  padding: 18px 22px;
+  overflow-x: auto;
+  background: var(--code-bg);
+  border: 1px solid var(--code-border);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 21px;
+  line-height: 1.5;
+  white-space: pre;
+  tab-size: 2;
+}
+.code pre code { font-size: inherit; }
+.code:not(:has(.code-label)) pre { border-radius: var(--radius-sm); }
+
+:not(pre) > code {
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.06em 0.32em;
+}
+
+.figure { margin: 0; }
+.figure img {
+  display: block;
+  max-width: 100%;
+  max-height: 470px;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.figure figcaption {
+  margin-top: 10px;
+  font-size: 18px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.quote {
+  margin: 0;
+  font-size: 34px;
+  line-height: 1.34;
+  font-weight: 500;
+}
+.quote-attrib {
+  display: block;
+  margin-top: 18px;
+  font-size: 20px;
+  color: var(--text-muted);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 22px;
+}
+th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+th {
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 620;
+}
+
+/* Backup detail kept off the slide until asked for. */
+.reveal { margin: 16px 0 0; border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.reveal-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 18px;
+  font: inherit;
+  font-size: 21px;
+  text-align: left;
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.reveal-toggle::before {
+  content: "";
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(-45deg);
+}
+.reveal[data-open] > .reveal-toggle::before { transform: rotate(45deg); }
+.reveal-body { padding: 0 18px 16px 39px; font-size: 22px; }
+.js .reveal-body { display: none; }
+.js .reveal[data-open] > .reveal-body { display: block; }
+
+/* ---------- fragments ---------------------------------------------------- */
+
+.js .frag { visibility: hidden; opacity: 0; transition: opacity 0.16s ease; }
+.js .frag[data-shown] { visibility: visible; opacity: 1; }
+.slide:focus { outline: none; }
+.slide--title::before, .slide--end::before {
+  content: ""; width: 80px; height: 6px; margin-bottom: 32px; background: var(--accent); flex: none;
+}
+.slide--end { background: var(--surface); }
+.slide--title em, .slide--end em { color: var(--accent); font-style: normal; }
+
+/* ---------- chrome -------------------------------------------------------- */
+
+.deck-chrome { display: none; }
+.js .deck-chrome { display: flex; position: fixed; z-index: 30; }
+
+.deck-controls {
+  top: 14px;
+  right: 16px;
+  gap: 6px;
+  padding: 5px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  opacity: 0.16;
+  transition: opacity 0.35s ease;
+}
+/* Pointer movement brings the controls part-way up so they can be found
+   without knowing where to hover. Declared before the hover rule because the
+   two selectors weigh the same, and hover must always reach full opacity. */
+[data-chrome="awake"] .deck-controls { opacity: 0.75; }
+.deck-controls:hover, .deck-controls:focus-within { opacity: 1; }
+
+.deck-controls button[aria-pressed="true"] {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.deck-controls button {
+  font: inherit;
+  font-size: 13px;
+  color: var(--text-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+.deck-controls button:hover { background: var(--surface-2); color: var(--text); }
+
+.deck-progress {
+  bottom: 12px;
+  right: 18px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+.deck-bar {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  display: block !important;
+}
+.deck-bar span {
+  display: block;
+  height: 100%;
+  width: var(--deck-progress, 0%);
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+/* ---------- slide index ---------------------------------------------------- */
+
+.deck-index {
+  width: min(720px, calc(100vw - 48px));
+  max-height: calc(100vh - 96px);
+  padding: 0;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-2);
+}
+.deck-index::backdrop { background: rgba(0, 0, 0, 0.6); }
+.deck-index h2 {
+  margin: 0;
+  padding: 20px 24px 12px;
+  font-size: 18px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.deck-index ol {
+  margin: 0;
+  padding: 0 12px 16px;
+  list-style: none;
+  overflow: auto;
+  max-height: calc(100vh - 190px);
+}
+.deck-index button {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
+  font: inherit;
+  font-size: 15px;
+  text-align: left;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.deck-index button:hover { background: var(--surface-2); }
+.deck-index button[aria-current="true"] { background: var(--accent-soft); color: var(--accent-strong); }
+.deck-index .idx-num { font-family: var(--font-mono); color: var(--text-faint); }
+.deck-index .idx-kind { color: var(--text-faint); font-size: 13px; }
+
+/* ---------- motion, print --------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+  .js .frag { visibility: visible; opacity: 1; }
+}
+
+@media print {
+  @page { size: 297mm 167mm; margin: 0; }
+  .js body { overflow: visible; }
+  .js .deck-stage {
+    position: static;
+    transform: none;
+    width: auto;
+    height: auto;
+  }
+  .js .slide, .js .slide[data-current] {
+    position: relative;
+    display: flex !important;
+    break-after: page;
+    border: 0;
+  }
+  .js .frag { visibility: visible; opacity: 1 !important; }
+  .js .reveal-body { display: block !important; }
+  .deck-chrome, .js .deck-chrome { display: none !important; }
+}
+</style>
+  <style>
+    #s-title h1 em { color: var(--accent); font-style: normal; }
+    .title-logos { display: flex; align-items: center; gap: 48px; }
+    .title-logos svg { display: block; height: 36px; width: auto; }
+    .title-logos text, .title-logos .github-mark { fill: var(--text); }
+    .slide-body .lifecycle {
+      grid-auto-flow: row;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 32px 24px;
+      margin: 0;
+      padding: 0;
+    }
+    .slide-body .lifecycle > li {
+      margin: 0;
+      min-height: 164px;
+      padding: 20px 24px;
+      border-left-color: var(--border-strong);
+      background: var(--surface-2);
+    }
+    .slide-body .lifecycle > li.code-step {
+      border-color: var(--accent-border);
+      border-left-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .lifecycle .seq-title { font-size: 27px; margin-bottom: 12px; }
+    .lifecycle .seq-note { font-size: 23px; line-height: 1.35; }
+    .slide-body .lifecycle > li::after { right: -17px; }
+    .slide-body .lifecycle > li:nth-child(3)::after {
+      top: auto;
+      right: auto;
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%) rotate(135deg);
+    }
+    .slide-body .lifecycle > li:nth-child(4) { grid-column: 3; grid-row: 2; }
+    .slide-body .lifecycle > li:nth-child(5) { grid-column: 2; grid-row: 2; }
+    .slide-body .lifecycle > li:nth-child(6) { grid-column: 1; grid-row: 2; }
+    .slide-body .lifecycle > li:nth-child(4)::after,
+    .slide-body .lifecycle > li:nth-child(5)::after {
+      right: auto;
+      left: -17px;
+      transform: translateY(-50%) rotate(225deg);
+    }
+    @media print {
+      .title-logos text, .title-logos .github-mark { fill: #161616; }
+    }
+  </style>
+  <script>
+(function () {
+  function boot() {
+(() => {
+  "use strict";
+
+  function revealTarget() {
+    const target = document.getElementById(location.hash.slice(1));
+    if (!target) return;
+    const slide = target.closest(".deck-stage > .slide");
+    if (slide && target !== slide) {
+      const url = new URL(location.href);
+      url.hash = slide.id;
+      history.replaceState(null, "", url.href);
+    }
+    for (let parent = target; parent; parent = parent.parentElement) {
+      if (parent.tagName === "DETAILS") parent.open = true;
+    }
+  }
+
+  // Resolve legacy numeric slide links before the unchanged deck runtime starts.
+  revealTarget();
+  window.addEventListener("hashchange", revealTarget);
+
+  document.addEventListener("keydown", (event) => {
+    if (!document.querySelector(".deck-stage") || !["ArrowUp", "ArrowDown"].includes(event.key) ||
+        document.querySelector("dialog[open]") || event.altKey || event.ctrlKey || event.metaKey ||
+        !(event.target instanceof Element) ||
+        event.target.closest("input, select, textarea, [contenteditable]")) return;
+    event.preventDefault();
+    event.target.dispatchEvent(new KeyboardEvent("keydown", {
+      key: event.key === "ArrowDown" ? "ArrowRight" : "ArrowLeft",
+      bubbles: true, cancelable: true, shiftKey: event.shiftKey
+    }));
+  });
+
+  for (const pre of document.querySelectorAll(".code pre")) {
+    if (pre.closest(".slide-content, .deck-stage")) continue;
+    const text = pre.querySelector("code")?.textContent ?? pre.textContent;
+    const button = document.createElement("button");
+    button.className = "ctrl";
+    button.type = "button";
+    button.dataset.copyCommand = "";
+    button.setAttribute("aria-label", "Copy command");
+    button.setAttribute("aria-live", "polite");
+    button.title = "Copy command";
+    button.innerHTML = '<svg aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M0 6.75C0 5.784.784 5 1.75 5h7.5c.966 0 1.75.784 1.75 1.75v7.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"/><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11H13V9.5h1.25a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25h-7.5a.25.25 0 0 0-.25.25V3H5Z"/></svg>';
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        button.setAttribute("aria-label", "Copied");
+        button.title = "Copied";
+      } catch {
+        button.setAttribute("aria-label", "Select and copy manually");
+        button.title = "Select and copy manually";
+      }
+      window.setTimeout(() => {
+        button.setAttribute("aria-label", "Copy command");
+        button.title = "Copy command";
+      }, 1500);
+    });
+    pre.before(button);
+  }
+})();
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else { boot(); }
+})();
+</script>
+  <script>
+(function () {
+  function boot() {
+/* =========================================================================
+   html-docs / deck runtime
+   Shared script for standalone HTML presentations. Never edit per page.
+
+   The deck is readable without JavaScript: every slide is present in the HTML
+   and stacks vertically. This script adds stage scaling, navigation,
+   fragments, the slide index, and the theme toggle.
+   ========================================================================= */
+
+(() => {
+  "use strict";
+
+  const root = document.documentElement;
+  const preferences = window.HtmlDocs;
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)");
+  const STAGE_W = 1280;
+  const STAGE_H = 720;
+  /* Below this the body text stops being readable from the back of a room.
+     A slide that still overflows here has to be split by the author. */
+  const MIN_FIT = 0.85;
+
+  const els = (sel, scope) => Array.from((scope || document).querySelectorAll(sel));
+  const el = (sel, scope) => (scope || document).querySelector(sel);
+
+  const stage = el(".deck-stage");
+  if (!stage) return;
+
+  const slides = els(".slide", stage);
+  if (!slides.length) return;
+
+  slides.forEach((slide, i) => {
+    if (!slide.id) slide.id = "slide-" + (i + 1);
+    slide.tabIndex = -1;
+    slide.setAttribute("role", "group");
+    slide.setAttribute("aria-roledescription", "slide");
+    slide.setAttribute("aria-label", `${i + 1} of ${slides.length}: ${slideLabel(slide)}`);
+  });
+
+  let index = 0;
+  let step = 0;
+  let indexDialog = null;
+  let chromeTimer = null;
+
+  /* "step" reveals fragments one at a time; "all" shows the whole slide and
+     makes one advance mean one slide. Presenters who are talking to a build
+     want the first; anyone reading or reviewing wants the second. */
+  let revealAll = preferences.read("animations") === "all";
+
+  /* ---------- chrome ------------------------------------------------- */
+
+  function buildChrome() {
+    const controls = document.createElement("div");
+    controls.className = "deck-chrome deck-controls";
+    controls.setAttribute("role", "group");
+    controls.setAttribute("aria-label", "Presentation controls");
+    controls.innerHTML =
+      '<button type="button" data-deck="prev" aria-label="Previous slide">Prev</button>' +
+      '<button type="button" data-deck="next" aria-label="Next slide">Next</button>' +
+      '<button type="button" data-deck="index">Slides</button>' +
+      '<button type="button" data-deck="reveal" aria-pressed="true" ' +
+      'aria-label="Animate points one at a time, or show each slide whole">Animations</button>' +
+      '<button type="button" data-deck="full">Full screen</button>' +
+      '<button type="button" data-action="print" aria-label="Save as PDF or print">PDF</button>' +
+      '<button type="button" data-action="toggle-theme">Dark</button>' +
+      '<button type="button" data-action="toggle-accent">Accent: Blue</button>';
+
+    const progress = document.createElement("div");
+    progress.className = "deck-chrome deck-progress";
+    progress.setAttribute("aria-live", "polite");
+
+    const bar = document.createElement("div");
+    bar.className = "deck-chrome deck-bar";
+    bar.innerHTML = "<span></span>";
+
+    document.body.append(controls, progress, bar);
+
+    controls.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-deck]");
+      if (!button) return;
+      const kind = button.getAttribute("data-deck");
+      if (kind === "prev") back();
+      else if (kind === "next") forward();
+      else if (kind === "index") openIndex();
+      else if (kind === "reveal") setReveal(!revealAll);
+      else toggleFullscreen();
+      dropPointerFocus(event, button);
+    });
+
+    markReveal();
+    preferences.refresh();
+  }
+
+  /* ---------- reveal mode ---------------------------------------------- */
+
+  /* The label is deliberately constant. A button whose text changes with its
+     state resizes the whole pill on every press, which is more distracting
+     than the setting is important; the pressed styling carries the state. */
+  function markReveal() {
+    const button = el('[data-deck="reveal"]');
+    if (!button) return;
+    button.setAttribute("aria-pressed", revealAll || reduced.matches ? "false" : "true");
+    button.disabled = reduced.matches;
+    button.setAttribute("aria-label", reduced.matches ? "Animations off: reduced motion preference" : "Animate points one at a time");
+  }
+
+  function setReveal(next) {
+    revealAll = !!next;
+    preferences.write("animations", revealAll ? "all" : "step");
+    markReveal();
+    /* Returning to step mode restarts the build on the current slide rather
+       than leaving it half-revealed, so the presenter gets a clean run-up. */
+    step = revealAll ? fragments(slides[index]).length : 0;
+    render();
+  }
+
+  /* ---------- chrome visibility ----------------------------------------- */
+
+  /* The controls sit at 0.14 opacity so they never compete with the slide.
+     That also makes them easy to miss, so any pointer movement brings them
+     part-way up for a moment. Hovering still takes them to full strength. */
+  /* The chrome rests near-invisible so it stays out of a recording. That only
+     works if the presenter has been shown it once, so it is held up for a few
+     seconds on load and lifted again whenever the mouse moves. */
+  function wakeChrome(ms) {
+    root.setAttribute("data-chrome", "awake");
+    clearTimeout(chromeTimer);
+    chromeTimer = setTimeout(() => root.removeAttribute("data-chrome"), ms || 2400);
+  }
+
+  /* A pointer click leaves the button focused, and :focus-within holds the
+     whole bar at full opacity for the rest of the talk. Keyboard activation
+     reports detail 0 and keeps its focus ring. */
+  function dropPointerFocus(event, node) {
+    if (event.detail > 0 && node && node.blur) node.blur();
+  }
+
+  /* ---------- scaling ------------------------------------------------- */
+
+  function scaleStage() {
+    const scale = Math.min(window.innerWidth / STAGE_W, window.innerHeight / STAGE_H);
+    stage.style.setProperty("--deck-scale", String(scale));
+  }
+
+  function fitSlide(slide) {
+    const body = el(".slide-body", slide);
+    if (!body) return;
+    body.style.setProperty("--fit", "1");
+    if (!body.clientHeight || body.scrollHeight <= body.clientHeight + 1) return;
+
+    /* Converge instead of trusting one ratio: margins between blocks and
+       sub-pixel rounding both survive the scale, so a single computed guess
+       reliably leaves a few pixels of content clipped. */
+    let fit = Math.max(MIN_FIT, (body.clientHeight / body.scrollHeight) * 0.99);
+    body.style.setProperty("--fit", String(fit));
+    let guard = 0;
+    while (body.scrollHeight > body.clientHeight + 1 && fit > MIN_FIT && guard < 20) {
+      fit = Math.max(MIN_FIT, fit - 0.02);
+      body.style.setProperty("--fit", String(fit));
+      guard += 1;
+    }
+    if (body.scrollHeight > body.clientHeight + 1) {
+      console.warn("html-docs: slide content overflows at readable size. Split this slide: #" + slide.id);
+    }
+  }
+
+  /* ---------- navigation ----------------------------------------------- */
+
+  function fragments(slide) {
+    return els(".frag", slide);
+  }
+
+  function render() {
+    slides.forEach((slide) => slide.removeAttribute("data-current"));
+    const slide = slides[index];
+    slide.setAttribute("data-current", "");
+
+    fragments(slide).forEach((frag, i) => {
+      const shown = revealAll || reduced.matches || i < step;
+      frag.setAttribute("aria-hidden", String(!shown));
+      if (shown) frag.setAttribute("data-shown", "");
+      else frag.removeAttribute("data-shown");
+    });
+
+    const progress = el(".deck-progress");
+    if (progress) progress.textContent = (index + 1) + " / " + slides.length;
+    const bar = el(".deck-bar span");
+    if (bar) bar.style.setProperty("--deck-progress", ((index + 1) / slides.length) * 100 + "%");
+
+    fitSlide(slide);
+
+    markIndex();
+
+    history.replaceState(null, "", location.pathname + location.search + "#" + slide.id);
+  }
+
+  function go(next, atEnd) {
+    index = Math.min(slides.length - 1, Math.max(0, next));
+    step = (atEnd || revealAll) ? fragments(slides[index]).length : 0;
+    render();
+    slides[index].tabIndex = -1;
+    slides[index].focus({ preventScroll: true });
+  }
+
+  function forward() {
+    const total = fragments(slides[index]).length;
+    if (!revealAll && !reduced.matches && step < total) {
+      step += 1;
+      render();
+      return;
+    }
+    if (index < slides.length - 1) go(index + 1, false);
+  }
+
+  function back() {
+    if (!revealAll && !reduced.matches && step > 0) {
+      step -= 1;
+      render();
+      return;
+    }
+    if (index > 0) go(index - 1, true);
+  }
+
+  function toggleFullscreen() {
+    const action = document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen();
+    action.catch(() => { el(".deck-progress").textContent += " | Full screen unavailable"; });
+  }
+
+  /* ---------- slide index ------------------------------------------------ */
+
+  function escapeText(text) {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  function slideLabel(slide) {
+    const title = el(".slide-title, h1, h2", slide);
+    if (title && title.textContent.trim()) {
+      const copy = title.cloneNode(true);
+      els("br", copy).forEach(br => br.replaceWith(" "));
+      return copy.textContent.trim().replace(/\s+/g, " ");
+    }
+    const text = (slide.textContent || "").replace(/\s+/g, " ").trim();
+    if (text) return text.length > 64 ? text.slice(0, 63).trimEnd() + "\u2026" : text;
+    return slide.id;
+  }
+
+  function slideKind(slide) {
+    if (slide.classList.contains("slide--title")) return "Title";
+    if (slide.classList.contains("slide--section")) return "Section";
+    if (slide.classList.contains("slide--end")) return "Closing";
+    return "";
+  }
+
+  function markIndex() {
+    if (!indexDialog) return;
+    els("button", indexDialog).forEach((button, i) =>
+      button.setAttribute("aria-current", i === index ? "true" : "false"));
+  }
+
+  function openIndex() {
+    if (!indexDialog) {
+      indexDialog = document.createElement("dialog");
+      indexDialog.className = "deck-index";
+      indexDialog.setAttribute("aria-label", "Slide index");
+      indexDialog.addEventListener("close", () => slides[index].focus({ preventScroll: true }));
+      const items = slides.map((slide, i) =>
+        '<li><button type="button" data-go="' + i + '">' +
+        '<span class="idx-num">' + (i + 1) + "</span><span>" +
+        escapeText(slideLabel(slide)) +
+        (slideKind(slide) ? ' <span class="idx-kind">' + slideKind(slide) + "</span>" : "") +
+        "</span></button></li>").join("");
+      indexDialog.innerHTML = "<h2>Slides</h2><ol>" + items + "</ol>";
+      document.body.appendChild(indexDialog);
+      indexDialog.addEventListener("click", (event) => {
+        const button = event.target.closest("[data-go]");
+        if (!button) return;
+        go(parseInt(button.getAttribute("data-go"), 10), false);
+        indexDialog.close();
+        slides[index].focus({ preventScroll: true });
+        /* Closing returns focus to the Slides button, which would otherwise
+           keep the controls bar lit. */
+        dropPointerFocus(event, document.activeElement);
+      });
+    }
+    markIndex();
+    indexDialog.showModal();
+    const current = el('button[aria-current="true"]', indexDialog);
+    if (current) current.focus();
+  }
+
+  /* ---------- reveals ------------------------------------------------------ */
+
+  els(".reveal").forEach((reveal) => {
+    const toggle = el(":scope > .reveal-toggle", reveal);
+    const body = el(":scope > .reveal-body", reveal);
+    if (!toggle || !body) return;
+    if (!body.id) body.id = "reveal-" + Math.random().toString(36).slice(2, 8);
+    toggle.setAttribute("aria-controls", body.id);
+    toggle.setAttribute("aria-expanded", reveal.hasAttribute("data-open") ? "true" : "false");
+    toggle.addEventListener("click", () => {
+      const open = !reveal.hasAttribute("data-open");
+      if (open) reveal.setAttribute("data-open", "");
+      else reveal.removeAttribute("data-open");
+      toggle.setAttribute("aria-expanded", open ? "true" : "false");
+      fitSlide(slides[index]);
+    });
+  });
+
+  /* ---------- input --------------------------------------------------------- */
+
+  document.addEventListener("keydown", (event) => {
+    if (el("dialog[open]") || event.altKey || event.ctrlKey || event.metaKey ||
+        event.target.closest("input, select, textarea, [contenteditable]")) return;
+    if (event.target.closest("button, a") && [" ", "Enter"].includes(event.key)) return;
+    const key = event.key;
+    if (key === "PageDown") {
+      event.preventDefault();
+      go(index + 1);
+    } else if (key === "PageUp") {
+      event.preventDefault();
+      go(index - 1, true);
+    } else if (key === "ArrowRight" || key === " " || key === "Spacebar") {
+      event.preventDefault();
+      forward();
+    } else if (key === "ArrowLeft") {
+      event.preventDefault();
+      back();
+    } else if (key === "Home") {
+      event.preventDefault();
+      go(0, false);
+    } else if (key === "End") {
+      event.preventDefault();
+      go(slides.length - 1, true);
+    } else if (key === "f" || key === "F") {
+      event.preventDefault();
+      toggleFullscreen();
+    } else if (key === "o" || key === "O") {
+      event.preventDefault();
+      openIndex();
+    } else if (key === "a" || key === "A") {
+      event.preventDefault();
+      setReveal(!revealAll);
+    }
+  });
+
+  document.addEventListener("mousemove", () => wakeChrome(2400), { passive: true });
+  reduced.addEventListener("change", () => { markReveal(); render(); });
+
+  document.addEventListener("click", (event) => {
+    if (event.target.closest("button, a, input, select, textarea, dialog")) return;
+    forward();
+  });
+
+  let touchX = null;
+  document.addEventListener("touchstart", (event) => {
+    touchX = event.changedTouches[0].clientX;
+  }, { passive: true });
+  document.addEventListener("touchend", (event) => {
+    if (touchX === null) return;
+    const delta = event.changedTouches[0].clientX - touchX;
+    touchX = null;
+    if (Math.abs(delta) < 45) return;
+    if (delta < 0) forward();
+    else back();
+  }, { passive: true });
+
+  window.addEventListener("resize", () => {
+    scaleStage();
+    fitSlide(slides[index]);
+  });
+
+  /* ---------- start ---------------------------------------------------------- */
+
+  buildChrome();
+  scaleStage();
+  preferences.keepAwake(true);
+
+  const wanted = slides.findIndex((slide) => "#" + slide.id === location.hash);
+  go(wanted >= 0 ? wanted : 0, false);
+  wakeChrome(4200);
+
+  window.addEventListener("hashchange", () => {
+    const target = slides.findIndex((slide) => "#" + slide.id === location.hash);
+    if (target >= 0 && target !== index) go(target, false);
+  });
+
+  window.addEventListener("load", () => {
+    scaleStage();
+    fitSlide(slides[index]);
+  });
+})();
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", boot);
+  } else { boot(); }
+})();
+</script>
+</head>
+<body>
+<main class="deck-stage">
+  <section class="slide slide--title" id="s-title">
+    <p class="slide-eyebrow">Hands-on workshop</p>
+    <h1>Loop Engineering<br>with <em>GitHub</em></h1>
+    <p class="slide-sub">Define the goal. Let the loops do the work.</p>
+    <div class="title-logos">
+      <span role="img" aria-label="Microsoft">
+        <svg viewBox="0 0 118 23" aria-hidden="true">
+          <rect width="11" height="11" fill="#f25022"/>
+          <rect x="12" width="11" height="11" fill="#7fba00"/>
+          <rect y="12" width="11" height="11" fill="#00a4ef"/>
+          <rect x="12" y="12" width="11" height="11" fill="#ffb900"/>
+          <text x="31" y="18.5" font-size="19" font-weight="600" font-family="Segoe UI, Arial, sans-serif">Microsoft</text>
+        </svg>
+      </span>
+      <span role="img" aria-label="GitHub">
+        <svg viewBox="0 0 126 33" aria-hidden="true">
+          <path class="github-mark" d="M16 0C7.2 0 0 7.4 0 16.5c0 7.3 4.6 13.5 10.9 15.7.8.2 1.1-.4 1.1-.8v-3.1c-4.4 1-5.4-2.2-5.4-2.2-.7-1.9-1.8-2.4-1.8-2.4-1.5-1 .1-1 .1-1 1.6.1 2.5 1.7 2.5 1.7 1.5 2.6 3.8 1.8 4.7 1.4.1-1.1.6-1.8 1-2.2-3.5-.4-7.2-1.8-7.2-8.1 0-1.8.6-3.3 1.7-4.5-.2-.4-.7-2.1.2-4.4 0 0 1.4-.5 4.6 1.7a15.6 15.6 0 0 1 8.4 0c3.2-2.2 4.6-1.7 4.6-1.7.9 2.3.3 4 .2 4.4 1.1 1.2 1.7 2.7 1.7 4.5 0 6.3-3.7 7.7-7.2 8.1.6.5 1.1 1.5 1.1 3v4.5c0 .4.3 1 1.1.8A16.4 16.4 0 0 0 32 16.5C32 7.4 24.8 0 16 0Z"/>
+          <text x="42" y="23" font-size="24" font-weight="650" font-family="Segoe UI, Arial, sans-serif">GitHub</text>
+        </svg>
+      </span>
+    </div>
+  </section>
+
+  <section class="slide" id="s-goal">
+    <div class="slide-head"><h2 class="slide-title">Stop managing prompts. Define the goal.</h2></div>
+    <div class="slide-body">
+      <div class="two-col">
+        <div><span class="col-label">Prompt-driven</span><p>You prescribe each step.<br>You evaluate each answer.</p></div>
+        <div><span class="col-label">Goal-driven</span><p>You define the outcome and boundaries.<br>The agent acts, checks, and adjusts.</p></div>
+      </div>
+    </div>
+    <p class="slide-note">Delegate iteration, not judgment.</p>
+  </section>
+
+  <section class="slide" id="s-before-code">
+    <div class="slide-head"><h2 class="slide-title">Engineering starts before the first line of code.</h2></div>
+    <div class="slide-body">
+      <ol class="sequence lifecycle">
+        <li><span class="seq-title">Need</span><span class="seq-note">Understand users and desired outcomes</span></li>
+        <li><span class="seq-title">Design</span><span class="seq-note">Choose contracts and resolve tradeoffs</span></li>
+        <li><span class="seq-title">Goal Card</span><span class="seq-note">Define evidence, permissions, and limits</span></li>
+        <li><span class="seq-title">Stories</span><span class="seq-note">Describe observable behavior and exceptions</span></li>
+        <li><span class="seq-title">Tests</span><span class="seq-note">Turn acceptance criteria into checks</span></li>
+        <li class="code-step"><span class="seq-title">Code</span><span class="seq-note">Implement against approved evidence</span></li>
+      </ol>
+    </div>
+    <p class="slide-note">Refine the artifacts as evidence changes.</p>
+  </section>
+
+  <section class="slide" id="s-after-code">
+    <div class="slide-head"><h2 class="slide-title">The loop continues after the code is written.</h2></div>
+    <div class="slide-body"><ol class="sequence lifecycle">
+      <li class="code-step"><span class="seq-title">Code</span><span class="seq-note">A checked change, not completion</span></li>
+      <li><span class="seq-title">Security</span><span class="seq-note">Find threats and limit exposure</span></li>
+      <li><span class="seq-title">Quality</span><span class="seq-note">Verify behavior and maintainability</span></li>
+      <li><span class="seq-title">Delivery</span><span class="seq-note">Approve promotion; preserve rollback</span></li>
+      <li><span class="seq-title">Operations</span><span class="seq-note">Observe outcomes and respond to incidents</span></li>
+      <li><span class="seq-title">Feedback</span><span class="seq-note">Turn evidence into the next goal</span></li>
+    </ol></div>
+    <p class="slide-note">Reviews can run in parallel. Humans authorize protected transitions.</p>
+  </section>
+
+  <section class="slide" id="s-loops">
+    <div class="slide-head"><h2 class="slide-title">The pull request connects two engineering loops.</h2></div>
+    <div class="slide-body">
+      <svg viewBox="0 40 1100 360" role="img" aria-labelledby="loops-title loops-desc">
+        <title id="loops-title">Connected engineering loops</title>
+        <desc id="loops-desc">Clockwise loops connect workspace iteration to shared review, delivery, and feedback.</desc>
+        <defs><marker id="loops-arrow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="var(--accent)"/></marker></defs>
+        <g fill="none" stroke="var(--accent)" stroke-width="4" stroke-linecap="round" marker-end="url(#loops-arrow)">
+          <path d="M176.7 118.8A110 110 0 0 1 283.3 118.8"/><path d="M326.2 161.7A110 110 0 0 1 326.2 268.3"/>
+          <path d="M283.3 311.2A110 110 0 0 1 176.7 311.2"/><path d="M133.8 268.3A110 110 0 0 1 133.8 161.7"/>
+          <path d="M672.3 189A150 150 0 0 1 707.5 115.7"/><path d="M748.3 83.3A150 150 0 0 1 827.5 65.2"/>
+          <path d="M878.3 76.8A150 150 0 0 1 941.8 127.4"/><path d="M964.4 174.4A150 150 0 0 1 964.4 255.6"/>
+          <path d="M941.8 302.6A150 150 0 0 1 878.3 353.2"/><path d="M827.5 364.8A150 150 0 0 1 748.3 346.7"/>
+          <path d="M707.5 314.3A150 150 0 0 1 672.3 241"/><path d="M346 215H640"/>
+        </g>
+        <g fill="var(--accent)">
+          <circle cx="152.2" cy="137.2" r="9"/><circle cx="307.8" cy="137.2" r="9"/><circle cx="307.8" cy="292.8" r="9"/><circle cx="152.2" cy="292.8" r="9"/>
+          <circle cx="670" cy="215" r="9"/><circle cx="726.5" cy="97.7" r="9"/><circle cx="853.4" cy="68.8" r="9"/>
+          <circle cx="955.1" cy="149.9" r="9"/><circle cx="955.1" cy="280.1" r="9"/><circle cx="853.4" cy="361.2" r="9"/><circle cx="726.5" cy="332.3" r="9"/>
+        </g>
+        <g fill="var(--text)" font-size="22">
+          <text x="140" y="114" text-anchor="end">Goal Card</text><text x="320" y="114">Create</text>
+          <text x="320" y="330">Check</text><text x="140" y="330" text-anchor="end">Adjust</text>
+          <text x="540" y="195" text-anchor="middle">Pull request</text>
+          <text x="650" y="260" text-anchor="end">Proposal</text><text x="710" y="80" text-anchor="end">Review</text>
+          <text x="853.4" y="112" text-anchor="middle">Implement</text><text x="980" y="132">Delivery</text>
+          <text x="980" y="288">Operations</text><text x="875" y="392">Issues</text><text x="690" y="365" text-anchor="end">Triage</text>
+        </g>
+        <g text-anchor="middle" fill="var(--text)">
+          <text x="230" y="212" font-size="24" font-weight="600">Inner loop</text><text x="230" y="240" font-size="19" fill="var(--text-muted)">Workspace</text>
+          <text x="820" y="212" font-size="24" font-weight="600">Outer loop</text><text x="820" y="240" font-size="19" fill="var(--text-muted)">Shared evidence</text>
+        </g>
+      </svg>
+    </div>
+    <p class="slide-note">Conceptual roles, not automatic authority. Either coding loop can run locally or remotely.</p>
+  </section>
+
+  <section class="slide" id="s-evidence">
+    <div class="slide-head"><h2 class="slide-title">Evidence informs intent. It does not authorize it.</h2></div>
+    <div class="slide-body"><ul class="arrow-list">
+      <li class="frag">Correlate sources; expose contradictions and uncertainty.</li>
+      <li class="frag">Separate a missing capability from a broken contract.</li>
+      <li class="frag">A person confirms scope before implementation begins.</li>
+    </ul></div>
+    <p class="slide-note">A confident summary is not a product decision.</p>
+  </section>
+
+  <section class="slide" id="s-goal-card">
+    <div class="slide-head"><h2 class="slide-title">A Goal Card makes delegation inspectable.</h2></div>
+    <div class="slide-body"><ul class="arrow-list">
+      <li class="frag">Outcome: observable behavior and proof of completion.</li>
+      <li class="frag">Boundary: permitted changes, tools, and protected invariants.</li>
+      <li class="frag">Stop: blockers, budgets, and human escalation.</li>
+    </ul></div>
+    <p class="slide-note">Approve the finish line before the agent starts running.</p>
+  </section>
+
+  <section class="slide" id="s-checks">
+    <div class="slide-head"><h2 class="slide-title">Repair the implementation, not the finish line.</h2></div>
+    <div class="slide-body"><ul class="arrow-list">
+      <li class="frag">First show a check failing for the right reason.</li>
+      <li class="frag">Let failed evidence select the smallest repair.</li>
+      <li class="frag">Changing acceptance criteria requires owner approval.</li>
+    </ul></div>
+    <p class="slide-note">Tests sample behavior; green output alone does not prove completeness.</p>
+  </section>
+
+  <section class="slide" id="s-handoff">
+    <div class="slide-head"><h2 class="slide-title">A handoff transfers evidence, not confidence.</h2></div>
+    <div class="slide-body"><ol class="sequence">
+      <li><span class="seq-title">Intent</span><span class="seq-note">Approved goal and scope</span></li>
+      <li><span class="seq-title">Revision</span><span class="seq-note">Exact diff and checks</span></li>
+      <li><span class="seq-title">Decision</span><span class="seq-note">Gaps and accountable owner</span></li>
+    </ol></div>
+    <p class="slide-note">A changed revision invalidates affected evidence. Recheck before approval.</p>
+  </section>
+
+  <section class="slide" id="s-authority">
+    <div class="slide-head"><h2 class="slide-title">Checks, reasoning, and authority answer different questions.</h2></div>
+    <div class="slide-body"><ol class="sequence">
+      <li><span class="seq-title">Checks</span><span class="seq-note">Does this revision pass?</span></li>
+      <li><span class="seq-title">Independent review</span><span class="seq-note">What did we miss?</span></li>
+      <li><span class="seq-title">Human authority</span><span class="seq-note">May it cross the boundary?</span></li>
+    </ol></div>
+    <p class="slide-note">A reviewer challenges the proposal; it does not inherit merge or release permissions.</p>
+  </section>
+
+  <section class="slide" id="s-trust">
+    <div class="slide-head"><h2 class="slide-title">Retrieved context must not become executable authority.</h2></div>
+    <div class="slide-body"><ul class="arrow-list">
+      <li class="frag">Treat tickets, comments, and documents as untrusted data.</li>
+      <li class="frag">Give each role only the tools it needs.</li>
+      <li class="frag">Enforce privileged boundaries outside the model.</li>
+    </ul></div>
+    <p class="slide-note">A prompt is not an access-control mechanism.</p>
+  </section>
+
+  <section class="slide" id="s-delivery">
+    <div class="slide-head"><h2 class="slide-title">Promote verified bytes. Do not rebuild the evidence.</h2></div>
+    <div class="slide-body"><ol class="sequence">
+      <li><span class="seq-title">Build once</span><span class="seq-note">Bind source to image digest</span></li>
+      <li><span class="seq-title">Verify in test</span><span class="seq-note">Checks and trusted publisher</span></li>
+      <li><span class="seq-title">Approve promotion</span><span class="seq-note">Same digest, separate authority</span></li>
+    </ol></div>
+    <p class="slide-note">A signature authenticates a publisher of bytes, not correctness. Readiness is not deployment.</p>
+  </section>
+
+  <section class="slide" id="s-operations">
+    <div class="slide-head"><h2 class="slide-title">Operational feedback closes the engineering loop.</h2></div>
+    <div class="slide-body"><ul class="arrow-list">
+      <li class="frag">Observe user outcomes, failures, and unexpected behavior.</li>
+      <li class="frag">Keep an operational owner and verified rollback candidate.</li>
+      <li class="frag">Turn new evidence into the next bounded goal.</li>
+    </ul></div>
+    <p class="slide-note">Deployment success and product success are different signals.</p>
+  </section>
+
+  <section class="slide" id="s-recurrence">
+    <div class="slide-head"><h2 class="slide-title">Recurrence means reconciliation, not repeated creation.</h2></div>
+    <div class="slide-body"><ol class="sequence">
+      <li><span class="seq-title">Read state</span><span class="seq-note">Evidence and prior output</span></li>
+      <li><span class="seq-title">Reconcile</span><span class="seq-note">Changed, duplicate, or waiting?</span></li>
+      <li><span class="seq-title">Bound the effect</span><span class="seq-note">Update owned work or no-op</span></li>
+    </ol></div>
+    <p class="slide-note">A trigger repeats the assessment. It does not expand permissions.</p>
+  </section>
+
+  <section class="slide" id="s-stop">
+    <div class="slide-head"><h2 class="slide-title">A useful loop knows when not to act.</h2></div>
+    <div class="slide-body"><ul class="arrow-list">
+      <li class="frag">DONE: required evidence supports the goal.</li>
+      <li class="frag">BLOCKED or CAPPED: stop and escalate with evidence.</li>
+      <li class="frag">NO-OP: unchanged or waiting state needs no write.</li>
+    </ul></div>
+    <p class="slide-note">Bound time, attempts, inference spend, and side effects before execution.</p>
+  </section>
+
+  <section class="slide" id="s-measure">
+    <div class="slide-head"><h2 class="slide-title">Measure accepted outcomes, not agent activity.</h2></div>
+    <div class="slide-body"><ul class="arrow-list">
+      <li class="frag">Track accepted quality, rework, and escaped failures.</li>
+      <li class="frag">Compare end-to-end time, cost, and human intervention.</li>
+      <li class="frag">Review blocked runs and false success claims.</li>
+    </ul></div>
+    <p class="slide-note">Choose a baseline and evaluation cases before the pilot.</p>
+  </section>
+
+  <section class="slide" id="s-adoption">
+    <div class="slide-head"><h2 class="slide-title">Adopt one reversible product slice at a time.</h2></div>
+    <div class="slide-body"><ul class="arrow-list">
+      <li class="frag">Start with a bounded task and named owner.</li>
+      <li class="frag">Preserve identity, approvals, and evidence across platforms.</li>
+      <li class="frag">Expand only after measurable exit criteria are met.</li>
+    </ul></div>
+    <p class="slide-note">Move the control model, not just repositories and pipelines.</p>
+  </section>
+
+  <section class="slide slide--end" id="s-end">
+    <p>Define the goal.<br>Let the loops do the work.<br>Keep judgment and authority explicit.</p>
+  </section>
+</main>
+</body>
+</html>

@@ -2,6 +2,8 @@
 
 - Status: Accepted
 - Date: 2026-09-30
+- Platform layout, local loop retention, and separate operator guide superseded by
+  [ADR 0019](0019-separate-demo-application-and-workshop-tooling.md).
 - Supersedes: historical-demo continuation in [ADR 0009](0009-loop-contract-and-bounded-recurrence.md), retention in [ADR 0012](0012-one-full-day-html-journey.md) and [ADR 0016](0016-retail-and-signed-test-prod-images.md), and generated-station tooling associated with [ADR 0013](0013-attendee-forks-and-codespaces.md)
 
 ## Context

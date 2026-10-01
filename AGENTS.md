@@ -1,6 +1,6 @@
 # Loop Engineering with GitHub
 
-This repository is the workshop station and its materials in one. Attendees fork it and work on the retail reservation service at the root. The workshop materials live in `docs/`, `platform/`, `tests/`, and `templates/`; when you change them, follow `.github/instructions/workshop-materials.instructions.md`.
+This repository is the workshop station and its materials in one. Attendees fork it and work on the retail reservation service in `demo-app/`. Root `npm start` and `npm test` forward to that dependency-free application. Workshop tooling, fixtures, and integrity tests live in `workshop/`; HTML materials, workshop ADRs, and authoring templates live in `docs/`. When you change workshop materials, follow `.github/instructions/workshop-materials.instructions.md`.
 
 ## Retail reservation service
 

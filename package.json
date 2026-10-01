@@ -4,17 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node src/server.mjs",
-    "test": "node --test \"test/**/*.test.mjs\"",
-    "test:materials": "node --test --test-concurrency=1 tests/content.test.mjs tests/platform.test.mjs tests/solution-integration.test.mjs tests/trusted-delivery.test.mjs tests/command.test.mjs tests/screenshot-evidence.test.mjs tests/loop-state.test.mjs",
-    "validate": "node tests/validate-content.mjs",
+    "start": "npm --prefix demo-app start",
+    "test": "npm --prefix demo-app test",
+    "test:materials": "node --test --test-concurrency=1 \"workshop/tests/*.test.mjs\"",
+    "validate": "node workshop/tools/materials/validate-content.mjs",
     "validate:workflows": "gh aw validate documentation-review goal-review repository-pulse showcase-signal --strict",
     "compile:workflows": "gh aw compile documentation-review goal-review repository-pulse showcase-signal --schedule-seed workshop/github-loop-engineering --validate",
-    "preflight": "node platform/scripts/preflight.mjs --profile sandbox",
-    "test:browser": "node tests/browser.mjs",
-    "validate:html": "node tests/html-docs.mjs",
-    "capture": "node tests/browser.mjs --capture",
-    "serve": "node tests/serve.mjs"
+    "preflight": "node workshop/tools/preflight/preflight.mjs --profile sandbox",
+    "test:browser": "node workshop/tools/materials/browser.mjs",
+    "validate:html": "node workshop/tools/materials/html-docs.mjs",
+    "capture": "node workshop/tools/materials/browser.mjs --capture",
+    "serve": "node workshop/tools/materials/serve.mjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"

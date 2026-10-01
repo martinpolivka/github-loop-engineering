@@ -33,7 +33,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Validate current main candidate
-        run: node scripts/release-evidence.mjs candidate
+        run: node workshop/tools/azure/release-evidence.mjs candidate
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Checkout candidate
@@ -53,7 +53,7 @@ jobs:
           [[ "$(git rev-parse HEAD)" == "$CANDIDATE_SHA" ]]
           docker build --build-arg BASE_IMAGE="$RETAIL_BASE_IMAGE" \
             --label "org.opencontainers.image.revision=$CANDIDATE_SHA" \
-            --tag retail-candidate:tested .
+            --tag retail-candidate:tested ./demo-app
           container_id="$(docker run --detach --publish 127.0.0.1::3000 retail-candidate:tested)"
           trap 'docker rm --force "$container_id" >/dev/null' EXIT
           port="$(docker port "$container_id" 3000/tcp | cut -d: -f2)"
@@ -63,11 +63,11 @@ jobs:
             sleep 0.25
           done
           [[ "$ready" == true ]]
-          node scripts/container-smoke.mjs "http://127.0.0.1:$port"
+          node workshop/tools/azure/container-smoke.mjs "http://127.0.0.1:$port"
           mkdir -p release
           docker save --output release/image.tar retail-candidate:tested
           IMAGE_ID="$(docker image inspect retail-candidate:tested --format '{{.Id}}')" \
-            node scripts/release-evidence.mjs build
+            node workshop/tools/azure/release-evidence.mjs build
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: tested-image-${{ github.run_attempt }}
@@ -109,12 +109,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node scripts/release-evidence.mjs candidate
+          node workshop/tools/azure/release-evidence.mjs candidate
           docker load --input release/image.tar
           export IMAGE_ID="$(docker image inspect retail-candidate:tested --format '{{.Id}}')"
           node --input-type=module -e "
             import {readFileSync} from 'node:fs';
-            import {releaseConfig,assertEvidence} from './scripts/release-evidence.mjs';
+            import {releaseConfig,assertEvidence} from './workshop/tools/azure/release-evidence.mjs';
             const e=assertEvidence(JSON.parse(readFileSync('release/release.json')),releaseConfig(process.env));
             if(e.imageId!==process.env.IMAGE_ID) throw Error('Loaded image identity mismatch');
           "
@@ -123,12 +123,12 @@ jobs:
           docker tag retail-candidate:tested "$tag"
           docker push "$tag"
           IMAGE_DIGEST="$(docker image inspect "$tag" --format '{{index .RepoDigests 0}}' | cut -d@ -f2)" \
-            node scripts/release-evidence.mjs publish
+            node workshop/tools/azure/release-evidence.mjs publish
       - name: Read exact image reference and approved trust root
         id: evidence
         run: |
-          node scripts/release-evidence.mjs read
-          node scripts/release-evidence.mjs trust
+          node workshop/tools/azure/release-evidence.mjs read
+          node workshop/tools/azure/release-evidence.mjs trust
       - name: Install checksum-pinned Notation CLI
         shell: bash
         run: |
@@ -156,7 +156,7 @@ jobs:
           notation cert add --type ca --store workshop-test release/certificate.pem
           notation policy import --force release/trustpolicy.json
           notation verify "$IMAGE_REFERENCE"
-          node scripts/release-evidence.mjs verified
+          node workshop/tools/azure/release-evidence.mjs verified
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: verified-test-${{ github.run_attempt }}
@@ -174,7 +174,7 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           ALLOCATION_TAG_NAME: ${{ vars.ALLOCATION_TAG_NAME }}
           ALLOCATION_TAG_VALUE: ${{ vars.ALLOCATION_TAG_VALUE }}
-        run: node scripts/deploy-aca.mjs
+        run: node workshop/tools/azure/deploy-aca.mjs
 
   prod_release:
     name: Promote exact test digest and verify the prod signature
@@ -205,7 +205,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          node scripts/release-evidence.mjs candidate
+          node workshop/tools/azure/release-evidence.mjs candidate
           mv release/verified-release.json release/release.json
       - name: Login using the separate prod managed identity
         uses: Azure/login@7ddb5af1ef8758cf1353cf3b42f940aee27ba21c # v3.0.2
@@ -235,23 +235,23 @@ jobs:
           set -euo pipefail
           az acr login --name "${TEST_ACR_LOGIN_SERVER%%.*}"
           az acr login --name "${ACR_LOGIN_SERVER%%.*}"
-          ACR_LOGIN_SERVER="$TEST_ACR_LOGIN_SERVER" node scripts/release-evidence.mjs read
+          ACR_LOGIN_SERVER="$TEST_ACR_LOGIN_SERVER" node workshop/tools/azure/release-evidence.mjs read
           ACR_LOGIN_SERVER="$TEST_ACR_LOGIN_SERVER" \
             SIGNING_CERTIFICATE_BASE64="$TEST_SIGNING_CERTIFICATE_BASE64" \
             SIGNING_CERTIFICATE_SHA256="$TEST_SIGNING_CERTIFICATE_SHA256" \
-            node scripts/release-evidence.mjs trust
+            node workshop/tools/azure/release-evidence.mjs trust
           notation cert add --type ca --store workshop-test release/certificate.pem
           notation policy import --force release/trustpolicy.json
           test_ref="$(node -p "require('./release/release.json').imageReference")"
           notation verify "$test_ref"
           target="$ACR_LOGIN_SERVER/$ACR_REPOSITORY:sha-$CANDIDATE_SHA-run-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
           oras copy "$test_ref" "$target"
-          IMAGE_DIGEST="$(oras resolve "$target")" node scripts/release-evidence.mjs promote
+          IMAGE_DIGEST="$(oras resolve "$target")" node workshop/tools/azure/release-evidence.mjs promote
       - name: Read prod digest and independent prod trust root
         id: evidence
         run: |
-          node scripts/release-evidence.mjs read
-          node scripts/release-evidence.mjs trust
+          node workshop/tools/azure/release-evidence.mjs read
+          node workshop/tools/azure/release-evidence.mjs trust
       - name: Sign and strictly verify the approved prod candidate
         env:
           IMAGE_REFERENCE: ${{ steps.evidence.outputs.image_reference }}
@@ -268,7 +268,7 @@ jobs:
           notation cert add --type ca --store workshop-prod release/certificate.pem
           notation policy import --force release/trustpolicy.json
           notation verify "$IMAGE_REFERENCE"
-          node scripts/release-evidence.mjs verified
+          node workshop/tools/azure/release-evidence.mjs verified
       - name: Retain test/prod promotion evidence
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -288,4 +288,4 @@ jobs:
           AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
           ALLOCATION_TAG_NAME: ${{ vars.ALLOCATION_TAG_NAME }}
           ALLOCATION_TAG_VALUE: ${{ vars.ALLOCATION_TAG_VALUE }}
-        run: node scripts/deploy-aca.mjs
+        run: node workshop/tools/azure/deploy-aca.mjs

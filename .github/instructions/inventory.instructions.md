@@ -1,5 +1,5 @@
 ---
-applyTo: "src/**/*.mjs"
+applyTo: "demo-app/src/**/*.mjs"
 ---
 
 # Service source rules

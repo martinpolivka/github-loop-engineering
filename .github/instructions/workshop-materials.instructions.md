@@ -1,5 +1,5 @@
 ---
-applyTo: "docs/**,platform/**,tests/**,templates/**,AGENDA.md,PLAN.md"
+applyTo: "docs/**,workshop/**,AGENDA.md"
 ---
 
 # Workshop materials rules
@@ -39,29 +39,29 @@ Prefer current first-party GitHub documentation. Record the validation date for 
 
 ## Repository layout
 
-The repository root is the attendee station: the retail service in `src/`, `test/`, `public/`, `data/`, `scripts/`, and `context/`, with `.devcontainer/` and `AGENTS.md`. Attendees fork the whole repository. The workshop materials live beside it:
+Attendees fork the whole repository. The retail service is self-contained in `demo-app/`; its OpenAPI contract and Docker build context belong with the application. Root commands forward to the application or workshop tooling. The synthetic intake stays in `context/`, beside `.devcontainer/`, `.github/`, `.agents/`, and `AGENTS.md`:
 
 ```text
-docs/                    index.html (agenda, opening demo, Slides), labs/, assets/, adr/
+demo-app/                src/, public/, test/, contracts/, Dockerfile, package.json
+docs/                    index.html (agenda), loop-engineering.en.html, labs/, adr/, templates/
 docs/labs/               one directory per lab: index.html plus artifacts/
-platform/demos/full-day/ current operator guide only
-platform/                azure/ templates, capability profiles/, preflight and OCI scripts/
-templates/               reusable authoring templates
-tests/                   materials integrity checks (the station's own tests are in test/)
+workshop/                azure/, profiles/, fixtures/, tools/, tests/
+workshop/tools/          azure/, preflight/, materials/
+workshop/tests/          materials, layout, release, and reference-solution integrity checks
 ```
 
-Root files: `README.md` (station and navigation), `PLAN.md` (delivery roadmap), `AGENDA.md` (full-day intent and schedule), `AGENTS.md` (station contract for agents). These rules are in `.github/instructions/workshop-materials.instructions.md`.
+Root files: `README.md` (station and navigation), `AGENDA.md` (full-day intent and schedule), `AGENTS.md` (station contract for agents). These rules are in `.github/instructions/workshop-materials.instructions.md`.
 
 ## Attendee-facing content
 
-HTML is the source format for presentations, lab instructions, reference documentation, and architecture explanations. `docs/index.html` is the sole attendee entry point; each of the five linked labs combines reading and presentation modes in its own HTML. Do not use Markdown as the primary attendee experience or create parallel slide decks and guides.
+HTML is the source format for presentations, lab instructions, reference documentation, and architecture explanations. `docs/index.html` is the attendee entry point and agenda; `docs/loop-engineering.en.html` is the separate English principles presentation, with a Czech counterpart reserved for later. Each of the five linked labs combines reading and presentation modes in its own HTML. Do not use Markdown as the primary attendee experience or duplicate lab procedures across decks and guides.
 
-- Use the vendored `html-docs` system in `docs/assets/html-docs/`. **Never edit vendored runtime files** — they are SHA-pinned.
-- Synchronize canonical head blocks with `node docs/assets/html-docs/sync-head.js <file>`.
+- Use the globally installed `html-docs` skill for authoring and validation; set `HTML_DOCS_SKILL` when it is not in the default location.
+- Embed canonical styles and scripts into each HTML file. Never edit the embedded runtime; validate it against the global skill.
 - Give each material a stable, unique `doc-id`.
 - Support light and dark modes and the blue, orange, and green accents. Warnings use text labels, not independent color palettes.
 - No Unicode emoji. Meet accessible contrast, keyboard navigation, visible focus, semantic HTML, and reduced-motion expectations.
-- Keep runtime dependencies vendored. Never depend on a CDN.
+- Keep published HTML self-contained. Never depend on a CDN or a shared assets directory.
 - Wrap code blocks as `<div class="code"><pre><code>` so they scroll instead of overflowing. Prefer `<dl>` over wide tables.
 
 ### Slides
@@ -82,7 +82,7 @@ Every lab states its outcome and time, prerequisites and access path, prepared s
 
 ## Facilitator demonstrations
 
-Every demonstration is self-contained, repeatable from a clean documented start, automated and idempotent where GitHub permits, and safe with synthetic data. Each provides an executable preflight, non-interactive lifecycle automation, an operator flow with timing and expected visible states, recovery instructions, and pre-captured evidence for network-, quota-, or permission-sensitive steps.
+Every demonstration is self-contained, repeatable from a clean documented start, automated and idempotent where GitHub permits, and safe with synthetic data. Keep timing, prerequisites, checkpoints, and recovery in the relevant lab and agenda, not a separate facilitator HTML. Retain executable preflight and source-bound evidence for network-, quota-, or permission-sensitive steps. Do not require a local loop runner for GitHub Agentic Workflows.
 
 The opening demonstration needs a rehearsed instructor station, a credible payoff in the first 30 minutes, and an honestly labelled source-based fallback when the live chain is unavailable.
 
@@ -94,12 +94,13 @@ Use least-privilege `GITHUB_TOKEN` permissions and pin third-party actions to im
 
 ## Architecture decisions
 
-Record significant decisions about content architecture, station isolation, workflow security, identity, deployment, or portability as ADRs in `docs/adr/`, named `NNNN-kebab-case-title.md`, starting from `templates/adr-template.md`. Mark superseded decisions and link both records; do not erase decision history. Skip ADRs for routine implementation details.
+Record significant decisions about content architecture, station isolation, workflow security, identity, deployment, or portability as ADRs in `docs/adr/`, named `NNNN-kebab-case-title.md`, starting from `docs/templates/adr-template.md`. Mark superseded decisions and link both records; do not erase decision history. Skip ADRs for routine implementation details.
 
 ## Validation
 
 ```powershell
-npm run test:materials    # materials integrity, lab artifacts, and station tests
+npm test                 # demo application behavior
+npm run test:materials    # materials integrity, lab artifacts, and release tooling
 npm run validate          # HTML structure and local references
 npm run validate:html     # six palettes, offline, responsive, no-JS
 npm run validate:workflows

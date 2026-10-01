@@ -1,5 +1,5 @@
 ---
-applyTo: "test/**/*.mjs"
+applyTo: "demo-app/test/**/*.mjs"
 ---
 
 # Test rules

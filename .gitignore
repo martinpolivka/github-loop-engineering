@@ -1,5 +1,5 @@
 .workshop/
-platform/azure/oci.json
+workshop/azure/oci.json
 node_modules/
 test-results/
 playwright-report/

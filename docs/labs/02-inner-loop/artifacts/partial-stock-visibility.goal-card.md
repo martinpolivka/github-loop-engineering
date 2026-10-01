@@ -17,9 +17,9 @@ dependencies.
 
 | Result | Destination | Write rule |
 | --- | --- | --- |
-| Visible bug fix | `public/app.js` | Preserve existing suggestion and error behavior |
+| Visible bug fix | `demo-app/public/app.js` | Preserve existing suggestion and error behavior |
 | Acceptance evidence | focused test or browser evidence and pull request checks | Add evidence; do not weaken existing tests |
-| Durable contract | `specs/partial-stock-visibility.goal-card.md` | Copy this approved card without weakening it |
+| Durable contract | `demo-app/specs/partial-stock-visibility.goal-card.md` | Copy this approved card without weakening it |
 
 ## DONE WHEN
 
@@ -61,7 +61,7 @@ behavior.
 | --- | --- | --- |
 | Confirmed bug Issue | Required | Attendee fork; approved Goal Card comment exists before assignment |
 | Bug evidence | Required | `context/intake/partial-stock-ticket.md`, `reservation-api.log`, and `meeting-notes.md` |
-| Current behavior | Required | `public/app.js` and existing tests on the assigned base revision |
+| Current behavior | Required | `demo-app/public/app.js` and existing tests on the assigned base revision |
 
 Unresolved: none.
 
@@ -69,7 +69,7 @@ Unresolved: none.
 
 Read: the confirmed Issue, existing comments at assignment time, listed
 evidence, UI source, service source, and tests.
-Write: `specs/partial-stock-visibility.goal-card.md`, `public/app.js`, and the
+Write: `demo-app/specs/partial-stock-visibility.goal-card.md`, `demo-app/public/app.js`, and the
 smallest focused test or evidence artifact required by repository conventions.
 Never: change the API contract, reserve partial stock, edit workflows,
 dependencies, ownership, or this approved finish line.

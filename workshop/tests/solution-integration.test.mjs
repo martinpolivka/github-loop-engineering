@@ -1,0 +1,43 @@
+import assert from "node:assert/strict";
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { join } from "node:path";
+import test from "node:test";
+import { root } from "../tools/materials/validation.mjs";
+import { copyService } from "./helpers/service-fixture.mjs";
+
+test("lab artifacts preserve the complete station service", () => {
+  mkdirSync(join(root, ".workshop"), { recursive: true });
+  const ownedRoot = mkdtempSync(join(root, ".workshop", "solution-test-"));
+  const ownership = join(ownedRoot, ".owner");
+  writeFileSync(ownership, "workshop/tests/solution-integration.test.mjs");
+  const station = join(ownedRoot, "station");
+  try {
+    copyService(station);
+    cpSync(
+      join(root, "docs", "labs", "02-inner-loop", "artifacts", "reservations.reference.mjs"),
+      join(station, "src", "reservations.mjs")
+    );
+    cpSync(
+      join(root, "docs", "labs", "02-inner-loop", "artifacts", "suggestion.test.mjs"),
+      join(station, "test", "suggestion.test.mjs")
+    );
+    const { NODE_TEST_CONTEXT: _testContext, ...cleanEnvironment } = process.env;
+    const result = spawnSync(process.execPath, [
+      "--test",
+      "--test-skip-pattern=^both learner tasks remain unsolved in the retail baseline$",
+      join(station, "test", "inventory.test.mjs"),
+      join(station, "test", "catalog.test.mjs"),
+      join(station, "test", "cors.test.mjs"),
+      join(station, "test", "public.test.mjs"),
+      join(station, "test", "server.test.mjs"),
+      join(station, "test", "suggestion.test.mjs")
+    ], { cwd: station, encoding: "utf8", env: cleanEnvironment });
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    assert.match(result.stdout, /unit: selects the first eligible same-category SKU without mutation/);
+    assert.match(result.stdout, /http: returns one suggestion without reserving it/);
+  } finally {
+    assert.equal(readFileSync(ownership, "utf8"), "workshop/tests/solution-integration.test.mjs");
+    rmSync(ownedRoot, { recursive: true, force: true });
+  }
+});

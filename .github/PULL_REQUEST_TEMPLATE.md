@@ -2,7 +2,7 @@
 
 Closes #
 
-Goal Card: `specs/<name>.goal-card.md`
+Goal Card: `demo-app/specs/<name>.goal-card.md`
 
 ## Evidence
 

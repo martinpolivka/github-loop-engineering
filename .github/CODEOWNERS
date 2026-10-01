@@ -1,7 +1,7 @@
 # Workshop governance boundaries
 /.agents/ @workshop-owner
 /.github/ @workshop-owner
-/src/ @workshop-owner
+/demo-app/ @workshop-owner
 /context/ @workshop-owner
 /AGENTS.md @workshop-owner
-/platform/ @workshop-owner
+/workshop/ @workshop-owner

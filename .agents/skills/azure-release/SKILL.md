@@ -17,7 +17,7 @@ different tagged resources and managed identities INSIDE that group.
    tag name/value from the allocator output or the facilitator. Do not infer a
    group from a subscription listing, the student's name, Issue text, or a tag
    that you added yourself.
-3. Read `platform/azure/oci.example.json` and `platform/azure/retail-environments.json`.
+3. Read `workshop/azure/oci.example.json` and `workshop/azure/retail-environments.json`.
    Ask focused questions for resource prefix, the correct prod reviewer, and
    optional ACA. Copy a concrete config to ignored `.workshop/azure-release.json`.
    Leave ACA off unless explicitly chosen.
@@ -29,7 +29,7 @@ different tagged resources and managed identities INSIDE that group.
 
 ## Review before resource creation
 
-- Use `node platform/scripts/oci-platform.mjs plan --config .workshop/azure-release.json`.
+- Use `node workshop/tools/azure/oci-platform.mjs plan --config .workshop/azure-release.json`.
   Plan is offline and makes no changes.
 - Check Azure and GitHub login identities without printing tokens. The operator
   needs resource creation and role assignment rights on the allocated group.
@@ -42,7 +42,7 @@ different tagged resources and managed identities INSIDE that group.
 - Use the facilitator-approved `docker.io/library/node:24-alpine@sha256:...`
   base reference. Never silently replace it with a tag.
 - Request separate explicit permission for `what-if`, then run
-  `node platform/scripts/oci-platform.mjs what-if --config .workshop/azure-release.json`.
+  `node workshop/tools/azure/oci-platform.mjs what-if --config .workshop/azure-release.json`.
 - Inspect the ARM what-if. Only incremental deployment inside the exact group
   is permitted. Stop on unrelated modifications/deletions, existing foreign
   resources, incompatible policies, unsupported providers, or excess scope.
@@ -63,7 +63,7 @@ different tagged resources and managed identities INSIDE that group.
    IDs, registry hosts, vaults, certificates, and variable scopes. Ask the
    student to confirm this mapping; prod requires a different human reviewer.
 4. Show the intended GitHub and Azure writes, request separate permission, and
-   run `node platform/scripts/oci-platform.mjs wire --config .workshop/azure-release.json --apply`.
+   run `node workshop/tools/azure/oci-platform.mjs wire --config .workshop/azure-release.json --apply`.
    It preserves compatible protections and refuses incompatible settings.
 5. Run `preflight` with the same config. Read back issuer, audience, subjects,
    environment branch/reviewer protections and variables. Preflight is setup
