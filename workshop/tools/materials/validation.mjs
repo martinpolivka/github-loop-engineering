@@ -90,7 +90,10 @@ export function validateRepository() {
     const markup = htmlMarkup(content);
     const label = relative(root, file);
     if (!/^<!doctype html>/i.test(content)) errors.push(`${label}: missing HTML doctype`);
-    if (!/<html[^>]+lang="en"/i.test(content)) errors.push(`${label}: missing language`);
+    const language = file === join(root, "docs", "loop-engineering.cs.html") ? "cs" : "en";
+    if (!new RegExp(`<html\\b[^>]*\\blang="${language}"`, "i").test(markup)) {
+      errors.push(`${label}: missing language`);
+    }
     if (!/<meta[^>]+name="viewport"/i.test(content)) errors.push(`${label}: missing viewport`);
     if (!/<title>[^<]+<\/title>/i.test(content)) errors.push(`${label}: missing title`);
     if (!/<h1[\s>]/i.test(content)) errors.push(`${label}: missing h1`);

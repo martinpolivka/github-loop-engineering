@@ -177,6 +177,40 @@ test("labs present one progressive loop without promising unavailable controls",
   assert.match(lab5, /source changes are proposals until an approved compiler regenerates the lock/i);
 });
 
+test("the Czech review deck preserves the English narrative and independent identity", () => {
+  const english = readFileSync(join(root, "docs", "loop-engineering.en.html"), "utf8");
+  const czech = readFileSync(join(root, "docs", "loop-engineering.cs.html"), "utf8");
+  const slideIds = (source) => [...htmlMarkup(source).matchAll(/<section class="slide[^"]*" id="([^"]+)"/g)]
+    .map(([, id]) => id);
+  assert.match(htmlMarkup(czech), /<html lang="cs"/);
+  assert.match(czech, /name="doc-id" content="loop-engineering-principles-cs"/);
+  assert.deepEqual(slideIds(czech), slideIds(english));
+  for (const id of slideIds(czech)) {
+    const slide = sourceElement(czech, id).replace(/<(title|desc)\b[^>]*>[\s\S]*?<\/\1>/g, "");
+    const wordLimit = ["s-before-code", "s-after-code"].includes(id) ? 65 : 45;
+    assert.ok(sourceText(slide).split(/\s+/).length <= wordLimit, `${id}: sparse Czech speaking aid`);
+    assert.doesNotMatch(slide, /<(?:a|button|details|input)\b/);
+  }
+  assert.match(sourceElement(czech, "s-evidence"), /Smyčka umí efektivně optimalizovat i špatně zvolený cíl/);
+  assert.match(sourceElement(czech, "s-measure"), /Měř lepší výsledky\. Ne víc aktivity\./);
+  assert.match(sourceElement(czech, "s-measure"), /Microsoft Research: EngThrive \(2026\)/);
+  assert.match(sourceElement(czech, "s-end"), /<em>GitHub Copilot<\/em> pro vnitřní smyčku/);
+  assert.match(sourceElement(czech, "s-end"), /<em>GitHub Platform<\/em> pro vnější smyčku/);
+  assert.match(sourceElement(czech, "s-title"), /s platformou <em>GitHub<\/em>/);
+  assert.match(sourceElement(czech, "s-goal"), /Předepisuješ a kontroluješ každý krok\./);
+  assert.match(sourceElement(czech, "s-loops"), /font-size="19" fill="var\(--text-muted\)">GitHub Copilot/);
+  assert.match(sourceElement(czech, "s-evidence"), /Řeš skutečný problém, ne symptom\./);
+  assert.doesNotMatch(sourceElement(czech, "s-evidence"), /Než zrychlíš/);
+  assert.match(sourceElement(czech, "s-goal-card"), /Definuj úspěch a hranice\.<br>Nepředepisuj každý krok\./);
+  assert.match(sourceElement(czech, "s-measure"), /<blockquote class="key-thought">Měř lepší výsledky\. Ne víc aktivity\.<cite/);
+  for (const [source, labels] of [[czech, ["Výsledek", "Hranice", "Zastavení"]], [english, ["Outcome", "Boundary", "Stop"]]]) {
+    const goal = sourceElement(source, "s-goal-card");
+    for (const label of labels) assert.match(goal, new RegExp(`<span class="goal-label">${label}</span>:`));
+    assert.match(source, /\.slide-body \.measurement-guardrail \{ margin: 32px 0 0;/);
+    assert.match(source, /\.goal-label, \.measurement-guardrail strong \{ color: var\(--accent\); \}/);
+  }
+});
+
 test("the agenda, labs, and goal artifact preserve the complete engineering loop", () => {
   const read = (...segments) => readFileSync(join(root, ...segments), "utf8");
   const sources = [
@@ -215,7 +249,7 @@ test("raw script strings and comments do not invent DOM links or duplicate IDs",
 test("every standalone material keeps its identity and intended presentation surface", () => {
   const ids = new Set();
   const files = materialFiles();
-  assert.equal(files.length, 7, "Agenda, principles deck, and five labs");
+  assert.equal(files.length, 8, "Agenda, English and Czech principles decks, and five labs");
   let decks = 0;
   for (const file of files) {
     const source = readFileSync(file, "utf8").replaceAll("\r\n", "\n");
@@ -252,5 +286,5 @@ test("every standalone material keeps its identity and intended presentation sur
       }
     }
   }
-  assert.equal(decks, 1, "Only the principles presentation is a separate deck");
+  assert.equal(decks, 2, "The English and Czech principles presentations are separate decks");
 });
