@@ -163,6 +163,33 @@ test("preflight refuses missing or drifted compiled workflow stamps", () => {
   assert.throws(() => assertCompilerStamp("# gh-aw-metadata: invalid JSON", "test"));
 });
 
+test("repository pulse exposes the read tools required by its evidence contract", () => {
+  const source = readFileSync(join(root, ".github", "workflows", "repository-pulse.md"), "utf8").replaceAll("\r\n", "\n");
+  assert.match(source, /toolsets: \[repos, issues, pull_requests, actions\]/);
+  assert.match(source, /^  actions: read$/m);
+  assert.doesNotMatch(source, /^  (?:contents|issues|pull-requests|actions): write$/m);
+  assert.match(source, /`gh-aw-agentic-workflow` HTML comment whose `workflow_id` field equals\r?\n`repository-pulse`/);
+  assert.match(source, /both creation and body replacement/);
+  assert.doesNotMatch(source, /workshop-pulse:v1/);
+  assert.match(source, /Exclude the owned pulse Issue from domain backlog comparisons/);
+  assert.match(source, /create-issue:\n    title-prefix: "Repository pulse: "\n    labels: \[repository-pulse\]/);
+  assert.match(source, /update-issue:\n    target: "\*"\n    body:\n    required-title-prefix: "Repository pulse: "\n    required-labels: \[repository-pulse\]\n    max: 1/);
+  assert.doesNotMatch(source, /^    (?:status|title):/m);
+  assert.match(source, /use operation `replace`, never append a second report/);
+  const lock = readFileSync(join(root, ".github", "workflows", "repository-pulse.lock.yml"), "utf8");
+  assert.match(lock, /"GITHUB_TOOLSETS": "repos,issues,pull_requests,actions"/);
+  const configLine = lock.split("\n").find((line) => line.trim().startsWith('{"create_issue":'));
+  assert.ok(configLine, "Compiled safe-output configuration exists");
+  const config = JSON.parse(configLine);
+  assert.deepEqual(config.create_issue, {
+    labels: ["repository-pulse"], max: 1, title_prefix: "Repository pulse: "
+  });
+  assert.deepEqual(config.update_issue, {
+    allow_body: true, max: 1, required_labels: ["repository-pulse"],
+    required_title_prefix: "Repository pulse: ", target: "*"
+  });
+});
+
 test("an unavailable optional compiler preserves the verified compiled fallback", () => {
   for (const code of ["ETIMEDOUT", "ENOENT"]) {
     assert.equal(compilerProbeVersion({ error: { code }, status: null }), `unavailable (${code})`);

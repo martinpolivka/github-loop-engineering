@@ -4,6 +4,8 @@
 - Date: 2026-10-01
 - Operator-guide retention superseded by
   [ADR 0019](0019-separate-demo-application-and-workshop-tooling.md).
+- Combined lab presentation modes superseded by
+  [ADR 0022](0022-reading-only-lab-guides.md); standalone opening decks are unchanged.
 - Supersedes the embedded opening presentation and vendored asset distribution
   aspects of [ADR 0012](0012-one-full-day-html-journey.md) and
   [ADR 0010](0010-canonical-html-docs-materials.md).

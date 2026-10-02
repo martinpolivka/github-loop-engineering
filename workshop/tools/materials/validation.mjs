@@ -138,8 +138,12 @@ export function validateRepository() {
     const target = `labs/${lab}/index.html`;
     if (!hub.includes(`href="${target}"`)) errors.push(`agenda needs a direct link to Lab ${index + 1}`);
     const source = htmlMarkup(readFileSync(join(root, "docs", "labs", lab, "index.html"), "utf8"));
-    if (!source.includes('data-action="toggle-slides"') || !source.includes('class="slide-content')) {
-      errors.push(`Lab ${index + 1} needs reading and presentation modes in the same document`);
+    if (source.includes('data-action="toggle-slides"') || source.includes('class="slide-content') ||
+        source.includes('class="deck-stage')) {
+      errors.push(`Lab ${index + 1} must remain a reading-only guide without slides`);
+    }
+    if (!source.includes('class="card-body"') || !source.includes('data-action="print"')) {
+      errors.push(`Lab ${index + 1} needs reading content and PDF printing`);
     }
   }
 

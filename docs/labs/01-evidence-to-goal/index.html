@@ -2109,14 +2109,12 @@ html:not(.js) .controls { display: none; }
 <div class="controls" role="group" aria-label="Article controls">
   <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
   <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
-  <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
   <button type="button" class="ctrl" data-action="print">PDF</button>
   <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
   <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
 </div>
 <div class="doc">
   <header class="doc-header" id="opening">
-    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 1</p><h2 class="slide-title">Separate the signals.<br><em>Approve two intents.</em></h2><p class="slide-lead">Classify a feature and a bug before either becomes durable work.</p></div>
     <p class="eyebrow">09:45-10:30 &middot; 45 minutes</p>
     <h1>From evidence to approved engineering intent</h1>
     <p class="subtitle">Create your workshop repository, correlate two synthetic support cases across several sources, and publish one evidence-backed feature Issue and one independently scoped bug Issue. Do not design either implementation yet.</p>
@@ -2127,7 +2125,6 @@ html:not(.js) .controls { display: none; }
   <main id="main">
     <section class="chapter" id="ch-start"><h2 class="chapter-label">Start your station</h2>
       <article class="card card--lead" id="card-station" data-open>
-        <div class="slide-content"><h2 class="slide-title">One repository becomes<br><em>the system of record.</em></h2><ul class="slide-points"><li class="frag">Your fork isolates every artifact.</li><li class="frag">Choose a Codespace or your laptop.</li><li class="frag">Later labs continue here.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Fork and open the workspace</span><span class="card-sub">10 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
@@ -2167,7 +2164,6 @@ npm test</code></pre></div>
     </section>
     <section class="chapter" id="ch-evidence"><h2 class="chapter-label">Correlate evidence</h2>
       <article class="card" id="card-intake">
-        <div class="slide-content"><h2 class="slide-title">Start from signals,<br><em>not a solution prompt.</em></h2><ul class="slide-points"><li class="frag">The agent connects scattered evidence.</li><li class="frag">Citations make claims inspectable.</li><li class="frag">A person confirms scope.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Separate two cited cases</span><span class="card-sub">20 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <p><code>context/intake/</code> contains synthetic snapshots of a support case, request log, Teams-style discussion, meeting decisions, Outlook-style authorization, and backlog. Approved connectors can retrieve authorized business context in a real environment; the lab uses repository files so every attendee sees the same safe evidence.</p>
@@ -2212,7 +2208,6 @@ npm test</code></pre></div>
         </div>
       </article>
       <article class="card" id="card-issue">
-        <div class="slide-content"><h2 class="slide-title">Each durable write<br><em>needs its own approval.</em></h2><ul class="slide-points"><li class="frag">Confirm the exact target repository.</li><li class="frag">Approve feature and bug separately.</li><li class="frag">Keep implementation closed.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Approve two Issues in your fork</span><span class="card-sub">15 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <p>The repository already contains two Issue forms under <code>.github/ISSUE_TEMPLATE/</code>: <code>reservation-feature.yml</code> and <code>reservation-bug.yml</code>. You can inspect them in the <strong>Code</strong> tab; GitHub renders them as choices under <strong>New issue</strong>. The skill selects the matching form and drafts its fields before any write.</p>
@@ -2231,7 +2226,7 @@ npm test</code></pre></div>
       </article>
     </section>
   </main>
-  <section class="takeaway" id="closing"><p>You turned one evidence packet into two independently approved work items: a new capability and a reproducible contract violation. Both are now traceable to sources without mixing their scope.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Classify the need.<br><em>Approve each intent.</em></h2></div></section>
+  <section class="takeaway" id="closing"><p>You turned one evidence packet into two independently approved work items: a new capability and a reproducible contract violation. Both are now traceable to sources without mixing their scope.</p></section>
   <footer class="doc-footer">Lab 1 of 5 &middot; Two evidence-backed Issues &middot; Synthetic retail data only.</footer>
 </div>
 </body>

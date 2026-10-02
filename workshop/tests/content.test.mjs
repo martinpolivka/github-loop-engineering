@@ -244,6 +244,40 @@ test("the Czech review deck preserves the English narrative and independent iden
   }
 });
 
+test("lab five observes owned-state replay without executing unreviewed workflow sources", () => {
+  const lab = readFileSync(join(root, "docs", "labs", "05-agentic-outer-loop", "index.html"), "utf8");
+  const schedule = readFileSync(join(root, "AGENDA.md"), "utf8");
+  const cases = readFileSync(join(root, "docs", "labs", "05-agentic-outer-loop", "artifacts", "pulse-cases.md"), "utf8");
+  const evidence = readFileSync(join(root, "docs", "labs", "05-agentic-outer-loop", "artifacts", "recurrence-evidence.md"), "utf8");
+  assert.match(lab, /gh aw run repository-pulse --repo TARGET-OWNER\/github-loop-engineering-NN --ref main/);
+  assert.match(lab, /gh aw compile issue-triage --validate/);
+  assert.match(lab, /gh issue view PULSE_NUMBER.*--json number,author,state,body,updatedAt,labels,url/);
+  assert.match(lab, /gh-aw-agentic-workflow/);
+  assert.match(lab, /workflow_id: repository-pulse/);
+  assert.match(lab, /body replacement does not retain that creation-only comment/);
+  assert.match(lab, /runtime|safe-output publisher/);
+  assert.match(lab, /no second bot-authored Issue may carry the marker/);
+  assert.match(lab, /green Actions run can contain a BLOCKED no-op/);
+  assert.match(lab, /20-minute total live-path cap/);
+  assert.match(lab, /Do not publish a PR yet/);
+  assert.match(lab, /After the replay observation/);
+  assert.match(lab, /does not merge or execute your new triage workflow/);
+  assert.match(sourceElement(lab, "card-readiness"), /outside the 40-minute core/);
+  assert.match(sourceElement(lab, "card-changed-evidence"), /second pulse Issue fails/);
+  assert.match(sourceElement(lab, "card-changed-evidence"), /operation: replace/);
+  assert.match(lab, /Bot authorship.*remain agent checks, not a runtime ownership guarantee/);
+  assert.match(lab, /recorded evidence, not runs or publications from your fork/);
+  assert.match(lab, /unchanged input does not guarantee zero inference or detector cost/);
+  assert.match(cases, /PULSE-A-001/);
+  assert.match(cases, /PULSE-B-001/);
+  assert.match(cases, /fictional rehearsal inputs/);
+  assert.match(evidence, /Same owned Issue number, state, complete body, and updatedAt/);
+  assert.match(evidence, /missing-access or missing-evidence noop is BLOCKED/);
+  assert.match(evidence, /Two manual runs do not prove that the weekly schedule fired/);
+  assert.match(schedule, /Newly authored workflows stay/);
+  assert.doesNotMatch(schedule, /authored, not executed|two attendee-authored Agentic Workflow sources/);
+});
+
 test("the agenda, labs, and goal artifact preserve the complete engineering loop", () => {
   const read = (...segments) => readFileSync(join(root, ...segments), "utf8");
   const sources = [
@@ -279,7 +313,7 @@ test("raw script strings and comments do not invent DOM links or duplicate IDs",
     "2d84da4ce6cb30f846032e3d497c36b477eaf6c2", "Optional line breaks do not change readable identities");
 });
 
-test("every standalone material keeps its identity and intended presentation surface", () => {
+test("every standalone material keeps its identity and intended views", () => {
   const ids = new Set();
   const files = materialFiles();
   assert.equal(files.length, 8, "Agenda, English and Czech principles decks, and five labs");
@@ -308,11 +342,12 @@ test("every standalone material keeps its identity and intended presentation sur
       assert.match(source, /data-deck/, label);
     } else {
       const landing = label.replaceAll("\\", "/") === "docs/index.html";
-      for (const action of [...(!landing ? ["expand-all", "collapse-all", "toggle-slides"] : []), "print", "toggle-theme", "toggle-accent"]) {
+      for (const action of [...(!landing ? ["expand-all", "collapse-all"] : []), "print", "toggle-theme", "toggle-accent"]) {
         assert.match(markup, new RegExp(`<button\\b[^>]*data-action="${action}"`), `${label}: ${action}`);
       }
       assert.match(markup, /<header\b[^>]*class="[^"]*\bdoc-header\b/, label);
       if (!landing) {
+        assert.doesNotMatch(markup, /data-action="toggle-slides"|class="slide-content/, `${label}: labs have no slides`);
         assert.match(markup, /class="[^"]*\btakeaway\b/, label);
         assert.match(markup, /class="[^"]*\bchapter\b/, label);
         assert.match(source, /dataset\.copyCommand/, `${label}: embedded command helper`);

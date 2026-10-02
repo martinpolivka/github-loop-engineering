@@ -26,7 +26,7 @@ SOFTWARE.
 -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Lab 5: author bounded Issue triage and release-readiness workflows, then inspect a recurring repository pulse.">
+  <meta name="description" content="Lab 5: author bounded triage, observe pulse publication and unchanged replay, then explore optional reconciliation and release-readiness sources.">
   <title>Lab 5 &middot; Agentic outer loop | GitHub workshop</title>
   <meta name="doc-id" content="workshop-lab-05-agentic-outer-loop">
   <script data-doc-bootstrap>
@@ -2098,26 +2098,25 @@ html:not(.js) .controls { display: none; }
 <div class="controls" role="group" aria-label="Article controls">
   <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
   <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
-  <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
   <button type="button" class="ctrl" data-action="print">PDF</button>
   <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
   <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
 </div>
 <div class="doc">
   <header class="doc-header" id="opening">
-    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 5</p><h2 class="slide-title">Automate recurring<br><em>reasoning, not authority.</em></h2><p class="slide-lead">Author event-driven triage and release advice, then inspect a scheduled reconciliation loop.</p></div>
     <p class="eyebrow">14:20-15:00 &middot; 40 minutes</p>
     <h1>Agentic outer loop</h1>
-    <p class="subtitle">Create an Issue-triage Agentic Workflow, finish a deployment-readiness workflow over Lab 4's signed ACR image evidence, and compare both with the prepared repository-pulse recurrence.</p>
-    <p><strong>Result:</strong> two attendee-authored workflow sources in one draft PR, at least one compiled lock when preview tooling is available, and a review of a third scheduled pattern.</p>
+    <p class="subtitle">Create an Issue-triage Agentic Workflow while the prepared repository pulse runs. Inspect its real publication, replay unchanged evidence, and distinguish a justified no-op from blocked access. Deployment-readiness authoring and changed-evidence reconciliation are optional extensions.</p>
+    <p><strong>Result:</strong> one attendee-authored workflow source in a draft PR, its compiled lock when the approved tooling is available, and two observed manual runs of a scheduled pattern with an evidence record.</p>
+    <p><strong>Prepared start:</strong> your fork has the reviewed <code>repository-pulse.md</code> and matching <code>repository-pulse.lock.yml</code> on <code>main</code>, Actions enabled, and approved Copilot inference access. Its GitHub toolsets include <code>repos, issues, pull_requests, actions</code>; <code>actions: read</code> alone does not expose Actions tools. No existing bot-authored pulse Issue may carry the marker, including a closed one. Check this before creating the synthetic input. Use your existing approved <code>gh aw</code> compiler; the workshop sources and locks are validated with <code>v0.86.2</code>. Do not install or upgrade tooling during the lab.</p>
+    <p>The 40-minute core launches the first run before authoring. Allow 15 minutes for observing and replaying it, with a 20-minute total live-path cap from the first dispatch. Queueing, model inference, and threat detection can exceed that allowance; switch to the source-bound fallback rather than extending the day or claiming success.</p>
   </header>
   <nav class="doc-nav" aria-label="Workshop navigation"><a href="../../index.html#ch-agenda">All labs</a><a href="#main">Skip to content</a><a href="../04-trusted-delivery/index.html">Previous lab</a><a href="../../index.html">Workshop home</a></nav>
-  <nav class="toc" aria-label="Contents"><p class="toc-label">Contents</p><ol><li><a href="#ch-contract">Compare three patterns</a></li><li><a href="#ch-author">Author two workflows</a></li><li><a href="#ch-run">Compile and review</a></li><li><a href="#ch-transfer">Inspect recurrence</a></li></ol></nav>
+  <nav class="toc" aria-label="Contents"><p class="toc-label">Contents</p><ol><li><a href="#ch-contract">Start the prepared loop</a></li><li><a href="#ch-author">Author Issue triage</a></li><li><a href="#ch-run">Compile and review</a></li><li><a href="#ch-transfer">Observe recurrence</a></li><li><a href="#ch-extensions">Optional extensions</a></li></ol></nav>
   <main id="main">
     <section class="chapter" id="ch-contract"><h2 class="chapter-label">Separate intent from authority</h2>
       <article class="card card--lead" id="card-contract" data-open>
-        <div class="slide-content"><h2 class="slide-title">One platform.<br><em>Three loop shapes.</em></h2><ul class="slide-points"><li class="frag">Issue events need classification.</li><li class="frag">Release evidence needs advice.</li><li class="frag">Schedules need reconciliation.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Compare three useful automated steps</span><span class="card-sub">5 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Start one bounded recommendation</span><span class="card-sub">5 minutes; let the run continue while you author.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <p>An Agentic Workflow is justified when a repeatable trigger needs contextual evidence and a bounded recommendation. It is not justified merely because an agent can perform the task.</p>
           <dl>
@@ -2126,14 +2125,23 @@ html:not(.js) .controls { display: none; }
             <dt>Repository pulse</dt><dd>A schedule reconciles seven days of repository state into one owned, updateable Issue.</dd>
           </dl>
           <p><strong>Checkpoint:</strong> for each pattern, name the trigger, evidence, worst permitted effect, stop condition, and remaining human decision.</p>
+          <ol>
+            <li>In your fork, inspect complete Issue bodies, including closed ones, through GitHub tools or the API. Look for a runtime-generated <code>gh-aw-agentic-workflow</code> HTML comment whose <code>workflow_id</code> field equals <code>repository-pulse</code>, authored by <code>github-actions[bot]</code>. Stop for facilitator recovery if one already exists; do not delete, reopen, or forge owned state.</li>
+            <li>Open <a href="artifacts/pulse-cases.md">the synthetic input cases</a>. Ask your current agent to draft Case A as one Issue in your exact fork using its matching Issue form, show the complete target and body, and wait for your explicit approval before publication. Verify the resulting Issue. The case is fictional evidence for this rehearsal, not a newly discovered service defect.</li>
+            <li>Under <strong>Actions</strong>, select <strong>Station repository pulse</strong>, choose <strong>Run workflow</strong> on <code>main</code>, and record the run URL and head SHA. Alternatively, from the workspace, run:
+              <div class="code"><pre><code>gh aw run repository-pulse --repo TARGET-OWNER/github-loop-engineering-NN --ref main</code></pre></div>
+            </li>
+            <li>Leave it running and start Steps 2-3 locally. Do not dispatch a second run before the first finishes. If it finishes while you are authoring, briefly perform Step 4's first-result snapshot and replay dispatch, then resume local authoring while replay runs. This overlap keeps the live path inside its cap without changing remote evidence.</li>
+          </ol>
+          <p><strong>Expected result:</strong> one approved synthetic input Issue and one real <code>workflow_dispatch</code> run. This exercises the prepared scheduled pattern manually; it is not evidence that the weekly scheduler fired.</p>
           <aside class="callout callout--warning"><p class="callout-label">Public preview</p><p>GitHub Agentic Workflows are public preview. Source changes are proposals until an approved compiler regenerates the lock, the source and lock diff are reviewed together, and the repository accepts the workflow.</p></aside>
+          <aside class="callout callout--info"><p class="callout-label">Capability and evidence boundary</p><p>Check the prepared workflow's actual read access and inference availability, not only whether the compiler is installed. A green Actions run can contain a BLOCKED no-op. Review the agent output and publication result before declaring the exercise complete. Documentation checked on 2026-10-02: <a href="https://github.github.com/gh-aw/reference/auth/">authentication</a> and <a href="https://github.github.com/gh-aw/reference/safe-outputs/">safe outputs</a>.</p></aside>
         </div>
       </article>
     </section>
     <section class="chapter" id="ch-author"><h2 class="chapter-label">Write the source contract</h2>
       <article class="card" id="card-edit">
-        <div class="slide-content"><h2 class="slide-title">The prompt proposes.<br><em>Frontmatter constrains.</em></h2><ul class="slide-points"><li class="frag">Trigger only on opened Issues.</li><li class="frag">Read only needed evidence.</li><li class="frag">Publish one bounded comment.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Author Issue triage</span><span class="card-sub">9 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Author Issue triage</span><span class="card-sub">8 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
             <li>Create a branch named <code>lab-05-issue-triage</code>.</li>
@@ -2145,55 +2153,91 @@ html:not(.js) .controls { display: none; }
           <p>If you run out of time, compare your source with <a href="artifacts/issue-triage.reference.md">the reference contract</a>.</p>
         </div>
       </article>
-      <article class="card" id="card-readiness">
-        <div class="slide-content"><h2 class="slide-title">Reason over evidence.<br><em>Never replace the gate.</em></h2><ul class="slide-points"><li class="frag">Read exact revision evidence.</li><li class="frag">Report READY or BLOCKED.</li><li class="frag">Leave approval to the environment.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Complete deployment readiness</span><span class="card-sub">9 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+    </section>
+    <section class="chapter" id="ch-run"><h2 class="chapter-label">Turn reviewed source into observable operation</h2>
+      <article class="card" id="card-compile">
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Compile, validate, and review</span><span class="card-sub">7 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
-            <li>Copy <a href="artifacts/deployment-readiness.starter.md">the prepared scaffold</a> to <code>.github/workflows/deployment-readiness.md</code>.</li>
+            <li>Keep the authored source on your local draft branch. Do not publish a PR yet: remote backlog changes during the first run would spoil the unchanged-evidence comparison.</li>
+            <li>If the approved <code>gh aw</code> compiler is available, run:
+              <div class="code"><pre><code>gh aw compile issue-triage --validate</code></pre></div>
+            </li>
+            <li>Review the source and generated triage lock together. The agent remains read-only and the separate safe-output job may publish only one bounded comment. Keep these files local until Step 5. Do not change the prepared pulse source or lock.</li>
+          </ol>
+          <p>The core lab does not merge or execute your new triage workflow. The pulse runs independently from its already reviewed default-branch source and lock. If compilation is unavailable, review the source against the reference; that is not proof of an executable workflow.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-transfer"><h2 class="chapter-label">Observe a recurring reconciliation loop</h2>
+      <article class="card" id="card-transfer">
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 4 &mdash; Replay unchanged evidence without another publication</span><span class="card-sub">15 minutes; include queueing and threat detection.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Wait for the first run to finish. Read the agent output, threat-detection result, and safe-output result. Continue only when one bot-authored pulse Issue exists, has the <code>Repository pulse: </code> title prefix and <code>repository-pulse</code> label, carries runtime-generated <code>gh-aw-agentic-workflow</code> metadata with <code>workflow_id: repository-pulse</code>, cites Case A and its evidence, and recommends no more than three human-owned actions. The safe-output publisher adds the label and ownership metadata; it does not rely on the model copying a hidden comment. A successful run with missing evidence, a BLOCKED no-op, or no owned publication does not satisfy this checkpoint.</li>
+            <li>Record the owned Issue number, author, state, complete body, and <code>updatedAt</code> in <a href="artifacts/recurrence-evidence.md">the evidence template</a>. For a copyable snapshot, run:
+              <div class="code"><pre><code>gh issue view PULSE_NUMBER --repo TARGET-OWNER/github-loop-engineering-NN --json number,author,state,body,updatedAt,labels,url</code></pre></div>
+            </li>
+            <li>Keep Case A, the application revision, and the owned pulse Issue unchanged. Do not edit, comment, close, or merge anything during replay. After the first run completes, dispatch <code>repository-pulse</code> again on <code>main</code> with the Step 1 command.</li>
+            <li>Inspect the second run's actual <code>noop</code> message. It must explain unchanged or already-reported evidence, not missing access. Read the owned Issue again: its number, state, body, and <code>updatedAt</code> must be unchanged, and no second bot-authored Issue may carry the marker.</li>
+            <li>Bind both observations to their run IDs, attempts, source SHA, and input Issue. Record <code>NOOP</code> only when the output and read-back agree. A duplicate publication or unexplained update is a failed checkpoint, not an acceptable alternate result.</li>
+          </ol>
+          <p><strong>Expected result:</strong> first publication, then a new real agent run that reads prior owned state and makes no Issue write. Two manual dispatches demonstrate reconciliation, not execution of the weekly schedule or deterministic exactly-once delivery.</p>
+          <dl>
+            <dt>Owned state</dt><dd>Bot authorship and the runtime metadata identify the one owned Issue. Creation also adds a separate <code>gh-aw-workflow-id</code> comment, but body replacement does not retain that creation-only comment. Use the common <code>gh-aw-agentic-workflow</code> metadata for every comparison.</dd>
+            <dt>Reconciliation</dt><dd>Closed, waiting-human, duplicate, or unchanged state produces no write rather than another report.</dd>
+            <dt>Budget</dt><dd>Timeout, inference credits, one create, and one update bound each run.</dd>
+            <dt>Authority</dt><dd>The workflow recommends no more than three actions; owners still prioritize and execute them.</dd>
+            <dt>Update envelope</dt><dd>Manual and scheduled runs have no triggering Issue. The handler therefore permits an explicit target number, but enforces the title prefix, required label, body-only changes, and one update per run. Bot authorship and selecting the one owned Issue remain agent checks, not a runtime ownership guarantee.</dd>
+            <dt>No-op is not free</dt><dd>This source reconciles through agent instructions after inference begins. Per-run output caps do not prevent duplicates across runs, and unchanged input does not guarantee zero inference or detector cost.</dd>
+          </dl>
+        </div>
+      </article>
+      <article class="card" id="card-recovery">
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 5 &mdash; Connect the limits and leave owned state intact</span><span class="card-sub">5 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <dl>
+            <dt>No compiled workflow, inference access, or Actions tools</dt><dd>Record BLOCKED. Ask the facilitator to repair the prepared station outside the lab; do not add PATs, widen write permissions, disable threat detection, or edit the workflow to obtain green output.</dd>
+            <dt>Still queued or running at the live-path cap</dt><dd>Record IN PROGRESS with the run URL. Stop dispatching; never queue repeated retries or use <code>--repeat</code> to hide sequencing. Continue with the facilitator's evidence pair.</dd>
+            <dt>Missing or duplicate marker, truncated read, or changed replay</dt><dd>Record BLOCKED or the failed checkpoint. Keep the actual Issue and run output for owner review; do not delete a duplicate or rewrite a body to manufacture a successful comparison.</dd>
+            <dt>Source-bound fallback</dt><dd>Read a facilitator-provided first-publication and unchanged-replay pair using <a href="artifacts/recurrence-evidence.md">the same evidence fields</a>. Keep their original repository, source SHA, run URLs, and Issue author. Label this recorded evidence, not runs or publications from your fork. Source-only inspection cannot prove recurrence.</dd>
+            <dt>Cleanup and handoff</dt><dd>Keep the authored PR draft and evidence links. Keep the pulse Issue open and unchanged through the checkpoint. After all observations, ask the facilitator whether the station should keep its weekly schedule; disable the workflow only with explicit owner approval. Never delete the attendee fork, bot-owned Issue, or shared resources.</dd>
+          </dl>
+          <p><strong>Checkpoint:</strong> explain why a green blocked run, a useful unchanged no-op, and an update for new evidence are three different outcomes. Neither a recommendation nor a no-op grants merge or release authority.</p>
+          <p>After the replay observation, ask the agent to commit the authored source and matching lock, push the draft branch, and open a draft PR in your fork. If compilation was unavailable, publish only the source and state that limitation. Keep the PR unmerged.</p>
+          <p><strong>Optional extension:</strong> if the environment exposes an SRE agent, compare its evidence, tool access, and authority boundary with deployment readiness. Do not represent unavailable or recorded behavior as live.</p>
+        </div>
+      </article>
+    </section>
+    <section class="chapter" id="ch-extensions"><h2 class="chapter-label">Optional depth after the core checkpoint</h2>
+      <article class="card" id="card-changed-evidence">
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Extension &mdash; Reconcile a new case into the same Issue</span><span class="card-sub">Allow 5-10 additional minutes; stop after one run.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Complete the unchanged replay first. Review Case B in <a href="artifacts/pulse-cases.md">the synthetic input cases</a> and separately approve one new Issue in your fork. Leave Case A open; do not claim that either fictional defect was fixed.</li>
+            <li>Keep the bot-owned pulse Issue open with no waiting-human disposition, then dispatch one more run after the previous run finishes.</li>
+            <li>Require an <code>update_issue</code> result with the existing owned Issue number and <code>operation: replace</code>. The handler must accept its existing title prefix and label. Its replacement body must carry the common runtime ownership metadata, retain earlier evidence, add the new case, and stay within three recommendations. Verify its number is unchanged and its body changed for the new evidence. A second pulse Issue fails this checkpoint.</li>
+            <li>If owned state is closed or waiting-human, expect an explained no-op and owner escalation instead. Do not reopen it automatically or count that as a successful update experiment.</li>
+          </ol>
+        </div>
+      </article>
+      <article class="card" id="card-readiness">
+        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Extension &mdash; Complete deployment readiness</span><span class="card-sub">9 minutes; outside the 40-minute core.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
+        <div class="card-body">
+          <ol>
+            <li>Copy <a href="artifacts/deployment-readiness.starter.md">the prepared scaffold</a> to <code>.github/workflows/deployment-readiness.md</code> on the same draft branch.</li>
             <li>Complete its three instruction fields: required evidence, conditions that force <code>BLOCKED</code>, and the human decision that remains.</li>
             <li>Require the run ID and attempt, candidate SHA, test/prod ACR repositories with the same OCI digest, both strict Notation verifications and pinned signers, prod approval, identity mapping, rollback digest, deterministic and smoke results, unresolved findings, and merged PR to agree. Explicitly label the lab's same-group Owner-role shortcut rather than calling it production isolation.</li>
             <li>Keep the workflow read-only with <code>noop</code> as its only safe output. It reads GitHub evidence only; it must not query Azure, sign an image, approve an environment, execute artifacts, access secrets, or deploy.</li>
+            <li>If the approved compiler is available, run <code>gh aw compile deployment-readiness --validate</code>, then review and commit its source and lock to the same draft PR. Do not execute it as part of this extension.</li>
           </ol>
           <p><strong>Expected result:</strong> reasoning can summarize operational evidence, but only the deterministic workflow and GitHub Environment can establish or exercise their controls.</p>
           <p>If you run out of time, compare your source with <a href="artifacts/deployment-readiness.reference.md">the reference contract</a>.</p>
         </div>
       </article>
     </section>
-    <section class="chapter" id="ch-run"><h2 class="chapter-label">Turn reviewed source into observable operation</h2>
-      <article class="card" id="card-compile">
-        <div class="slide-content"><h2 class="slide-title">Source and lock<br><em>must travel together.</em></h2><ul class="slide-points"><li class="frag">Compile with an approved toolchain.</li><li class="frag">Review generated authority.</li><li class="frag">Keep stale locks unmerged.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 4 &mdash; Compile, validate, and review</span><span class="card-sub">11 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-        <div class="card-body">
-          <ol>
-            <li>Commit the source and open a draft PR.</li>
-            <li>If the approved <code>gh aw</code> compiler is available, run:
-              <div class="code"><pre><code>gh aw compile --dir .github/workflows --validate</code></pre></div>
-            </li>
-            <li>Commit both generated lock files to the same PR. Review that triage has one comment output while deployment readiness remains read-only and can only return a no-op report.</li>
-          </ol>
-          <p>If compilation is unavailable, keep the PR draft and review the source contract against the reference. That is a source review, not proof of an executable workflow.</p>
-        </div>
-      </article>
-    </section>
-    <section class="chapter" id="ch-transfer"><h2 class="chapter-label">Inspect a recurring reconciliation loop</h2>
-      <article class="card" id="card-transfer">
-        <div class="slide-content"><h2 class="slide-title">Recurrence requires<br><em>ownership and no-op.</em></h2><ul class="slide-points"><li class="frag">Reconcile before publishing.</li><li class="frag">Update one owned artifact.</li><li class="frag">No change means no write.</li></ul></div>
-        <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 5 &mdash; Review repository pulse</span><span class="card-sub">6 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
-        <div class="card-body">
-          <p>Open <code>.github/workflows/repository-pulse.md</code> and compare it with your two event-specific workflows.</p>
-          <dl>
-            <dt>Owned state</dt><dd>The marker identifies the one Issue this workflow may create or update.</dd>
-            <dt>Reconciliation</dt><dd>Closed, waiting-human, duplicate, or unchanged state produces no write rather than another report.</dd>
-            <dt>Budget</dt><dd>Timeout, inference credits, one create, and one update bound each run.</dd>
-            <dt>Authority</dt><dd>The workflow recommends no more than three actions; owners still prioritize and execute them.</dd>
-          </dl>
-          <p><strong>Optional extension:</strong> if the environment exposes an SRE agent, compare its evidence, tool access, and authority boundary with deployment readiness. Do not represent unavailable or recorded behavior as live.</p>
-        </div>
-      </article>
-    </section>
   </main>
-  <section class="takeaway" id="closing"><p>You authored bounded reasoning for intake and release evidence, then traced how a scheduled loop reconciles its own prior output. Each workflow keeps trigger, evidence, effect, stop, and human authority reviewable.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Automate the loop.<br><em>Keep authority human.</em></h2></div></section>
+  <section class="takeaway" id="closing"><p>You authored bounded triage and inspected real publication and replay evidence, or explicitly recorded the live-path limitation. Useful recurrence reads its prior state before deciding whether another write is justified.</p></section>
   <footer class="doc-footer">Lab 5 of 5 &middot; Continue with a tailored discussion on migration, adoption, or governance &middot; Synthetic retail data only.</footer>
 </div>
 </body>

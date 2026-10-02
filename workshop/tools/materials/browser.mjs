@@ -272,6 +272,10 @@ async function articleChecks(page, path, label) {
       `${label}: the agenda PDF is reachable`);
     return;
   }
+  check(await page.locator(".slide-content, .deck-stage, [data-action='toggle-slides']").count() === 0,
+    `${label}: labs are reading-only guides without slide surfaces or controls`);
+  check(JSON.stringify((await printPlan(page)).map(({ target }) => target)) === JSON.stringify(["read"]),
+    `${label}: the lab offers only a reading PDF`);
   const cards = page.locator("main > .chapter > .card");
   check(await cards.count() > 0 && await cards.count() === await page.locator(".card").count(),
     `${label}: every card belongs directly to a chapter`);
@@ -333,6 +337,13 @@ async function articleChecks(page, path, label) {
   await frame(page);
   check(await first.getAttribute("data-open") !== null && await first.locator(":scope > .card-body").isVisible(),
     `${label}: card hash exposes reading content`);
+  const legacy = new URL(page.url());
+  legacy.searchParams.set("view", "slides");
+  await page.goto(legacy.href, { waitUntil: "load" });
+  check(await page.locator("html").getAttribute("data-view") === null &&
+    await page.locator(".doc-header").isVisible(), `${label}: old slide links fall back to reading`);
+  check(await page.locator(".slide-nav, .slide-progress, [data-slide-current]").count() === 0,
+    `${label}: old slide links never activate presentation navigation`);
 }
 async function deepLink(page, url, id, label) {
   await page.goto(`${url}#${id}`, { waitUntil: "load" });
@@ -747,7 +758,8 @@ try {
           }
         }
       }
-      for (const viewport of path === "docs/index.html" ? [] : [...(selectedViewport ? [{
+      const presentable = isDeck || await page.locator('[data-action="toggle-slides"]').count() > 0;
+      for (const viewport of !presentable ? [] : [...(selectedViewport ? [{
         width: Number(selectedViewport.split("x")[0]), height: Number(selectedViewport.split("x")[1])
       }] : [{ width: 1440, height: 900 }, { width: 1920, height: 1080 }]),
         ...(isDeck ? [{ width: 1280, height: 720 }] : [])]) {
@@ -770,7 +782,7 @@ try {
     sourceHashFormat: "sha256-utf8-lf", captures: records.sort((left, right) => left.file.localeCompare(right.file)) }, null, 2)}\n`;
   if (capture) writeFileSync(join(output, "manifest.json"), manifest(captures));
   if (paletteOutput) writeFileSync(join(paletteOutput, "manifest.json"), manifest(paletteCaptures));
-  console.log(`PASS ${pages.length} materials; eight palettes, opposite OS, responsive layouts, presentation order, preferences and no-JS. ${((performance.now() - started) / 1000).toFixed(2)}s; ${jobs} workers.`);
+  console.log(`PASS ${pages.length} materials; eight palettes, opposite OS, responsive layouts, available views, preferences and no-JS. ${((performance.now() - started) / 1000).toFixed(2)}s; ${jobs} workers.`);
   if (capture) console.log(`CAPTURE ${captures.length} source-bound browser screenshots in .workshop/screenshots`);
   if (paletteOutput) console.log(`REVIEW ${paletteCaptures.length} source-bound palette screenshots in ${relative(root, paletteOutput)}`);
 } finally {

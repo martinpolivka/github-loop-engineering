@@ -2109,14 +2109,12 @@ html:not(.js) .controls { display: none; }
 <div class="controls" role="group" aria-label="Article controls">
   <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
   <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
-  <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
   <button type="button" class="ctrl" data-action="print">PDF</button>
   <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
   <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
 </div>
 <div class="doc">
   <header class="doc-header" id="opening">
-    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 2</p><h2 class="slide-title">One Goal Card pattern.<br><em>Two agent surfaces.</em></h2><p class="slide-lead">Run one loop beside the agent and delegate the other through an Issue.</p></div>
     <p class="eyebrow">10:45-11:45 &middot; 60 minutes</p>
     <h1>Goal Cards and two coding loops</h1>
     <p class="subtitle">Turn both approved Issues into immutable Goal Cards. Execute the feature with a local agent while Copilot cloud agent works on the smaller bug from its Issue. Compare how both paths produce reviewable pull requests from the same evidence discipline.</p>
@@ -2127,7 +2125,6 @@ html:not(.js) .controls { display: none; }
   <main id="main">
     <section class="chapter" id="ch-goals"><h2 class="chapter-label">Approve the Goal Cards</h2>
       <article class="card card--lead" id="card-goals" data-open>
-        <div class="slide-content"><h2 class="slide-title">The Issue states the need.<br><em>The Goal Card fixes done.</em></h2><ul class="slide-points"><li class="frag">Design checks before coding.</li><li class="frag">Approve each finish line.</li><li class="frag">Publish before delegation.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Create two Goal Cards</span><span class="card-sub">15 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <p>The <code>goal-card</code> skill defines the outcome and finish line; it does not execute the task. Create each card before choosing its coding surface. The executor may repair allowed outputs but may not weaken the card to make its work pass.</p>
@@ -2145,7 +2142,6 @@ html:not(.js) .controls { display: none; }
         </div>
       </article>
       <article class="card" id="card-publish-goals">
-        <div class="slide-content"><h2 class="slide-title">Cloud delegation captures<br><em>context at assignment.</em></h2><ul class="slide-points"><li class="frag">Publish the complete approved card.</li><li class="frag">Assign only after the comment exists.</li><li class="frag">Keep later steering on the PR.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Let the agent publish both Goal Cards</span><span class="card-sub">8 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <p>Copilot cloud agent receives the Issue title, body, and comments that already exist when the Issue is assigned. It does not receive later Issue comments. Let your current agent use GitHub MCP to publish each complete reviewed card, not a link to an uncommitted local file.</p>
@@ -2166,7 +2162,6 @@ Prefix each comment with "## APPROVED GOAL CARD". Show the exact repository-qual
     </section>
     <section class="chapter" id="ch-cloud"><h2 class="chapter-label">Delegate the bounded bug</h2>
       <article class="card" id="card-cloud">
-        <div class="slide-content"><h2 class="slide-title">Assignment turns an Issue<br><em>into asynchronous work.</em></h2><ul class="slide-points"><li class="frag">The bug is small and explicit.</li><li class="frag">Copilot owns branch mechanics.</li><li class="frag">The output is always a PR.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Assign the bug to Copilot</span><span class="card-sub">7 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
@@ -2182,7 +2177,6 @@ Prefix each comment with "## APPROVED GOAL CARD". Show the exact repository-qual
     </section>
     <section class="chapter" id="ch-local"><h2 class="chapter-label">Run the visible inner loop</h2>
       <article class="card" id="card-local-loop">
-        <div class="slide-content"><h2 class="slide-title">Work beside the agent.<br><em>Choose from failed checks.</em></h2><ul class="slide-points"><li class="frag">Branch creation is part of the task.</li><li class="frag">The first check proves the gap.</li><li class="frag">Evidence selects each repair.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 4 &mdash; Execute the feature Goal Card locally</span><span class="card-sub">23 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <p>Use any approved local agent surface in the repository. At this point the only uncommitted Goal Card in the workspace is <code>demo-app/specs/stock-substitution.goal-card.md</code>. The instruction owns branch mechanics and makes that card the DoD; it does not require a particular IDE button or Git command.</p>
@@ -2208,7 +2202,6 @@ First establish the acceptance check and show its initial failure before changin
     </section>
     <section class="chapter" id="ch-compare"><h2 class="chapter-label">Compare the two handoffs</h2>
       <article class="card" id="card-compare">
-        <div class="slide-content"><h2 class="slide-title">The harness changes.<br><em>The evidence boundary stays.</em></h2><ul class="slide-points"><li class="frag">Local work exposes each decision.</li><li class="frag">Cloud work exposes delegation.</li><li class="frag">Both terminate in a PR.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 5 &mdash; Inspect both pull requests</span><span class="card-sub">7 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
@@ -2222,7 +2215,6 @@ First establish the acceptance check and show its initial failure before changin
     </section>
     <section class="chapter" id="ch-recover"><h2 class="chapter-label">Recovery and alternatives</h2>
       <article class="card" id="card-recover">
-        <div class="slide-content"><h2 class="slide-title">A delayed agent<br><em>does not block learning.</em></h2><ul class="slide-points"><li class="frag">Keep truthful session state.</li><li class="frag">Use references only for recovery.</li><li class="frag">Never invent a second PR.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">If you get stuck</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <dl>
@@ -2236,7 +2228,7 @@ First establish the acceptance check and show its initial failure before changin
       </article>
     </section>
   </main>
-  <section class="takeaway" id="closing"><p>You executed one Goal Card beside a local agent and delegated another through an Issue to Copilot cloud agent. Both paths produced revision-bound proposals without transferring approval authority to the agent.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Same Goal Card.<br><em>Different execution surface.</em></h2></div></section>
+  <section class="takeaway" id="closing"><p>You executed one Goal Card beside a local agent and delegated another through an Issue to Copilot cloud agent. Both paths produced revision-bound proposals without transferring approval authority to the agent.</p></section>
   <footer class="doc-footer">Lab 2 of 5 &middot; Two bounded coding loops &middot; Synthetic retail data only.</footer>
 </div>
 </body>

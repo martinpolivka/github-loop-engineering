@@ -39,7 +39,8 @@ available in [English](docs/loop-engineering.en.html) and
 [Czech](docs/loop-engineering.cs.html); hands-on demonstrations follow in the labs.
 Each HTML embeds its styles and scripts and works without an assets directory
 or server. Links between the agenda, labs, and artifacts still need those sibling
-files. In each lab, **Slides** switches between reading and presentation views.
+files. Labs are reading-only guides with collapsible steps, copyable commands,
+and **PDF** printing. Slide mode belongs only to the separate opening presentations.
 
 Material authoring and `npm run validate:html` use the globally installed
 `html-docs` skill, not a vendored copy. Set `HTML_DOCS_SKILL` to its directory

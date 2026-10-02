@@ -2098,14 +2098,12 @@ html:not(.js) .controls { display: none; }
 <div class="controls" role="group" aria-label="Article controls">
   <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
   <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
-  <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
   <button type="button" class="ctrl" data-action="print">PDF</button>
   <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
   <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
 </div>
 <div class="doc">
   <header class="doc-header" id="opening">
-    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 4</p><h2 class="slide-title">Build the image.<br><em>Earn the signature.</em></h2><p class="slide-lead">Connect your reviewed retail change to an approved, signed OCI image in Azure Container Registry.</p></div>
     <p class="eyebrow">13:20-14:10 &middot; 50 minutes</p>
     <h1>Trusted delivery and operational readiness</h1>
     <p class="subtitle">Let your agent deploy the prepared test/prod resources into your allocated Azure group. Map two managed identities to GitHub Environments, then build once, sign in test, and approve promotion of the exact digest into prod.</p>
@@ -2119,7 +2117,6 @@ html:not(.js) .controls { display: none; }
   <main id="main">
     <section class="chapter" id="ch-identity"><h2 class="chapter-label">Own the allocation before deploying resources</h2>
       <article class="card card--lead" id="card-identity" data-open>
-        <div class="slide-content"><h2 class="slide-title">One allocated group.<br><em>Two visible environments.</em></h2><ul class="slide-points"><li class="frag">Your agent reviews a prepared IaC template.</li><li class="frag">Test and prod use different resources.</li><li class="frag">Owner is a workshop shortcut.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Deploy your test/prod resources with the agent</span><span class="card-sub">15 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
@@ -2137,7 +2134,6 @@ html:not(.js) .controls { display: none; }
     </section>
     <section class="chapter" id="ch-evidence"><h2 class="chapter-label">Map identities before building once</h2>
       <article class="card" id="card-dispatch">
-        <div class="slide-content"><h2 class="slide-title">Two identities.<br><em>Two environment subjects.</em></h2><ul class="slide-points"><li class="frag">Test federation names workshop-test.</li><li class="frag">Prod federation names workshop-prod.</li><li class="frag">Environment variables select the correct client.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Connect test/prod identities to the workflow</span><span class="card-sub">8 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
@@ -2150,7 +2146,6 @@ html:not(.js) .controls { display: none; }
         </div>
       </article>
       <article class="card" id="card-artifact">
-        <div class="slide-content"><h2 class="slide-title">A tag is a label.<br><em>A digest is identity.</em></h2><ul class="slide-points"><li class="frag">Version tags make images findable.</li><li class="frag">Manifest digests name exact OCI bytes.</li><li class="frag">Source SHA and image digest differ.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Build, sign, and verify the test image</span><span class="card-sub">10 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
@@ -2166,7 +2161,6 @@ html:not(.js) .controls { display: none; }
     </section>
     <section class="chapter" id="ch-authority"><h2 class="chapter-label">Keep evidence separate from authority</h2>
       <article class="card" id="card-approval">
-        <div class="slide-content"><h2 class="slide-title">Promote the digest.<br><em>Do not rebuild for prod.</em></h2><ul class="slide-points"><li class="frag">A different reviewer approves the transition.</li><li class="frag">ORAS copies the identical OCI manifest.</li><li class="frag">Prod Key Vault supplies a different signature.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 4 &mdash; Approve promotion to the prod registry</span><span class="card-sub">9 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
@@ -2182,7 +2176,6 @@ html:not(.js) .controls { display: none; }
     </section>
     <section class="chapter" id="ch-decision"><h2 class="chapter-label">Make operational readiness explicit</h2>
       <article class="card" id="card-decision">
-        <div class="slide-content"><h2 class="slide-title">Check both publishers.<br><em>Record a reversible decision.</em></h2><ul class="slide-points"><li class="frag">Prod policy requires its own signer.</li><li class="frag">Rollback names another verified digest.</li><li class="frag">ACA is optional, not the finish line.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 5 &mdash; Read prod verification and record readiness</span><span class="card-sub">8 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
@@ -2216,7 +2209,7 @@ Unresolved blockers:</code></pre></div>
       </article>
     </section>
   </main>
-  <section class="takeaway" id="closing"><p>You deployed tagged test/prod resources into your allocated group, connected two federated identities, and promoted one tested OCI digest through approval and two verified Key Vault signatures without rebuilding.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Same bytes.<br><em>Different release authority.</em></h2></div></section>
+  <section class="takeaway" id="closing"><p>You deployed tagged test/prod resources into your allocated group, connected two federated identities, and promoted one tested OCI digest through approval and two verified Key Vault signatures without rebuilding.</p></section>
   <footer class="doc-footer">Lab 4 of 5 &middot; Synthetic retail data only.</footer>
 </div>
 </body>

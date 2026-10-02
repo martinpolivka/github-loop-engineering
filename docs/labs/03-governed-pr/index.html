@@ -2098,14 +2098,12 @@ html:not(.js) .controls { display: none; }
 <div class="controls" role="group" aria-label="Article controls">
   <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
   <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
-  <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
   <button type="button" class="ctrl" data-action="print">PDF</button>
   <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
   <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
 </div>
 <div class="doc">
   <header class="doc-header" id="opening">
-    <div class="slide-content slide-content--title"><p class="slide-eyebrow">Lab 3</p><h2 class="slide-title">Move trust<br><em>outside the agent.</em></h2><p class="slide-lead">Turn local evidence into a reviewable, revision-bound pull request.</p></div>
     <p class="eyebrow">11:45-12:35 &middot; 50 minutes</p>
     <h1>Governed pull request</h1>
     <p class="subtitle">Compare the local-agent and cloud-agent pull requests from Lab 2, then challenge the feature PR with deterministic CI, GitHub Code Quality, native Copilot code review, and two contextual Agentic Workflow reviews. Keep the final merge decision human.</p>
@@ -2116,7 +2114,6 @@ html:not(.js) .controls { display: none; }
   <main id="main">
     <section class="chapter" id="ch-pr"><h2 class="chapter-label">Publish a reviewable change</h2>
       <article class="card card--lead" id="card-pr" data-open>
-        <div class="slide-content"><h2 class="slide-title">A pull request is<br><em>the shared evidence boundary.</em></h2><ul class="slide-points"><li class="frag">Intent links to the diff.</li><li class="frag">Checks bind to a revision.</li><li class="frag">Authority stays explicit.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="true"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 1 &mdash; Compare the two agent handoffs</span><span class="card-sub">8 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
@@ -2128,7 +2125,6 @@ html:not(.js) .controls { display: none; }
         </div>
       </article>
       <article class="card" id="card-checks">
-        <div class="slide-content"><h2 class="slide-title">A green check answers<br><em>one specific question.</em></h2><ul class="slide-points"><li class="frag">Tests execute known invariants.</li><li class="frag">Reviews interpret the change.</li><li class="frag">Neither grants merge authority.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 2 &mdash; Read the checks as claims</span><span class="card-sub">7 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
@@ -2143,7 +2139,6 @@ html:not(.js) .controls { display: none; }
     </section>
     <section class="chapter" id="ch-review"><h2 class="chapter-label">Challenge the same revision</h2>
       <article class="card" id="card-reviews">
-        <div class="slide-content"><h2 class="slide-title">Separate reviewers expose<br><em>different failure modes.</em></h2><ul class="slide-points"><li class="frag">Native review challenges code.</li><li class="frag">Goal review protects intent.</li><li class="frag">Documentation review protects users.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 3 &mdash; Collect native and contextual reviews</span><span class="card-sub">15 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
@@ -2162,7 +2157,6 @@ html:not(.js) .controls { display: none; }
         </div>
       </article>
       <article class="card" id="card-repair">
-        <div class="slide-content"><h2 class="slide-title">Repair the finding.<br><em>Invalidate old evidence.</em></h2><ul class="slide-points"><li class="frag">Choose one concrete finding.</li><li class="frag">Push a bounded correction.</li><li class="frag">Re-run checks on the new SHA.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 4 &mdash; Resolve one finding or record none</span><span class="card-sub">10 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <ol>
@@ -2176,7 +2170,6 @@ html:not(.js) .controls { display: none; }
     </section>
     <section class="chapter" id="ch-governance"><h2 class="chapter-label">Make the authority decision</h2>
       <article class="card" id="card-decision">
-        <div class="slide-content"><h2 class="slide-title">Automation informs.<br><em>Policy constrains. Humans authorize.</em></h2><ul class="slide-points"><li class="frag">Repository rules protect integration.</li><li class="frag">Organization policy scales defaults.</li><li class="frag">Enterprise controls bound adoption.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">Step 5 &mdash; Review the governance stack</span><span class="card-sub">5 minutes.</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <dl>
@@ -2191,7 +2184,6 @@ html:not(.js) .controls { display: none; }
     </section>
     <section class="chapter" id="ch-recover"><h2 class="chapter-label">Recovery</h2>
       <article class="card" id="card-recover">
-        <div class="slide-content"><h2 class="slide-title">Preserve the boundary<br><em>when capability is missing.</em></h2><ul class="slide-points"><li class="frag">Use source-bound evidence.</li><li class="frag">Label unavailable controls.</li><li class="frag">Keep the decision human.</li></ul></div>
         <h3 class="card-head"><button type="button" class="card-toggle" aria-expanded="false"><span class="card-num" aria-hidden="true"></span><span class="card-titles"><span class="card-title">If a platform feature is unavailable</span></span><span class="card-mark" aria-hidden="true"></span></button></h3>
         <div class="card-body">
           <dl>
@@ -2206,7 +2198,7 @@ html:not(.js) .controls { display: none; }
       </article>
     </section>
   </main>
-  <section class="takeaway" id="closing"><p>You compared local and cloud agent handoffs, challenged one revision with deterministic and reasoning evidence, repaired only justified findings, and kept merge authority with a person.</p><div class="slide-content slide-content--end"><h2 class="slide-title">Evidence is plural.<br><em>Authority is explicit.</em></h2></div></section>
+  <section class="takeaway" id="closing"><p>You compared local and cloud agent handoffs, challenged one revision with deterministic and reasoning evidence, repaired only justified findings, and kept merge authority with a person.</p></section>
   <footer class="doc-footer">Lab 3 of 5 &middot; Two PRs, one governed review bar &middot; Synthetic retail data only.</footer>
 </div>
 </body>

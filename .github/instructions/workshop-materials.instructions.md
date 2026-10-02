@@ -54,7 +54,7 @@ Root files: `README.md` (station and navigation), `AGENDA.md` (full-day intent a
 
 ## Attendee-facing content
 
-HTML is the source format for presentations, lab instructions, reference documentation, and architecture explanations. `docs/index.html` is the attendee entry point and agenda; `docs/loop-engineering.en.html` is the separate English principles presentation, with a Czech counterpart reserved for later. Each of the five linked labs combines reading and presentation modes in its own HTML. Do not use Markdown as the primary attendee experience or duplicate lab procedures across decks and guides.
+HTML is the source format for presentations, lab instructions, reference documentation, and architecture explanations. `docs/index.html` is the attendee entry point and agenda; `docs/loop-engineering.en.html` is the separate English principles presentation, with a Czech counterpart reserved for later. Each of the five linked labs is a reading-only HTML guide with PDF printing, without slide controls or authored slide summaries. Do not use Markdown as the primary attendee experience or duplicate lab procedures across decks and guides.
 
 - Use the globally installed `html-docs` skill for authoring and validation; set `HTML_DOCS_SKILL` when it is not in the default location.
 - Embed canonical styles and scripts into each HTML file. Never edit the embedded runtime; validate it against the global skill.
@@ -65,6 +65,8 @@ HTML is the source format for presentations, lab instructions, reference documen
 - Wrap code blocks as `<div class="code"><pre><code>` so they scroll instead of overflowing. Prefer `<dl>` over wide tables.
 
 ### Slides
+
+Slide mode belongs to standalone presentations, not lab guides.
 
 Slides are speaking aids. One idea per slide, sparse text, progressive disclosure. Article slides stay within 45 words and three points of at most ten words. Keep full procedures in the reading view of the same HTML file. Preserve full-screen, keyboard, and deep-link behavior.
 
