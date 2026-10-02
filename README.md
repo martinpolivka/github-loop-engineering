@@ -17,6 +17,14 @@ workshop validation only; the application needs no package installation.
 Use `npm run test:materials` for workshop and release-tooling checks.
 `context/intake/` remains the synthetic evidence packet for Lab 1.
 
+The Codespaces devcontainer includes Azure CLI for Lab 4, with Bicep installation
+disabled because the lab uses prepared ARM templates. Container creation runs
+`az version && npm test`; neither check requires an Azure login.
+If `az` is missing in an existing Codespace, first update the fork and pull the
+current `.devcontainer/devcontainer.json`, then run **Codespaces: Rebuild
+Container** from the VS Code Command Palette. Verify `az version` in the
+Codespace terminal before starting Lab 4.
+
 To view the materials locally, use Node.js 22 or newer:
 
 ```powershell

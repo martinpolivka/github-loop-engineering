@@ -25,5 +25,5 @@
       "label": "Retail service"
     }
   },
-  "postCreateCommand": "npm test"
+  "postCreateCommand": "az version && npm test"
 }

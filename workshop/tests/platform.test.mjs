@@ -100,7 +100,7 @@ test("active workflows and preflight share retained synthetic telemetry, not loc
   }
 });
 
-test("repository opens in a Codespace with Copilot and runs the tests", () => {
+test("repository opens in a Codespace with Copilot, verifies Azure CLI, and runs the tests", () => {
   const template = root;
   const devcontainer = JSON.parse(readFileSync(join(template, ".devcontainer", "devcontainer.json"), "utf8"));
   assert.match(devcontainer.image, /javascript-node:24/);
@@ -114,7 +114,8 @@ test("repository opens in a Codespace with Copilot and runs the tests", () => {
   assert.equal(devcontainer.name, "Retail reservation station");
   assert.equal(devcontainer.portsAttributes["3000"].label, "Retail service");
   assert.ok(devcontainer.customizations.vscode.extensions.includes("GitHub.copilot-chat"));
-  assert.equal(devcontainer.postCreateCommand, "npm test");
+  assert.equal(devcontainer.postCreateCommand, "az version && npm test",
+    "Creation must fail if Azure CLI is unavailable before running application tests");
   assert.deepEqual(devcontainer.forwardPorts, [3000]);
 });
 
