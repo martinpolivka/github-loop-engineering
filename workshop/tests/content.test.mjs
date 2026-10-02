@@ -18,13 +18,16 @@ test("the workshop hub contains only the agenda and navigation", () => {
   assert.ok(sourceText(visibleCopy).split(/\s+/).length <= 650,
     "The hub must remain brief, including visible slide cues but not duplicate SVG accessibility descriptions");
   assert.match(markup, /href="loop-engineering\.en\.html"/);
+  assert.match(markup, /href="loop-engineering\.cs\.html" lang="cs" hreflang="cs"/);
+  assert.match(markup, /href="LoopEngineeringWithGitHub\.pdf" download/);
   assert.doesNotMatch(source, /superdemo|card-demo-flow|card-fallback|ch-controls|ch-adoption|operator-guide/i);
   assert.doesNotMatch(markup, /card-head|card-toggle|card-body|data-action="(?:expand|collapse)-all"|toggle-slides/);
   const agenda = sourceElement(source, "agenda");
   const slots = [...agenda.matchAll(/<time datetime="(\d\d:\d\d)">[^<]+<\/time>-<time datetime="(\d\d:\d\d)">/g)];
-  assert.equal(slots.length, 10, "Opening, five labs, two breaks, lunch, and discussion");
+  assert.equal(slots.length, 10, "Presentation, five labs, two breaks, lunch, and discussion");
   assert.equal(slots[0][1], "09:00");
-  assert.equal(slots.at(-1)[2], "15:30");
+  assert.equal(slots.at(-1)[2], "16:00");
+  assert.match(sourceElement(source, "opening"), /09:00-16:00/);
   for (let index = 1; index < slots.length; index++) {
     assert.equal(slots[index][1], slots[index - 1][2], "The agenda must be continuous");
   }
@@ -32,7 +35,37 @@ test("the workshop hub contains only the agenda and navigation", () => {
     "04-trusted-delivery", "05-agentic-outer-loop"]) {
     assert.equal([...agenda.matchAll(new RegExp(`href="labs/${lab}/index.html"`, "g"))].length, 1);
   }
-  assert.match(agenda, /opening walkthrough/i);
+  const firstSlot = agenda.match(/<li>([\s\S]*?)<\/li>/)[1];
+  assert.match(firstSlot, /Presentation &middot; 45 min/);
+  assert.match(firstSlot, /Loop Engineering with GitHub: principles and the complete loop/);
+  assert.doesNotMatch(firstSlot, /walkthrough|demo/i);
+  const schedule = readFileSync(join(root, "AGENDA.md"), "utf8");
+  assert.match(schedule, /09:00-09:45 \| \*\*Presentation: Loop Engineering with GitHub/);
+  const finalSlot = [...agenda.matchAll(/<li>([\s\S]*?)<\/li>/g)].at(-1)[1];
+  assert.match(finalSlot, /Tailored discussion &middot; 60 min/);
+  assert.match(finalSlot, /migration from existing tools, adoption, or governance/i);
+  assert.match(schedule, /15:00-16:00 \| \*\*Bring the loop into your practice: tailored discussion/);
+});
+
+test("the Markdown schedule and lab timing match the customer agenda", () => {
+  const hub = readFileSync(join(root, "docs", "index.html"), "utf8");
+  const schedule = readFileSync(join(root, "AGENDA.md"), "utf8");
+  const entries = [...sourceElement(hub, "agenda").matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/g)];
+  const htmlSlots = entries.map(([, entry]) => {
+    const times = [...entry.matchAll(/<time datetime="(\d\d:\d\d)">/g)].map(([, time]) => time);
+    const minutes = (time) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
+    const duration = entry.match(/&middot; (\d+) min/);
+    assert.equal(Number(duration?.[1]), minutes(times[1]) - minutes(times[0]), "Printed duration matches the slot");
+    const lab = entry.match(/href="(labs\/[^"]+\/index\.html)"/)?.[1];
+    if (lab) {
+      const source = readFileSync(join(root, "docs", ...lab.split("/")), "utf8");
+      assert.match(sourceElement(source, "opening"),
+        new RegExp(`${times.join("-")} &middot; ${duration[1]} minutes`), `${lab}: lab header matches the agenda`);
+    }
+    return times.join("-");
+  });
+  const markdownSlots = [...schedule.matchAll(/^\| (\d\d:\d\d-\d\d:\d\d) \|/gm)].map(([, slot]) => slot);
+  assert.deepEqual(markdownSlots, htmlSlots, "Both agendas have the same complete schedule");
 });
 
 test("the separate English deck explains principles across the complete workshop", () => {

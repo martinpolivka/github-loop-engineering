@@ -33,8 +33,10 @@ npm run serve
 ```
 
 Open `http://localhost:4173/docs/` and follow the agenda into each lab. The hub
-contains only the agenda and navigation; the
-[English principles presentation](docs/loop-engineering.en.html) is separate.
+contains only the agenda and navigation, with a downloadable
+[agenda PDF](docs/LoopEngineeringWithGitHub.pdf). The opening principles presentation is separate,
+available in [English](docs/loop-engineering.en.html) and
+[Czech](docs/loop-engineering.cs.html); hands-on demonstrations follow in the labs.
 Each HTML embeds its styles and scripts and works without an assets directory
 or server. Links between the agenda, labs, and artifacts still need those sibling
 files. In each lab, **Slides** switches between reading and presentation views.
@@ -42,6 +44,14 @@ files. In each lab, **Slides** switches between reading and presentation views.
 Material authoring and `npm run validate:html` use the globally installed
 `html-docs` skill, not a vendored copy. Set `HTML_DOCS_SKILL` to its directory
 if it is not under `~/.copilot/skills/html-docs`.
+
+Regenerate `docs/LoopEngineeringWithGitHub.pdf` from the self-contained agenda HTML after agenda
+changes using the installed skill:
+
+```powershell
+node "$HOME\.copilot\skills\html-docs\assets\export-pdf.js" docs\index.html --only read
+if ($LASTEXITCODE -eq 0) { Move-Item docs\index.pdf docs\LoopEngineeringWithGitHub.pdf -Force }
+```
 
 During editing, export the changed HTML and run a targeted smoke check:
 

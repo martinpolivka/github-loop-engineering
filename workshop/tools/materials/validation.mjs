@@ -129,8 +129,9 @@ export function validateRepository() {
 
   const hub = htmlMarkup(readFileSync(join(root, "docs", "index.html"), "utf8"));
   if (!hub.includes('id="agenda"') || !hub.includes('href="loop-engineering.en.html"') ||
+      !hub.includes('href="loop-engineering.cs.html"') || !hub.includes('href="LoopEngineeringWithGitHub.pdf"') ||
       hub.includes('data-action="toggle-slides"') || hub.includes('class="slide-content')) {
-    errors.push("workshop hub needs an agenda and separate presentation link, without embedded slides");
+    errors.push("workshop hub needs an agenda, its PDF, and separate English/Czech presentation links, without embedded slides");
   }
   for (const [index, lab] of ["01-evidence-to-goal", "02-inner-loop", "03-governed-pr",
     "04-trusted-delivery", "05-agentic-outer-loop"].entries()) {

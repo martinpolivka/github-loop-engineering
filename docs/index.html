@@ -1116,11 +1116,21 @@ html:not(.js) .detail-more { display: none; }
       .agenda-break .agenda-entry { padding: 0 4px 8px; }
     }
     @media print {
-      .agenda > li { break-inside: avoid; gap: 16px; margin-bottom: 8px; }
-      .agenda-entry { padding: 12px 16px; }
-      .agenda-time { padding-top: 16px; }
+      .doc-header { padding: 0 0 12px; }
+      .doc-header .eyebrow { margin-bottom: 6px; font-size: 8pt; }
+      .doc-header h1 { margin: 0 0 6px; font-size: 24pt; }
+      .doc-header .subtitle { margin: 0; font-size: 11pt; }
+      .hub-agenda { margin-top: 0; }
+      .hub-agenda > h2 { margin-bottom: 12px; font-size: 13pt; }
+      .agenda > li { grid-template-columns: 100px minmax(0, 1fr); break-inside: avoid; gap: 12px; margin-bottom: 6px; }
+      .agenda-entry, a.agenda-entry { padding: 9px 12px; text-decoration: none; }
+      .agenda-time { padding-top: 12px; font-size: 9pt; }
+      .agenda-kind { margin-bottom: 3px; font-size: 8pt; }
+      .agenda-title { font-size: 11pt; }
       a.agenda-entry::after { display: none; }
-      .agenda-description { font-size: 0.85rem; }
+      .agenda-description { margin-top: 4px; font-size: 9pt; line-height: 1.4; }
+      .agenda-break .agenda-entry { padding: 4px 12px; font-size: 9pt; }
+      .agenda-break .agenda-time { padding-top: 4px; }
     }
   </style>
 </head>
@@ -1132,17 +1142,17 @@ html:not(.js) .detail-more { display: none; }
 </div>
 <div class="doc">
   <header class="doc-header" id="opening">
-    <p class="eyebrow">Full-day technical workshop &middot; 09:00-15:30</p>
+    <p class="eyebrow">Full-day technical workshop &middot; 09:00-16:00</p>
     <h1>Loop Engineering with GitHub</h1>
-    <p class="subtitle">One synthetic retail service. Five connected labs.</p>
+    <p class="subtitle">One principles presentation. One synthetic retail service. Five connected labs.</p>
   </header>
-  <nav class="doc-nav" aria-label="Workshop navigation"><a href="labs/01-evidence-to-goal/index.html">Start Lab 1</a><a href="loop-engineering.en.html">Open the English presentation</a></nav>
+  <nav class="doc-nav" aria-label="Workshop navigation"><a href="loop-engineering.cs.html" lang="cs" hreflang="cs">Prezentace česky (CZ)</a><a href="loop-engineering.en.html" hreflang="en">Presentation in English (EN)</a><a href="labs/01-evidence-to-goal/index.html">Start Lab 1</a><a href="LoopEngineeringWithGitHub.pdf" download>Download agenda (PDF)</a></nav>
   <main id="main">
     <section class="hub-agenda" id="agenda" aria-labelledby="agenda-title">
       <span id="ch-agenda"></span>
       <h2 id="agenda-title">Your day, one loop at a time</h2>
       <ol class="agenda">
-        <li><span class="agenda-time"><time datetime="09:00">09:00</time>-<time datetime="09:45">09:45</time></span><div class="agenda-entry"><span class="agenda-kind">Opening &middot; 45 min</span><span class="agenda-title">The complete engineering loop</span><span class="agenda-description">An opening walkthrough from evidence to code, review, delivery, and feedback.</span></div></li>
+        <li><span class="agenda-time"><time datetime="09:00">09:00</time>-<time datetime="09:45">09:45</time></span><div class="agenda-entry"><span class="agenda-kind">Presentation &middot; 45 min</span><span class="agenda-title">Loop Engineering with GitHub: principles and the complete loop</span><span class="agenda-description">Understand Goal Cards, inner and outer loops, evidence, and human authority before applying them in the labs.</span></div></li>
         <li><span class="agenda-time"><time datetime="09:45">09:45</time>-<time datetime="10:30">10:30</time></span><a class="agenda-entry" href="labs/01-evidence-to-goal/index.html"><span class="agenda-kind">Lab 1 &middot; 45 min</span><span class="agenda-title">Evidence to engineering intent</span><span class="agenda-description">Fork the station; turn synthetic evidence into one approved feature Issue and one bug Issue.</span></a></li>
         <li class="agenda-break"><span class="agenda-time"><time datetime="10:30">10:30</time>-<time datetime="10:45">10:45</time></span><div class="agenda-entry">Break &middot; 15 min</div></li>
         <li><span class="agenda-time"><time datetime="10:45">10:45</time>-<time datetime="11:45">11:45</time></span><a class="agenda-entry" href="labs/02-inner-loop/index.html"><span class="agenda-kind">Lab 2 &middot; 60 min</span><span class="agenda-title">Goal Cards and two agent loops</span><span class="agenda-description">Define the goals; implement locally and with the cloud agent to open two pull requests.</span></a></li>
@@ -1151,7 +1161,7 @@ html:not(.js) .detail-more { display: none; }
         <li><span class="agenda-time"><time datetime="13:20">13:20</time>-<time datetime="14:10">14:10</time></span><a class="agenda-entry" href="labs/04-trusted-delivery/index.html"><span class="agenda-kind">Lab 4 &middot; 50 min</span><span class="agenda-title">Trusted delivery and operational readiness</span><span class="agenda-description">Deploy prepared test/prod resources; sign and promote the same OCI image digest through Azure.</span></a></li>
         <li class="agenda-break"><span class="agenda-time"><time datetime="14:10">14:10</time>-<time datetime="14:20">14:20</time></span><div class="agenda-entry">Break &middot; 10 min</div></li>
         <li><span class="agenda-time"><time datetime="14:20">14:20</time>-<time datetime="15:00">15:00</time></span><a class="agenda-entry" href="labs/05-agentic-outer-loop/index.html"><span class="agenda-kind">Lab 5 &middot; 40 min</span><span class="agenda-title">Author agentic outer loops</span><span class="agenda-description">Author bounded Agentic Workflows for triage and delivery readiness.</span></a></li>
-        <li><span class="agenda-time"><time datetime="15:00">15:00</time>-<time datetime="15:30">15:30</time></span><div class="agenda-entry"><span class="agenda-kind">Discussion &middot; 30 min</span><span class="agenda-title">Bring the loop into your practice</span><span class="agenda-description">Connect the day's decisions to adoption and migration choices.</span></div></li>
+        <li><span class="agenda-time"><time datetime="15:00">15:00</time>-<time datetime="16:00">16:00</time></span><div class="agenda-entry"><span class="agenda-kind">Tailored discussion &middot; 60 min</span><span class="agenda-title">Bring the loop into your practice</span><span class="agenda-description">Explore migration from existing tools, adoption, or governance according to your team's priorities.</span></div></li>
       </ol>
     </section>
   </main>

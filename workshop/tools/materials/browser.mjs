@@ -265,7 +265,11 @@ async function articleChecks(page, path, label) {
     check(await page.locator(".slide-content, .deck-stage, [data-action='toggle-slides']").count() === 0,
       `${label}: the agenda contains no presentation runtime or surfaces`);
     check(await page.locator('a[href="loop-engineering.en.html"]').isVisible(),
-      `${label}: the standalone presentation is reachable`);
+      `${label}: the English presentation is reachable`);
+    check(await page.locator('a[href="loop-engineering.cs.html"]').isVisible(),
+      `${label}: the Czech presentation is reachable`);
+    check(await page.locator('a[href="LoopEngineeringWithGitHub.pdf"][download]').isVisible(),
+      `${label}: the agenda PDF is reachable`);
     return;
   }
   const cards = page.locator("main > .chapter > .card");
