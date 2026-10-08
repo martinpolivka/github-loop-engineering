@@ -56,8 +56,8 @@ Root files: `README.md` (station and navigation), `AGENDA.md` (full-day intent a
 
 HTML is the source format for presentations, lab instructions, reference documentation, and architecture explanations. `docs/index.html` is the attendee entry point and agenda; `docs/loop-engineering.en.html` is the separate English principles presentation, with a Czech counterpart reserved for later. Each of the five linked labs is a reading-only HTML guide with PDF printing, without slide controls or authored slide summaries. Do not use Markdown as the primary attendee experience or duplicate lab procedures across decks and guides.
 
-- Use the globally installed `html-docs` skill for authoring and validation; set `HTML_DOCS_SKILL` when it is not in the default location.
-- Embed canonical styles and scripts into each HTML file. Never edit the embedded runtime; validate it against the global skill.
+- Use the vendored `html-docs` skill in `.agents/skills/html-docs` for authoring and validation; `HTML_DOCS_SKILL` explicitly overrides that directory.
+- Embed canonical styles and scripts into each HTML file. Never edit the embedded runtime; validate it against the selected skill.
 - Give each material a stable, unique `doc-id`.
 - Support light and dark modes and the blue, orange, and green accents. Warnings use text labels, not independent color palettes.
 - No Unicode emoji. Meet accessible contrast, keyboard navigation, visible focus, semantic HTML, and reduced-motion expectations.

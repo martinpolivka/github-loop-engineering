@@ -2,6 +2,8 @@
 
 - Status: Accepted
 - Date: 2026-10-01
+- Global skill installation requirement superseded by
+  [ADR 0023](0023-vendored-html-docs-skill.md); standalone HTML remains unchanged.
 - Operator-guide retention superseded by
   [ADR 0019](0019-separate-demo-application-and-workshop-tooling.md).
 - Combined lab presentation modes superseded by

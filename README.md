@@ -42,15 +42,18 @@ or server. Links between the agenda, labs, and artifacts still need those siblin
 files. Labs are reading-only guides with collapsible steps, copyable commands,
 and **PDF** printing. Slide mode belongs only to the separate opening presentations.
 
-Material authoring and `npm run validate:html` use the globally installed
-`html-docs` skill, not a vendored copy. Set `HTML_DOCS_SKILL` to its directory
-if it is not under `~/.copilot/skills/html-docs`.
+Material authoring and `npm run validate:html` use the vendored
+`html-docs` skill in `.agents/skills/html-docs`; no global skill installation
+is required. Set `HTML_DOCS_SKILL` to explicitly use another complete skill
+directory. See [the vendoring record](.agents/skills/html-docs/VENDORED.md)
+for the upstream revision and update procedure. Skill discovery is host-specific;
+restart or reload an existing agent session if it has not discovered the skill.
 
 Regenerate `docs/LoopEngineeringWithGitHub.pdf` from the self-contained agenda HTML after agenda
-changes using the installed skill:
+changes using the vendored skill:
 
 ```powershell
-node "$HOME\.copilot\skills\html-docs\assets\export-pdf.js" docs\index.html --only read
+node .agents\skills\html-docs\assets\export-pdf.js docs\index.html --only read
 if ($LASTEXITCODE -eq 0) { Move-Item docs\index.pdf docs\LoopEngineeringWithGitHub.pdf -Force }
 ```
 

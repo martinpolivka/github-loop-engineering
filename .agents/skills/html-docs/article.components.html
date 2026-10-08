@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="en" data-default-accent="blue">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Article components</title>
+<meta name="description" content="Every component of the html-docs article runtime, with the exact markup each one requires.">
+<meta name="doc-id" content="html-docs-article-components">
+
+<script data-doc-bootstrap>
+/* Inline in the head before styles with sync-head.js. No deferred bootstrap. */
+(() => {
+  "use strict";
+  const root = document.documentElement;
+  const params = new URLSearchParams(location.search);
+  const id = document.querySelector('meta[name="doc-id"]')?.content ||
+    location.pathname.replace(/\.standalone(?=\.html$)/i, "");
+  const prefix = "html-docs:" + id + ":";
+  const choices = { theme: ["light", "dark"], accent: ["blue", "red", "green", "yellow"] };
+  const read = (name) => {
+    try { return localStorage.getItem(prefix + name); }
+    catch { return null; /* Storage may be unavailable for local files. */ }
+  };
+  const write = (name, value) => {
+    try { localStorage.setItem(prefix + name, value); }
+    catch { /* The current view still works without persistence. */ }
+  };
+  function refresh() {
+    for (const name of Object.keys(choices)) {
+      const current = root.getAttribute("data-" + name);
+      const next = choices[name][(choices[name].indexOf(current) + 1) % choices[name].length];
+      document.querySelectorAll('[data-action="toggle-' + name + '"]').forEach(button => {
+        button.textContent = name === "theme" ? (next === "dark" ? "Dark" : "Light") :
+          "Accent: " + current[0].toUpperCase() + current.slice(1);
+        button.setAttribute("aria-label", name === "theme" ? "Switch to " + next + " theme" :
+          "Accent: " + current + ". Switch to " + next);
+      });
+    }
+  }
+  for (const [name, values] of Object.entries(choices)) {
+    const fallback = name === "theme" && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : values[0];
+    const value = [params.get(name), read(name), root.getAttribute("data-default-" + name), fallback]
+      .map(candidate => name === "accent" && candidate === "orange" ? "red" : candidate)
+      .find(candidate => values.includes(candidate));
+    root.setAttribute("data-" + name, value);
+  }
+  root.classList.add("js");
+  if (["slides", "sheet"].includes(params.get("view"))) root.setAttribute("data-view", params.get("view"));
+
+  // Print what is on screen. data-print selects the matching print stylesheet.
+  const printTarget = () => {
+    if (document.querySelector(".deck-stage")) return "slides";
+    const view = root.getAttribute("data-view");
+    if (view === "slides" || (view === "sheet" && document.querySelector(".sheet"))) return view;
+    return document.querySelector(".doc") || !document.querySelector(".sheet") ? "read" : "sheet";
+  };
+  let printing = null;
+  addEventListener("beforeprint", () => {
+    if (root.hasAttribute("data-print")) return; // Set by an automated export.
+    const target = printTarget();
+    printing = document.title;
+    root.setAttribute("data-print", target);
+    // The browser proposes the title as the PDF file name.
+    if (target !== "read" && document.querySelector(".doc")) {
+      document.title += target === "slides" ? " - Slides" : " - Sheet";
+    }
+  });
+  addEventListener("afterprint", () => {
+    if (printing === null) return;
+    root.removeAttribute("data-print");
+    document.title = printing;
+    printing = null;
+  });
+
+  // Keep the display awake while presenting, like presentation software does.
+  let lock = null;
+  let awake = false;
+  async function holdScreen() {
+    if (!awake || lock || document.visibilityState !== "visible" || !navigator.wakeLock) return;
+    try {
+      const sentinel = await navigator.wakeLock.request("screen");
+      if (!awake || lock) { sentinel.release(); return; }
+      lock = sentinel;
+      root.setAttribute("data-awake", "");
+      sentinel.addEventListener("release", () => {
+        if (lock !== sentinel) return;
+        lock = null;
+        root.removeAttribute("data-awake");
+      });
+    } catch { /* Denied by battery saver or an embedding policy; retried on input. */ }
+  }
+  function keepAwake(on) {
+    awake = !!on;
+    if (awake) holdScreen();
+    else if (lock) lock.release();
+  }
+  // The browser drops the lock when the tab is hidden; some require a gesture.
+  document.addEventListener("visibilitychange", holdScreen);
+  document.addEventListener("pointerdown", holdScreen);
+  document.addEventListener("keydown", holdScreen);
+
+  window.HtmlDocs = { read, write, refresh, keepAwake };
+  document.addEventListener("DOMContentLoaded", refresh);
+  document.addEventListener("click", event => {
+    if (event.target.closest('[data-action="print"]')) window.print();
+  });
+  document.addEventListener("click", event => {
+    const button = event.target.closest('[data-action="toggle-theme"], [data-action="toggle-accent"]');
+    if (!button) return;
+    const name = button.getAttribute("data-action").slice(7);
+    const values = choices[name];
+    const next = values[(values.indexOf(root.getAttribute("data-" + name)) + 1) % values.length];
+    root.setAttribute("data-" + name, next);
+    write(name, next);
+    // Replace a URL override too, so reloading preserves a deliberate change.
+    const url = new URL(location.href);
+    if (url.searchParams.has(name)) {
+      url.searchParams.set(name, next);
+      history.replaceState(null, "", url.href);
+    }
+    refresh();
+  });
+})();
+</script>
+
+<style data-doc-tokens>
+/* Canonical tokens. Inline with sync-head.js; one accent family at a time. */
+:root {
+  color-scheme: light;
+  --bg: #fafafa; --surface: #ffffff; --surface-2: #f2f2f2; --surface-3: #e8e8e8;
+  --border: #dedede; --border-strong: #b8b8b8;
+  --text: #161616; --text-muted: #565656; --text-faint: #686868;
+  --accent-light: #006da0; --accent-dark: #00a4ef;
+  --accent: var(--accent-light);
+  --accent-strong: var(--accent);
+  --accent-quiet: var(--accent);
+  --accent-soft: color-mix(in srgb, var(--accent) 9%, var(--bg));
+  --accent-border: color-mix(in srgb, var(--accent) 36%, var(--bg));
+  --warn: var(--accent); --warn-soft: var(--accent-soft); --warn-border: var(--accent-border);
+  --code-bg: var(--surface-2); --code-border: var(--border);
+  --focus: var(--accent);
+  --shadow-1: 0 1px 2px rgba(0,0,0,.04);
+  --shadow-2: 0 2px 4px rgba(0,0,0,.04), 0 12px 28px rgba(0,0,0,.06);
+  --radius: 10px; --radius-sm: 6px; --canvas: 1160px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Mono", "Cascadia Code", ui-monospace, Consolas, "SF Mono", "Liberation Mono", Menlo, monospace;
+}
+/* Screen only: every PDF and printout uses the light palette. */
+@media screen {
+  [data-theme="dark"], :root:not([data-theme])[data-default-theme="dark"] {
+    color-scheme: dark;
+    --bg: #101010; --surface: #191919; --surface-2: #232323; --surface-3: #2c2c2c;
+    --border: #363636; --border-strong: #595959;
+    --text: #f2f2f2; --text-muted: #b5b5b5; --text-faint: #a0a0a0;
+    --accent: var(--accent-dark);
+    --shadow-1: 0 1px 2px rgba(0,0,0,.3);
+    --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 12px 28px rgba(0,0,0,.4);
+  }
+}
+[data-accent="red"], :root:not([data-accent])[data-default-accent="red"],
+[data-accent="orange"], :root:not([data-accent])[data-default-accent="orange"] {
+  --accent-light: #bc3a16; --accent-dark: #f25022;
+}
+[data-accent="green"], :root:not([data-accent])[data-default-accent="green"] {
+  --accent-light: #4c7100; --accent-dark: #7fba00;
+}
+[data-accent="yellow"], :root:not([data-accent])[data-default-accent="yellow"] {
+  --accent-light: #805b00; --accent-dark: #ffb900;
+}
+</style>
+
+<link rel="stylesheet" href="assets/article.css">
+<link rel="stylesheet" href="assets/slides.css">
+<link rel="stylesheet" href="assets/sheet.css">
+<script src="assets/article.js" defer></script>
+<script src="assets/slides.js" defer></script>
+<script src="assets/sheet.js" defer></script>
+</head>
+
+<body>
+
+<div class="controls" role="group" aria-label="Article controls">
+  <button type="button" class="ctrl" data-action="expand-all">Expand all</button>
+  <button type="button" class="ctrl" data-action="collapse-all">Collapse all</button>
+  <button type="button" class="ctrl" data-action="toggle-slides" aria-pressed="false">Slides</button>
+  <button type="button" class="ctrl" data-action="toggle-sheet" aria-pressed="false">Sheet</button>
+  <button type="button" class="ctrl" data-action="print" aria-label="Save the current view as PDF or print it">PDF</button>
+  <button type="button" class="ctrl" data-action="toggle-theme">Dark</button>
+  <button type="button" class="ctrl" data-action="toggle-accent">Accent: Blue</button>
+</div>
+
+<div class="doc">
+
+  <header class="doc-header" id="opening">
+    <div class="slide-content slide-content--title">
+      <p class="slide-eyebrow">Article components</p>
+      <h2 class="slide-title">One narrative.<br><em>Two depths.</em></h2>
+      <p class="slide-lead">Concise cues live beside the complete reference.</p>
+    </div>
+    <p class="eyebrow">Reference</p>
+    <h1>Article components</h1>
+    <p class="subtitle">Every component the article runtime styles, with the exact markup it expects. Copy from here rather than inventing structure.</p>
+    <p class="meta">Component reference; all scenarios are illustrative.</p>
+  </header>
+
+  <nav class="doc-nav" aria-label="Related material">
+    <a href="article.template.html">Blank article template</a>
+    <a href="deck.components.html">Deck components</a>
+  </nav>
+
+  <nav class="toc" aria-label="Contents">
+    <p class="toc-label">Contents</p>
+    <ol>
+      <li><a href="#ch-structure">Structure</a></li>
+      <li><a href="#ch-alternatives">Alternatives and detail</a></li>
+      <li><a href="#ch-shape">Shaped content</a></li>
+      <li><a href="#ch-evidence">Evidence</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section class="chapter" id="ch-structure">
+      <h2 class="chapter-label">Structure</h2>
+
+      <article class="card card--lead" id="card-how-to-read" data-open>
+        <div class="slide-content">
+          <h2 class="slide-title">Present the idea.<br><em>Keep the reasoning.</em></h2>
+          <p class="slide-lead">Slides and reading share structure, not density.</p>
+        </div>
+        <h3 class="card-head">
+          <button type="button" class="card-toggle" aria-expanded="true">
+            <span class="card-num" aria-hidden="true"></span>
+            <span class="card-titles">
+              <span class="card-title">How to read this page</span>
+            </span>
+            <span class="card-mark" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="card-body">
+          <p>This is a lead card. It carries <code>card--lead</code>, so it is not numbered and never renders <code>00</code>. It is the only card open on load.</p>
+          <p>Every other card below demonstrates one component. Open a card, then read its markup in the source.</p>
+        </div>
+      </article>
+
+      <article class="card" id="card-card">
+        <div class="slide-content">
+          <h2 class="slide-title">One card.<br><em>One point.</em></h2>
+          <p class="slide-lead">A short authored cue, not a compressed paragraph.</p>
+        </div>
+        <h3 class="card-head">
+          <button type="button" class="card-toggle" aria-expanded="false">
+            <span class="card-num" aria-hidden="true"></span>
+            <span class="card-titles">
+              <span class="card-title">Card</span>
+              <span class="card-sub">The fundamental unit: one card is one major idea.</span>
+            </span>
+            <span class="card-mark" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="card-body">
+          <p>The header is a real button with <code>aria-expanded</code>. The number is generated by a CSS counter, so inserting a card never renumbers by hand.</p>
+          <p>The second header line is a subtitle. Use it when the title alone does not make a collapsed card understandable.</p>
+        </div>
+      </article>
+
+      <article class="card" id="card-reveal">
+        <div class="slide-content">
+          <h2 class="slide-title">Details belong<br><em>in reading mode.</em></h2>
+          <p class="slide-lead">No reveal buttons on the projected slide.</p>
+        </div>
+        <h3 class="card-head">
+          <button type="button" class="card-toggle" aria-expanded="false">
+            <span class="card-num" aria-hidden="true"></span>
+            <span class="card-titles">
+              <span class="card-title">Reveal</span>
+              <span class="card-sub">Optional depth inside a card.</span>
+            </span>
+            <span class="card-mark" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="card-body">
+          <p>Use a reveal for troubleshooting, evidence, derivations, and side arguments. The content stays inline in the HTML, so it prints and searches.</p>
+
+          <div class="reveal">
+            <button type="button" class="reveal-toggle" aria-expanded="false">Show the failure path</button>
+            <div class="reveal-body">
+              <p>Reveal body text stays at normal reading size. Optional does not mean fine print.</p>
+              <ul class="arrow-list">
+                <li>Check the resource provider registration first.</li>
+                <li>Then confirm the role assignment has propagated.</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="reveal">
+            <button type="button" class="reveal-toggle" aria-expanded="false">Show a second reveal</button>
+            <div class="reveal-body">
+              <p>Reveals are independent of each other and of the card.</p>
+            </div>
+          </div>
+        </div>
+      </article>
+
+    </section>
+
+    <section class="chapter" id="ch-alternatives">
+      <h2 class="chapter-label">Alternatives and detail</h2>
+
+      <article class="card" id="card-tabs">
+        <div class="slide-content">
+          <h2 class="slide-title">Choose a path.<br><em>Do not project tabs.</em></h2>
+          <ul class="slide-points"><li class="frag">Readers can compare alternatives.</li><li class="frag">Presenters need one clear argument.</li></ul>
+        </div>
+        <h3 class="card-head">
+          <button type="button" class="card-toggle" aria-expanded="false">
+            <span class="card-num" aria-hidden="true"></span>
+            <span class="card-titles">
+              <span class="card-title">Tabs</span>
+              <span class="card-sub">Only for true alternatives: two ways to do the same thing.</span>
+            </span>
+            <span class="card-mark" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="card-body">
+          <div class="tabs">
+            <div class="tablist" role="tablist" aria-label="Ways to create the resource">
+              <button type="button" role="tab" id="tab-portal" aria-controls="panel-portal" aria-selected="true">Portal</button>
+              <button type="button" role="tab" id="tab-cli" aria-controls="panel-cli" aria-selected="false" tabindex="-1">CLI</button>
+              <button type="button" role="tab" id="tab-sdk" aria-controls="panel-sdk" aria-selected="false" tabindex="-1">SDK</button>
+            </div>
+            <div class="tabpanel" role="tabpanel" id="panel-portal" aria-labelledby="tab-portal" data-tab-label="Portal">
+              <p>Open the resource blade, select <strong>Create</strong>, and complete the basics tab.</p>
+            </div>
+            <div class="tabpanel" role="tabpanel" id="panel-cli" aria-labelledby="tab-cli" data-tab-label="CLI" hidden>
+              <div class="code">
+                <p class="code-label">bash</p>
+                <pre><code>az group create --name rg-demo --location westeurope</code></pre>
+              </div>
+            </div>
+            <div class="tabpanel" role="tabpanel" id="panel-sdk" aria-labelledby="tab-sdk" data-tab-label="SDK" hidden>
+              <p>Call the management client and await the long-running operation.</p>
+            </div>
+          </div>
+          <p>Without JavaScript, the tab strip is hidden and every panel is shown stacked with its label, so nothing is lost.</p>
+        </div>
+      </article>
+
+      <article class="card" id="card-detail-grid">
+        <div class="slide-content">
+          <h2 class="slide-title">Project the verdict,<br><em>not the dialog.</em></h2>
+          <p class="slide-lead">Keep the full comparison next to its claim.</p>
+        </div>
+        <h3 class="card-head">
+          <button type="button" class="card-toggle" aria-expanded="false">
+            <span class="card-num" aria-hidden="true"></span>
+            <span class="card-titles">
+              <span class="card-title">Detail grid</span>
+              <span class="card-sub">Two or four tiles, each with a short summary and a longer detail.</span>
+            </span>
+            <span class="card-mark" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="card-body">
+          <div class="detail-grid">
+            <div class="detail-tile">
+              <button type="button" class="detail-open">
+                <span class="detail-title">Cost</span>
+                <span class="detail-summary">Predictable at steady state, spiky during migration.</span>
+                <span class="detail-more" aria-hidden="true">Details</span>
+              </button>
+              <div class="detail-body">
+                <p>Migration doubles the running footprint for the cutover window. Budget for the overlap rather than the end state.</p>
+              </div>
+            </div>
+            <div class="detail-tile">
+              <button type="button" class="detail-open">
+                <span class="detail-title">Operations</span>
+                <span class="detail-summary">Fewer moving parts, different failure modes.</span>
+                <span class="detail-more" aria-hidden="true">Details</span>
+              </button>
+              <div class="detail-body">
+                <p>The platform absorbs patching and node health. In exchange, diagnosis moves from the host to the platform log surface.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+
+    </section>
+
+    <section class="chapter" id="ch-shape">
+      <h2 class="chapter-label">Shaped content</h2>
+
+      <article class="card" id="card-sequence">
+        <div class="slide-content">
+          <h2 class="slide-title">Order carries meaning.</h2>
+          <ul class="slide-points"><li class="frag">Prepare.</li><li class="frag">Act.</li><li class="frag">Verify.</li></ul>
+        </div>
+        <h3 class="card-head">
+          <button type="button" class="card-toggle" aria-expanded="false">
+            <span class="card-num" aria-hidden="true"></span>
+            <span class="card-titles">
+              <span class="card-title">Sequence and steps</span>
+              <span class="card-sub">An ordered evolution, and a lifecycle to execute.</span>
+            </span>
+            <span class="card-mark" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="card-body">
+          <h4>Sequence</h4>
+          <ol class="sequence">
+            <li><span class="seq-title">Virtual machines</span><span class="seq-note">Full control, full responsibility.</span></li>
+            <li><span class="seq-title">Containers</span><span class="seq-note">Portable units, orchestrated.</span></li>
+            <li><span class="seq-title">Managed platform</span><span class="seq-note">Operations absorbed.</span></li>
+          </ol>
+
+          <h4>Steps</h4>
+          <ol class="steps">
+            <li>
+              <h4>Provision</h4>
+              <p>Create the resource group and the workload identity.</p>
+            </li>
+            <li>
+              <h4>Deploy</h4>
+              <p>Push the image and roll out the first revision.</p>
+            </li>
+            <li>
+              <h4>Verify</h4>
+              <p>Confirm the health probe returns 200 before shifting traffic.</p>
+            </li>
+          </ol>
+        </div>
+      </article>
+
+      <article class="card" id="card-lists">
+        <div class="slide-content">
+          <h2 class="slide-title">Keep the synthesis short.</h2>
+          <ul class="slide-points"><li class="frag">Name the constraint.</li><li class="frag">Choose the tradeoff.</li><li class="frag">State the next action.</li></ul>
+        </div>
+        <h3 class="card-head">
+          <button type="button" class="card-toggle" aria-expanded="false">
+            <span class="card-num" aria-hidden="true"></span>
+            <span class="card-titles">
+              <span class="card-title">Summary grid and arrow list</span>
+              <span class="card-sub">Final synthesis, and practical next actions.</span>
+            </span>
+            <span class="card-mark" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="card-body">
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span class="summary-label">Latency</span>
+              <p>Median request time drops once the cold start is removed.</p>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Cost</span>
+              <p>Steady state is cheaper; the migration window is not.</p>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Risk</span>
+              <p>The rollback path must be rehearsed before the cutover.</p>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Effort</span>
+              <p>Most of the work is in configuration, not in code.</p>
+            </div>
+          </div>
+
+          <h4>Next actions</h4>
+          <ul class="arrow-list">
+            <li>Run the readiness assessment against the staging subscription.</li>
+            <li>Record the current baseline latency before changing anything.</li>
+            <li>Agree the rollback trigger with the service owner.</li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="card" id="card-callouts">
+        <div class="slide-content">
+          <h2 class="slide-title">Meaning comes from labels,<br><em>not extra colors.</em></h2>
+          <p class="slide-lead">One accent, including warnings.</p>
+        </div>
+        <h3 class="card-head">
+          <button type="button" class="card-toggle" aria-expanded="false">
+            <span class="card-num" aria-hidden="true"></span>
+            <span class="card-titles">
+              <span class="card-title">Callouts</span>
+              <span class="card-sub">A fixed set of six meanings. Use them sparingly.</span>
+            </span>
+            <span class="card-mark" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="card-body">
+          <aside class="callout callout--note">
+            <p class="callout-label">Note</p>
+            <p>Side information worth surfacing.</p>
+          </aside>
+          <aside class="callout callout--rule">
+            <p class="callout-label">Rule</p>
+            <p>A durable rule to remember.</p>
+          </aside>
+          <aside class="callout callout--warning">
+            <p class="callout-label">Warning</p>
+            <p>A practical risk, or a way to break something.</p>
+          </aside>
+          <aside class="callout callout--verdict">
+            <p class="callout-label">Verdict</p>
+            <p>A conclusion.</p>
+          </aside>
+          <aside class="callout callout--source">
+            <p class="callout-label">Source</p>
+            <p>Provenance of a claim, with a date or a version.</p>
+          </aside>
+          <aside class="callout callout--author">
+            <p class="callout-label">Author</p>
+            <p>A personal viewpoint, marked as one.</p>
+          </aside>
+        </div>
+      </article>
+
+    </section>
+
+    <section class="chapter" id="ch-evidence">
+      <h2 class="chapter-label">Evidence</h2>
+
+      <article class="card" id="card-code">
+        <div class="slide-content">
+          <h2 class="slide-title">Explain the mechanism.<br><em>Keep the full code below.</em></h2>
+          <p class="slide-lead">The reference carries what the screen should not.</p>
+        </div>
+        <h3 class="card-head">
+          <button type="button" class="card-toggle" aria-expanded="false">
+            <span class="card-num" aria-hidden="true"></span>
+            <span class="card-titles">
+              <span class="card-title">Code and tables</span>
+              <span class="card-sub">Commands, transcripts, and small comparisons.</span>
+            </span>
+            <span class="card-mark" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="card-body">
+          <div class="code">
+            <p class="code-label">infra/main.bicep</p>
+            <pre><code>resource app 'Microsoft.App/containerApps@2024-03-01' = {
+  name: appName
+  location: location
+  properties: {
+    managedEnvironmentId: environment.id
+    configuration: { ingress: { external: true, targetPort: 8080 } }
+  }
+}</code></pre>
+          </div>
+
+          <div class="code">
+            <pre><code>$ az containerapp show --name demo --query properties.runningStatus --output tsv
+Running</code></pre>
+          </div>
+
+          <table>
+            <thead>
+              <tr><th>Option</th><th>Control</th><th>Operational load</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Virtual machines</td><td>Full</td><td>High</td></tr>
+              <tr><td>Container apps</td><td>Application level</td><td>Low</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
+      <article class="card" id="card-figure">
+        <div class="slide-content">
+          <h2 class="slide-title">Give the diagram space.</h2>
+          <img src="assets/sample-diagram.svg" alt="Source feeds processing, which writes to a sink." width="960" height="240">
+        </div>
+        <h3 class="card-head">
+          <button type="button" class="card-toggle" aria-expanded="false">
+            <span class="card-num" aria-hidden="true"></span>
+            <span class="card-titles">
+              <span class="card-title">Figures</span>
+              <span class="card-sub">Screenshots and diagrams, zoomable in place.</span>
+            </span>
+            <span class="card-mark" aria-hidden="true"></span>
+          </button>
+        </h3>
+        <div class="card-body">
+          <figure class="figure">
+            <a class="zoom" href="assets/sample-diagram.svg">
+              <img src="assets/sample-diagram.svg" alt="Source feeds a processing stage, which writes to a sink." loading="lazy" width="960" height="240">
+            </a>
+            <figcaption>Data path from source through processing to sink. Click to zoom.</figcaption>
+          </figure>
+
+          <div class="reveal">
+            <button type="button" class="reveal-toggle" aria-expanded="false">Show the screenshot evidence</button>
+            <div class="reveal-body">
+              <p>Screenshot-heavy evidence belongs in a reveal so the main article stays readable.</p>
+              <figure class="figure">
+                <a class="zoom" href="assets/sample-diagram.svg">
+                  <img src="assets/sample-diagram.svg" alt="The same diagram, used here as a stand-in for a portal screenshot." loading="lazy" width="960" height="240">
+                </a>
+                <figcaption>Placeholder standing in for a portal screenshot.</figcaption>
+              </figure>
+            </div>
+          </div>
+        </div>
+      </article>
+
+    </section>
+
+  </main>
+
+  <section class="takeaway" id="closing">
+    <p>Reuse the component structures; author the presentation cues intentionally.</p>
+    <div class="slide-content slide-content--end">
+      <p class="slide-eyebrow">The key message</p>
+      <h2 class="slide-title">Less on screen.<br><em>More to return to.</em></h2>
+    </div>
+  </section>
+
+  <footer class="doc-footer">
+    <a href="article.template.html">Blank article template</a>
+    <a href="deck.components.html">Deck components</a>
+  </footer>
+
+</div>
+
+<!-- Companion sheet: a third depth. Its title is h2 because the article owns
+     the h1. Every page is exactly one sheet of paper. -->
+<section class="sheet" aria-label="Sheet components">
+
+  <article class="sheet-page" id="sheet-summary">
+    <header class="sheet-head">
+      <p class="sheet-kicker">Reference · sheet components · page one</p>
+      <h2 class="sheet-title">One page.<br><em>Everything a decision needs.</em></h2>
+      <p class="sheet-lead">A sheet is authored for skimming on paper: a kicker, a claim-style title, a short lead, then evidence blocks and a closing line.</p>
+    </header>
+
+    <ul class="sheet-stats" aria-label="Key figures">
+      <li><span class="sheet-stat-value">4</span><span class="sheet-stat-label">blocks in a two-column grid</span></li>
+      <li><span class="sheet-stat-value">1</span><span class="sheet-stat-label">accent shared with every view</span></li>
+      <li><span class="sheet-stat-value">7.5 pt</span><span class="sheet-stat-label">smallest allowed text, for notes</span></li>
+    </ul>
+
+    <div class="sheet-grid">
+      <section class="sheet-block">
+        <h3>Claims as<br>block titles</h3>
+        <p>Each block title states a result. The paragraph gives its reason in two to four sentences, with the <strong>one phrase</strong> a skimming reader must catch in bold.<sup>1</sup></p>
+      </section>
+      <section class="sheet-block">
+        <h3>Qualifications<br>stay visible</h3>
+        <p>A condition that changes the conclusion belongs in the block, not only in a note. Notes hold sources, dates, and definitions.</p>
+      </section>
+      <section class="sheet-block">
+        <h3>Authored, not<br>generated</h3>
+        <p>The sheet is a third depth. Write it for paper; do not copy card bodies or slide cues into it.</p>
+      </section>
+      <section class="sheet-block">
+        <h3>Fits or<br>gets shorter</h3>
+        <p>Text never shrinks to fit. When a page overflows, cut words or move a block to another page.</p>
+      </section>
+    </div>
+
+    <aside class="sheet-actions" aria-label="Recommended actions">
+      <h3>Recommended actions</h3>
+      <ul>
+        <li>Use a sheet for a one-pager, datasheet, or leave-behind brief.</li>
+        <li>Pair it with an article when readers also need the full reasoning.</li>
+        <li>Export the PDF and inspect every page before sending it.</li>
+      </ul>
+    </aside>
+
+    <p class="sheet-close">Paper rewards <em>fewer, stronger</em> claims.</p>
+
+    <footer class="sheet-notes">
+      <p><sup>1</sup> Illustrative reference content; no external sources.</p>
+    </footer>
+  </article>
+
+  <article class="sheet-page" id="sheet-matrix">
+    <header class="sheet-head">
+      <p class="sheet-kicker">Reference · sheet components · page two</p>
+      <h2 class="sheet-title">A matrix shows<br>where each option wins.</h2>
+      <p class="sheet-lead">Rows are reasons to choose; columns are options. Each cell states its point in words, and a drawn mark summarizes it.</p>
+    </header>
+
+    <table class="sheet-matrix">
+      <thead>
+        <tr><th scope="col">Reason</th><th scope="col">Option A</th><th scope="col">Option B</th><th scope="col">What C adds</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Control<span>pin a version, switch provider</span></th>
+          <td><span class="mark" data-mark="full" role="img" aria-label="Delivers"></span>Same result from several providers.</td>
+          <td><span class="mark" data-mark="full" role="img" aria-label="Delivers"></span>Full control of every setting.</td>
+          <td><span class="mark" data-mark="none" role="img" aria-label="Adds nothing"></span></td>
+        </tr>
+        <tr>
+          <th scope="row">Latency<span>many short steps</span></th>
+          <td><span class="mark" data-mark="part" role="img" aria-label="Partly"></span>Usually negligible next to processing time.</td>
+          <td><span class="mark" data-mark="full" role="img" aria-label="Delivers"></span>Small batches cut latency at a higher unit cost.</td>
+          <td><span class="mark" data-mark="plus" role="img" aria-label="C adds"></span>On-site placement; rarely decisive.</td>
+        </tr>
+        <tr>
+          <th scope="row">Cost<span>same work, smaller bill</span></th>
+          <td><span class="mark" data-mark="full" role="img" aria-label="Delivers"></span>No idle capacity to pay for.</td>
+          <td><span class="mark" data-mark="part" role="img" aria-label="Partly"></span>Only with steady, concurrent load.</td>
+          <td><span class="mark" data-mark="plus" role="img" aria-label="C adds"></span>Lowest unit cost when busy.<br><span class="mark" data-mark="minus" role="img" aria-label="C drawback"></span>Costlier when underused.</td>
+        </tr>
+      </tbody>
+    </table>
+    <ul class="sheet-legend" aria-label="Legend">
+      <li><span class="mark" data-mark="full" aria-hidden="true"></span>delivers the benefit</li>
+      <li><span class="mark" data-mark="part" aria-hidden="true"></span>partly or in specific cases</li>
+      <li><span class="mark" data-mark="none" aria-hidden="true"></span>not possible, or adds nothing</li>
+      <li><span class="mark" data-mark="plus" aria-hidden="true"></span>option C adds</li>
+      <li><span class="mark" data-mark="minus" aria-hidden="true"></span>option C drawback</li>
+    </ul>
+
+    <figure class="sheet-figure">
+      <svg viewBox="0 0 640 120" role="img" aria-labelledby="sheet-fig-title sheet-fig-desc">
+        <title id="sheet-fig-title">Three options on one cost axis</title>
+        <desc id="sheet-fig-desc">Option A is cheapest at low load; option C becomes cheapest only at sustained high load.</desc>
+        <path d="M40 90H600" stroke="var(--border-strong)" stroke-width="2"/>
+        <circle cx="130" cy="90" r="9" fill="var(--accent)"/>
+        <circle cx="330" cy="90" r="9" fill="var(--surface)" stroke="var(--accent)" stroke-width="3"/>
+        <circle cx="530" cy="90" r="9" fill="var(--text)"/>
+        <text x="130" y="60" text-anchor="middle" fill="var(--text)" font-size="17">A · low load</text>
+        <text x="330" y="60" text-anchor="middle" fill="var(--text)" font-size="17">B · steady load</text>
+        <text x="530" y="60" text-anchor="middle" fill="var(--text)" font-size="17">C · sustained peak</text>
+      </svg>
+      <figcaption>Inline SVG inherits the accent. Illustrative, not measured.</figcaption>
+    </figure>
+
+    <div class="sheet-grid sheet-grid--3">
+      <section class="sheet-block"><h3>Three columns</h3><p>Use <code>sheet-grid--3</code> for short, parallel points.</p></section>
+      <section class="sheet-block"><h3>Same rules</h3><p>Claim titles, visible conditions, sourced numbers.</p></section>
+      <section class="sheet-block"><h3>Same accent</h3><p>Marks, rules, and figures follow the selected accent.</p></section>
+    </div>
+
+    <p class="sheet-close">Open weights for control. <em>Shared capacity for cost.</em></p>
+
+    <footer class="sheet-notes">
+      <p>Page two of the sheet reference. Pages print in order, one per sheet of paper.</p>
+    </footer>
+  </article>
+
+</section>
+
+</body>
+</html>
