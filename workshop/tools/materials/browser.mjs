@@ -110,15 +110,29 @@ async function retailJourney() {
             : "docs/labs/02-inner-loop/artifacts/reservations.reference.mjs";
           await screenshot(page, `retail-${state}`, source, theme,
             "Actual local HTTP 409 response; synthetic data, not GitHub or a cloud deployment.");
+          await page.locator("#sku").selectOption("SKU-002");
+          await page.locator("#quantity").fill("5");
+          await page.getByRole("button", { name: "Request reservation", exact: true }).click();
+          await page.waitForFunction(() => document.querySelector("#response").textContent.includes('"available": 4'));
+          await page.locator('#result[data-status="409"]').waitFor();
+          const partialStockResult = page.locator("#result");
+          check((await partialStockResult.innerText()).includes("4 available"),
+            `Retail ${state}/${theme}: visible SKU-002 conflict result states 4 available`);
+          check(await partialStockResult.getAttribute("aria-live") === "polite",
+            `Retail ${state}/${theme}: partial-stock result retains polite live announcements`);
+          check(await partialStockResult.getAttribute("aria-atomic") === "true",
+            `Retail ${state}/${theme}: partial-stock result retains atomic announcements`);
+          check(await page.locator('#stock tr[data-sku="SKU-002"] td:last-child').innerText() === "4",
+            `Retail ${state}/${theme}: partial-stock conflict does not reserve stock`);
           await page.setViewportSize({ width: 1280, height: 720 });
           await page.evaluate(() => scrollTo(0, 0));
-          check(await page.locator("#result").evaluate((element) => {
+          check(await partialStockResult.evaluate((element) => {
             const box = element.getBoundingClientRect();
             return box.top >= 0 && box.bottom <= innerHeight;
-          }), `Retail ${state}: the response must fit a 720p projector without scrolling`);
+          }), `Retail ${state}/${theme}: partial-stock result fits a 720p projector without scrolling`);
           await page.setViewportSize({ width: 390, height: 844 });
           check(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
-            `Retail ${state}: mobile overflow`);
+            `Retail ${state}/${theme}: mobile overflow`);
           if (state === "suggestion") {
             await page.getByRole("button", { name: "Choose SKU-004", exact: true }).click();
             check(await page.locator('#stock tr[data-sku="SKU-004"] td:last-child').innerText() === "6",
