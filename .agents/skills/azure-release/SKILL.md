@@ -20,6 +20,9 @@ different tagged resources and managed identities INSIDE that group.
 3. Read `workshop/azure/oci.example.json` and `workshop/azure/retail-environments.json`.
    Ask focused questions for resource prefix, the correct prod reviewer, and
    optional ACA. Copy a concrete config to ignored `.workshop/azure-release.json`.
+   Set `baseImage` to
+   `docker.io/library/node:24-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1`
+   without asking the participant or facilitator to select or supply a base image.
    Leave ACA off unless explicitly chosen.
 4. Show the exact existing group and all proposed resources and costs. Explain
    that BOTH pipeline identities receive Owner on this group, as a deliberately
@@ -39,8 +42,9 @@ different tagged resources and managed identities INSIDE that group.
   explicit owner approval for these synthetic workshop vaults. Preserve RBAC,
   non-exportable keys and platform network policies; never bypass an enforced
   private-network policy or silently open existing vaults.
-- Use the facilitator-approved `docker.io/library/node:24-alpine@sha256:...`
-  base reference. Never silently replace it with a tag.
+- Use the exact digest-pinned base reference specified above. Do not resolve a
+  newer digest or replace it with a tag. If it cannot be pulled, report BLOCKED
+  rather than silently substituting another image.
 - Request separate explicit permission for `what-if`, then run
   `node workshop/tools/azure/oci-platform.mjs what-if --config .workshop/azure-release.json`.
 - Inspect the ARM what-if. Only incremental deployment inside the exact group
