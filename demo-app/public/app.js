@@ -59,7 +59,8 @@ form.addEventListener("submit", async (event) => {
       result.replaceChildren(text("h3", "HTTP 201 / Reservation created"),
         text("p", `${body.sku}: ${body.quantity} reserved, ${body.remaining} remaining.`));
     } else if (response.status === 409) {
-      result.replaceChildren(text("h3", "HTTP 409 / Requested stock unavailable"));
+      result.replaceChildren(text("h3", "HTTP 409 / Requested stock unavailable"),
+        text("p", `Requested ${form.elements.sku.value}: ${body.available} available.`));
       if (body.suggestion) {
         result.append(text("p", `Suggestion: ${body.suggestion.sku} / ${body.suggestion.name}. ${body.suggestion.available} available.`),
           text("p", "Nothing reserved. A person must choose whether to request the alternative."));
